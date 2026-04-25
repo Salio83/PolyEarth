@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolyEarth - Polytech Montpellier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-green-700 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">PolyEarth</h1>
+            <div class="space-x-6">
+                <a href="/" class="hover:text-green-200">Accueil</a>
+                <a href="/association" class="hover:text-green-200">L'Association</a>
+                <a href="/offres" class="hover:text-green-200">Offres</a>
+                <a href="/profil" class="hover:text-green-200 font-semibold border-l pl-6">Mon Profil</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="content" class="container mx-auto py-8">
+        <!-- Le contenu sera injecté ici par app.ts -->
+    </div>
+
+    <script type="module" src="/app.js"></script>
+</body>
+</html>

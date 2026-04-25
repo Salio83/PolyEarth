@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14.7-alpine
+    container_name: "db-polyearth"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=polyearth
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build: ./backend
+    container_name: "backend-deno"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    container_name: "frontend-deno"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+
+volumes:
+  db-data:

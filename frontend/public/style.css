@@ -1,0 +1,13 @@
+/* Styles de base pour PolyEarth */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+#content {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.nav-link-active {
+    color: #bbf7d0; /* green-200 */
+    font-weight: bold;
+}
