@@ -5,31 +5,47 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    school VARCHAR(255),
-    status VARCHAR(255),
-    history TEXT,
-    rating FLOAT DEFAULT 2.5,
-    is_verified BOOLEAN DEFAULT FALSE,
-    verification_token TEXT
+    school VARCHAR(255) DEFAULT 'Polytech Montpellier',
+    rating DECIMAL(2,1) DEFAULT 3.0,
+    transaction_count INTEGER DEFAULT 0,
+    is_verified BOOLEAN DEFAULT false,
+    verification_token TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS items (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    available BOOLEAN DEFAULT TRUE,
     owner_id INTEGER REFERENCES users(id),
+    category VARCHAR(255) DEFAULT 'Autre',
+    quality VARCHAR(50) DEFAULT 'good',
     photo_url TEXT,
-    category VARCHAR(255),
-    created_at TIMESTAMP DEFAULT NOW()
+    status VARCHAR(50) DEFAULT 'available', -- available, reserved, borrowed
+    available_from DATE,
+    available_until DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    id SERIAL PRIMARY KEY,
+    item_id INTEGER REFERENCES items(id),
+    sender_id INTEGER REFERENCES users(id),
+    receiver_id INTEGER REFERENCES users(id),
+    content TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT false,
+    read_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
     item_id INTEGER REFERENCES items(id),
     borrower_id INTEGER REFERENCES users(id),
+    owner_id INTEGER REFERENCES users(id),
     start_date DATE,
     end_date DATE,
     true_end_date DATE,
-    status VARCHAR(255) DEFAULT 'pending'
+    status VARCHAR(255) DEFAULT 'pending', -- pending, accepted, rejected, completed
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

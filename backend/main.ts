@@ -2,186 +2,287 @@ import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { Client } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
-const dbConfig = {
-  user: "root",
-  database: "polyearth",
-  hostname: "db",
-  password: "root",
-  port: 5432,
-};
+const connectedUsers = new Map<number, WebSocket>();
 
-const client = new Client(dbConfig);
+async function sendVerificationEmail(email: string, _name: string, token: string) {
+  const link = `http://localhost:8000/api/auth/verify?token=${token}`;
+  console.log(`\n📧 EMAIL to ${email}\nLink: ${link}\n`);
+}
+
+const client = new Client({ user: "root", database: "polyearth", hostname: "db", password: "root", port: 5432 });
 
 async function connectWithRetry() {
   while (true) {
     try {
       await client.connect();
       console.log("✅ Connecté à PostgreSQL");
-      // S'assurer que photo_url est de type TEXT pour les images Base64
-      try {
-        await client.queryObject("ALTER TABLE items ALTER COLUMN photo_url TYPE TEXT");
-      } catch (e) {
-        console.log("Migration photo_url déjà effectuée ou non nécessaire.");
+      const migrations = [
+        `CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, item_id INTEGER REFERENCES items(id), sender_id INTEGER REFERENCES users(id), receiver_id INTEGER REFERENCES users(id), content TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`,
+        `ALTER TABLE items ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'available'`,
+        `ALTER TABLE items ADD COLUMN IF NOT EXISTS quality VARCHAR(50) DEFAULT 'good'`,
+        `ALTER TABLE items ADD COLUMN IF NOT EXISTS available_from DATE`,
+        `ALTER TABLE items ADD COLUMN IF NOT EXISTS available_until DATE`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS school VARCHAR(255) DEFAULT 'Polytech Montpellier'`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS rating DECIMAL(2,1) DEFAULT 3.0`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS transaction_count INTEGER DEFAULT 0`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT`,
+        `ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false`,
+        `ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMP`,
+        `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES users(id)`,
+        `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`,
+        `UPDATE items SET status='available' WHERE status IS NULL`,
+        `UPDATE items SET quality='good' WHERE quality IS NULL`,
+        `UPDATE users SET rating=3.0 WHERE rating IS NULL`,
+        `UPDATE users SET transaction_count=0 WHERE transaction_count IS NULL`,
+        `UPDATE users SET is_verified=true WHERE is_verified IS NULL`,
+        `UPDATE messages SET is_read=false WHERE is_read IS NULL`,
+      ];
+      for (const q of migrations) {
+        try { await client.queryObject(q); }
+        catch (e) { if (!e.message?.includes("already exists")) console.warn("Migration:", e.message); }
       }
+      console.log("✅ Migrations OK");
       break;
     } catch (err) {
-      console.error("❌ Échec de la connexion. Nouvelle tentative dans 5s...", err.message);
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      console.error("❌ DB retry in 5s...", err.message);
+      await new Promise(r => setTimeout(r, 5000));
     }
   }
 }
 
 await connectWithRetry();
-
 const router = new Router();
 
-// --- AUTHENTIFICATION ---
+// --- WEBSOCKET ---
+router.get("/ws/:userId", (ctx) => {
+  if (!ctx.isUpgradable) ctx.throw(400, "Not upgradable");
+  const userId = parseInt(ctx.params.userId);
+  const socket = ctx.upgrade();
+  socket.onopen = () => { connectedUsers.set(userId, socket); };
+  socket.onclose = () => { connectedUsers.delete(userId); };
+  socket.onerror = (e) => console.error("WS Error:", e);
+});
 
+// --- AUTH ---
 router.post("/api/auth/register", async (ctx) => {
-  const { name, email, password } = await ctx.request.body().value;
-  const hashedPassword = await bcrypt.hash(password);
-  const token = crypto.randomUUID();
-
   try {
+    const { name, email, password } = await ctx.request.body({ type: "json" }).value;
+    const hashed = await bcrypt.hash(password);
+    const token = crypto.randomUUID();
     await client.queryObject(
-      "INSERT INTO users (name, email, password, verification_token) VALUES ($1, $2, $3, $4)",
-      [name, email, hashedPassword, token]
+      "INSERT INTO users (name, email, password, verification_token, is_verified) VALUES ($1,$2,$3,$4,false)",
+      [name, email, hashed, token]
     );
-    console.log(`[EMAIL] Lien: http://localhost:8000/api/auth/verify?token=${token}`);
-    ctx.response.body = { message: "Compte créé. Vérifiez vos emails." };
-  } catch (err) {
-    ctx.response.status = 400;
-    ctx.response.body = { message: "Erreur lors de l'inscription." };
-  }
+    await sendVerificationEmail(email, name, token);
+    ctx.response.body = { message: "Compte créé." };
+  } catch { ctx.response.status = 400; ctx.response.body = { message: "Erreur inscription." }; }
 });
 
 router.post("/api/auth/login", async (ctx) => {
-  const { email, password } = await ctx.request.body().value;
-  const result = await client.queryObject("SELECT * FROM users WHERE email = $1", [email]);
-  const user = result.rows[0] as any;
-
+  const { email, password } = await ctx.request.body({ type: "json" }).value;
+  const r = await client.queryObject("SELECT * FROM users WHERE email=$1", [email]);
+  const user = r.rows[0] as any;
   if (user && await bcrypt.compare(password, user.password)) {
-    if (!user.is_verified) {
-      ctx.response.status = 403;
-      ctx.response.body = { message: "Veuillez vérifier votre email." };
-      return;
-    }
-    ctx.response.body = { id: user.id, name: user.name, email: user.email };
-  } else {
-    ctx.response.status = 401;
-    ctx.response.body = { message: "Identifiants invalides." };
-  }
+    if (!user.is_verified) { ctx.response.status = 403; return; }
+    ctx.response.body = { id: user.id, name: user.name, email: user.email, school: user.school, rating: user.rating, transaction_count: user.transaction_count };
+  } else ctx.response.status = 401;
 });
 
 router.get("/api/auth/verify", async (ctx) => {
   const token = ctx.request.url.searchParams.get("token");
-  const result = await client.queryObject(
-    "UPDATE users SET is_verified = true, verification_token = null WHERE verification_token = $1 RETURNING id",
-    [token]
-  );
-  if (result.rows.length > 0) {
-    ctx.response.redirect("http://localhost:3000/login?verified=true");
-  } else {
-    ctx.response.body = "Lien invalide.";
-  }
+  await client.queryObject("UPDATE users SET is_verified=true, verification_token=null WHERE verification_token=$1", [token]);
+  ctx.response.redirect("http://localhost:3000/login?verified=true");
 });
 
-// --- API DATA ---
-
-router.get("/api/users", async (ctx) => {
-  const result = await client.queryObject("SELECT id, name, email FROM users");
-  ctx.response.body = result.rows;
+// --- USERS ---
+router.patch("/api/users/:id", async (ctx) => {
+  try {
+    const { name, email, school } = await ctx.request.body({ type: "json" }).value;
+    const r = await client.queryObject(
+      "UPDATE users SET name=COALESCE($1,name), email=COALESCE($2,email), school=COALESCE($3,school) WHERE id=$4 RETURNING id,name,email,school,rating,transaction_count",
+      [name, email, school, ctx.params.id]
+    );
+    ctx.response.body = r.rows[0];
+  } catch { ctx.response.status = 400; ctx.response.body = { message: "Erreur mise à jour." }; }
 });
 
+// --- ITEMS ---
 router.get("/api/items", async (ctx) => {
-  const result = await client.queryObject(`
-    SELECT i.*, u.name as owner_name 
-    FROM items i 
-    JOIN users u ON i.owner_id = u.id
-    ORDER BY i.id DESC
-  `);
-  ctx.response.body = result.rows;
+  const category = ctx.request.url.searchParams.get("category");
+  const search = ctx.request.url.searchParams.get("search");
+  let query = `SELECT i.*, u.name as owner_name, u.rating as owner_rating, u.transaction_count as owner_transaction_count FROM items i JOIN users u ON i.owner_id=u.id WHERE i.status='available'`;
+  const params: unknown[] = [];
+  if (category && category !== "all") { params.push(category); query += ` AND i.category=$${params.length}`; }
+  if (search) { params.push(`%${search}%`); query += ` AND (i.name ILIKE $${params.length} OR i.description ILIKE $${params.length})`; }
+  query += " ORDER BY i.id DESC";
+  ctx.response.body = (await client.queryObject(query, params)).rows;
 });
 
 router.post("/api/items", async (ctx) => {
-  const body = await ctx.request.body({ limit: "10mb" }).value;
-  const userId = ctx.request.headers.get("X-Sharer-User-Id");
-  
-  if (!userId) {
-    ctx.response.status = 400;
-    ctx.response.body = { message: "User ID manquant dans les headers." };
-    return;
-  }
-
-  const result = await client.queryObject(
-    "INSERT INTO items (name, description, owner_id, category, photo_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-    [body.name, body.description, parseInt(userId), body.category, body.photo_url]
-  );
-  ctx.response.body = result.rows[0];
+  try {
+    const body = await ctx.request.body({ type: "json", limit: "10mb" }).value;
+    const userId = ctx.request.headers.get("X-Sharer-User-Id");
+    const r = await client.queryObject(
+      "INSERT INTO items (name,description,owner_id,category,quality,photo_url,available_from,available_until) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
+      [body.name, body.description, parseInt(userId!), body.category, body.quality || "good", body.photo_url || null, body.available_from || null, body.available_until || null]
+    );
+    ctx.response.body = r.rows[0];
+  } catch (e) { console.error(e); ctx.response.status = 500; ctx.response.body = { message: "Erreur création annonce." }; }
 });
 
 router.get("/api/items/:id", async (ctx) => {
-  const id = ctx.params.id;
-  const result = await client.queryObject(`
-    SELECT i.*, u.name as owner_name, u.email as owner_email
-    FROM items i 
-    JOIN users u ON i.owner_id = u.id
-    WHERE i.id = $1
-  `, [id]);
-  
-  if (result.rows.length > 0) {
-    ctx.response.body = result.rows[0];
-  } else {
-    ctx.response.status = 404;
-    ctx.response.body = { message: "Annonce non trouvée." };
-  }
+  const r = await client.queryObject(
+    `SELECT i.*, u.name as owner_name, u.email as owner_email, u.rating as owner_rating, u.transaction_count as owner_transaction_count FROM items i JOIN users u ON i.owner_id=u.id WHERE i.id=$1`,
+    [ctx.params.id]
+  );
+  ctx.response.body = r.rows[0];
 });
 
 router.delete("/api/items/:id", async (ctx) => {
-  const id = ctx.params.id;
   const userId = ctx.request.headers.get("X-Sharer-User-Id");
-
-  if (!userId) {
-    ctx.response.status = 400;
-    ctx.response.body = { message: "User ID manquant." };
-    return;
-  }
-
-  // Vérifier si l'objet appartient bien à l'utilisateur
-  const item = await client.queryObject("SELECT owner_id FROM items WHERE id = $1", [id]);
-  
-  if (item.rows.length === 0) {
-    ctx.response.status = 404;
-    ctx.response.body = { message: "Annonce non trouvée." };
-    return;
-  }
-
-  if ((item.rows[0] as any).owner_id !== parseInt(userId)) {
-    ctx.response.status = 403;
-    ctx.response.body = { message: "Vous n'êtes pas autorisé à supprimer cette annonce." };
-    return;
-  }
-
-  await client.queryObject("DELETE FROM items WHERE id = $1", [id]);
-  ctx.response.body = { message: "Annonce supprimée avec succès." };
+  try {
+    await client.queryObject("DELETE FROM messages WHERE item_id=$1", [ctx.params.id]);
+    await client.queryObject("DELETE FROM transactions WHERE item_id=$1", [ctx.params.id]);
+    await client.queryObject("DELETE FROM items WHERE id=$1 AND owner_id=$2", [ctx.params.id, userId]);
+    ctx.response.body = { message: "Supprimé." };
+  } catch { ctx.response.status = 500; ctx.response.body = { message: "Erreur suppression." }; }
 });
 
-const app = new Application();
+// --- LOAN REQUESTS ---
+router.post("/api/items/:id/reserve", async (ctx) => {
+  try {
+    const { borrower_id, start_date, end_date } = await ctx.request.body({ type: "json" }).value;
+    const itemRes = await client.queryObject("SELECT owner_id FROM items WHERE id=$1", [ctx.params.id]);
+    const item = itemRes.rows[0] as any;
+    if (!item) { ctx.response.status = 404; return; }
+    if (item.owner_id === borrower_id) { ctx.response.status = 403; ctx.response.body = { message: "Vous ne pouvez pas emprunter votre propre objet." }; return; }
 
-// CORS Middleware
+    const existing = await client.queryObject(
+      "SELECT id FROM transactions WHERE item_id=$1 AND borrower_id=$2 AND status IN ('pending','accepted')", [ctx.params.id, borrower_id]
+    );
+    if (existing.rows.length > 0) { ctx.response.status = 409; ctx.response.body = { message: "Vous avez déjà une demande en cours pour cet objet." }; return; }
+
+    const txRes = await client.queryObject(
+      "INSERT INTO transactions (item_id,borrower_id,owner_id,start_date,end_date,status) VALUES ($1,$2,$3,$4,$5,'pending') RETURNING *",
+      [ctx.params.id, borrower_id, item.owner_id, start_date || null, end_date || null]
+    );
+
+    const fmt = (d: string) => new Date(d).toLocaleDateString("fr-FR");
+    const msgContent = start_date
+      ? `📅 Demande de prêt du ${fmt(start_date)} au ${fmt(end_date)}`
+      : "📅 Demande de prêt";
+
+    await client.queryObject(
+      "INSERT INTO messages (item_id,sender_id,receiver_id,content) VALUES ($1,$2,$3,$4)",
+      [ctx.params.id, borrower_id, item.owner_id, msgContent]
+    );
+
+    const ownerSocket = connectedUsers.get(item.owner_id);
+    if (ownerSocket) ownerSocket.send(JSON.stringify({ type: "LOAN_REQUEST", data: { item_id: ctx.params.id } }));
+
+    ctx.response.body = txRes.rows[0];
+  } catch (e) { console.error(e); ctx.response.status = 500; ctx.response.body = { message: "Erreur." }; }
+});
+
+router.get("/api/loans/user/:userId", async (ctx) => {
+  const r = await client.queryObject(
+    `SELECT t.*, i.name as item_name, i.photo_url as item_photo, ub.name as borrower_name, uo.name as owner_name
+     FROM transactions t JOIN items i ON t.item_id=i.id JOIN users ub ON t.borrower_id=ub.id JOIN users uo ON t.owner_id=uo.id
+     WHERE t.borrower_id=$1 OR t.owner_id=$1 ORDER BY t.created_at DESC`,
+    [ctx.params.userId]
+  );
+  ctx.response.body = r.rows;
+});
+
+router.patch("/api/loans/:id", async (ctx) => {
+  try {
+    const { status } = await ctx.request.body({ type: "json" }).value;
+    const txRes = await client.queryObject("UPDATE transactions SET status=$1 WHERE id=$2 RETURNING *", [status, ctx.params.id]);
+    const tx = txRes.rows[0] as any;
+
+    if (status === "accepted") {
+      await client.queryObject("UPDATE items SET status='reserved' WHERE id=$1", [tx.item_id]);
+      await client.queryObject(
+        "INSERT INTO messages (item_id,sender_id,receiver_id,content) VALUES ($1,$2,$3,$4)",
+        [tx.item_id, tx.owner_id, tx.borrower_id, "✅ Prêt accepté ! Coordonnez la remise de l'objet."]
+      );
+      await client.queryObject("UPDATE users SET transaction_count=transaction_count+1 WHERE id=$1 OR id=$2", [tx.owner_id, tx.borrower_id]);
+      const s = connectedUsers.get(tx.borrower_id);
+      if (s) s.send(JSON.stringify({ type: "LOAN_ACCEPTED", data: { item_id: tx.item_id } }));
+    } else if (status === "rejected") {
+      await client.queryObject(
+        "INSERT INTO messages (item_id,sender_id,receiver_id,content) VALUES ($1,$2,$3,$4)",
+        [tx.item_id, tx.owner_id, tx.borrower_id, "❌ Demande de prêt refusée."]
+      );
+      const s = connectedUsers.get(tx.borrower_id);
+      if (s) s.send(JSON.stringify({ type: "LOAN_REJECTED", data: { item_id: tx.item_id } }));
+    } else if (status === "completed") {
+      await client.queryObject("UPDATE items SET status='available' WHERE id=$1", [tx.item_id]);
+    }
+
+    ctx.response.body = tx;
+  } catch (e) { console.error(e); ctx.response.status = 500; ctx.response.body = { message: "Erreur." }; }
+});
+
+// --- MESSAGES ---
+router.get("/api/messages/:userId", async (ctx) => {
+  const r = await client.queryObject(
+    `SELECT m.*, u.name as sender_name, i.name as item_name, i.photo_url as item_photo
+     FROM messages m JOIN users u ON m.sender_id=u.id JOIN items i ON m.item_id=i.id
+     WHERE m.sender_id=$1 OR m.receiver_id=$1 ORDER BY m.created_at ASC`,
+    [ctx.params.userId]
+  );
+  ctx.response.body = r.rows;
+});
+
+router.patch("/api/messages/:id/read", async (ctx) => {
+  try {
+    await client.queryObject("UPDATE messages SET is_read=true, read_at=CURRENT_TIMESTAMP WHERE id=$1", [ctx.params.id]);
+    ctx.response.body = { success: true };
+  } catch { ctx.response.status = 500; }
+});
+
+router.post("/api/messages", async (ctx) => {
+  try {
+    const { item_id, sender_id, receiver_id, content } = await ctx.request.body({ type: "json" }).value;
+    await client.queryObject(
+      "INSERT INTO messages (item_id,sender_id,receiver_id,content) VALUES ($1,$2,$3,$4)",
+      [item_id, sender_id, receiver_id, content]
+    );
+    const receiverSocket = connectedUsers.get(receiver_id);
+    if (receiverSocket) {
+      const sRes = await client.queryObject("SELECT name FROM users WHERE id=$1", [sender_id]);
+      const senderName = (sRes.rows[0] as any).name;
+      receiverSocket.send(JSON.stringify({ type: "NEW_MESSAGE", data: { item_id, sender_id, content, sender_name: senderName } }));
+    }
+    ctx.response.body = { message: "Envoyé." };
+  } catch (e) { console.error(e); ctx.response.status = 500; }
+});
+
+// --- MARK ALL MESSAGES READ FOR ITEM/USER ---
+router.post("/api/messages/read-all", async (ctx) => {
+  try {
+    const { item_id, user_id } = await ctx.request.body({ type: "json" }).value;
+    await client.queryObject(
+      "UPDATE messages SET is_read=true, read_at=CURRENT_TIMESTAMP WHERE item_id=$1 AND receiver_id=$2 AND is_read=false",
+      [item_id, user_id]
+    );
+    ctx.response.body = { success: true };
+  } catch { ctx.response.status = 500; }
+});
+
+// --- APP ---
+const app = new Application();
 app.use(async (ctx, next) => {
   ctx.response.headers.set("Access-Control-Allow-Origin", "*");
-  ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+  ctx.response.headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
   ctx.response.headers.set("Access-Control-Allow-Headers", "*");
-  if (ctx.request.method === "OPTIONS") {
-    ctx.response.status = 204;
-  } else {
-    await next();
-  }
+  if (ctx.request.method === "OPTIONS") ctx.response.status = 204;
+  else await next();
 });
-
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-console.log("🚀 Backend Deno running on http://localhost:8000");
+console.log("🚀 Backend on http://localhost:8000");
 await app.listen({ port: 8000 });

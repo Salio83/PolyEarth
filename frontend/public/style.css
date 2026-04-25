@@ -1,54 +1,136 @@
-/* Styles de base pour PolyEarth - Design Leboncoin Épuré */
+/* PolyEarth — Styles globaux */
 body {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: #1f2937; /* gray-800 */
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #1f2937;
 }
 
-#content {
-    transition: opacity 0.3s ease-in-out;
+#content { transition: opacity 0.25s ease; }
+
+/* Animations */
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes scaleUp { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+@keyframes slideIn { from { transform:translateX(-8px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+.animate-fade-in  { animation: fadeIn  0.35s ease-out forwards; }
+.animate-scale-up { animation: scaleUp 0.25s ease-out forwards; }
+.animate-slide-in { animation: slideIn 0.25s ease-out forwards; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:#f9fafb; }
+::-webkit-scrollbar-thumb { background:#e5e7eb; border-radius:10px; }
+::-webkit-scrollbar-thumb:hover { background:#d1d5db; }
+
+/* Badges qualité */
+.badge-quality { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; }
+.badge-new      { background:#f3e8ff; color:#7c3aed; }
+.badge-very_good{ background:#d1fae5; color:#065f46; }
+.badge-good     { background:#dbeafe; color:#1d4ed8; }
+.badge-fair     { background:#ffedd5; color:#c2410c; }
+.badge-poor     { background:#fee2e2; color:#b91c1c; }
+
+/* Badges catégorie */
+.badge-cat { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:700; background:#f3f4f6; color:#374151; }
+
+/* Badge dispo */
+.badge-available   { background:#d1fae5; color:#065f46; }
+.badge-unavailable { background:#fef3c7; color:#92400e; }
+.badge-status      { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+
+/* Messages layout 2 colonnes */
+.messages-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    height: calc(100vh - 90px);
+    border: 1px solid #f3f4f6;
+    border-radius: 12px;
+    overflow: hidden;
+    background: white;
+}
+@media (max-width: 768px) {
+    .messages-layout { grid-template-columns: 1fr; }
+    .chat-panel.hidden-mobile { display: none; }
+    .conv-sidebar.hidden-mobile { display: none; }
 }
 
-/* Animations personnalisées */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+.conv-sidebar {
+    border-right: 1px solid #f3f4f6;
+    overflow-y: auto;
+    background: #fafafa;
 }
 
-.animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
+.conv-item {
+    padding: 12px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.15s;
+}
+.conv-item:hover  { background: #f0fdf4; }
+.conv-item.active { background: #ecfdf5; border-left: 3px solid #059669; }
+
+.chat-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-@keyframes scaleUp {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-.animate-scale-up {
-    animation: scaleUp 0.3s ease-out forwards;
-}
-
-/* Scrollbar épurée */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     background: #f9fafb;
 }
 
-::-webkit-scrollbar-thumb {
-    background: #e5e7eb;
+.msg-bubble {
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    font-weight: 500;
+}
+.msg-bubble.sent     { align-self:flex-end; background:#059669; color:white; border-bottom-right-radius:3px; }
+.msg-bubble.received { align-self:flex-start; background:white; color:#1f2937; border:1px solid #e5e7eb; border-bottom-left-radius:3px; }
+.msg-bubble.system   { align-self:center; background:#f3f4f6; color:#6b7280; font-size:12px; border-radius:999px; padding:4px 12px; }
+
+.chat-input-bar {
+    border-top: 1px solid #f3f4f6;
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    background: white;
+}
+
+/* Item cards */
+.item-card {
+    background: white;
     border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #d1d5db;
-}
-
-/* Styles spécifiques pour les cartes */
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    border: 1px solid #f3f4f6;
     overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
+.item-card:hover {
+    border-color: #059669;
+    box-shadow: 0 4px 16px rgba(5,150,105,.1);
+    transform: translateY(-2px);
+}
+
+/* Loan status pills */
+.loan-pill { padding:3px 10px; border-radius:999px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+.loan-pending   { background:#fef3c7; color:#92400e; }
+.loan-accepted  { background:#d1fae5; color:#065f46; }
+.loan-rejected  { background:#fee2e2; color:#b91c1c; }
+.loan-completed { background:#e0e7ff; color:#3730a3; }
+
+/* Category filter pills */
+.cat-pill { padding:5px 12px; border-radius:999px; font-size:12px; font-weight:700; cursor:pointer; border:2px solid transparent; transition:all 0.15s; background:#f3f4f6; color:#374151; }
+.cat-pill:hover  { background:#d1fae5; color:#065f46; }
+.cat-pill.active { background:#059669; color:white; border-color:#059669; }
+
+/* Line clamp */
+.line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
