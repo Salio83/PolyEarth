@@ -19,8 +19,9 @@ CREATE TABLE IF NOT EXISTS items (
     description TEXT,
     available BOOLEAN DEFAULT TRUE,
     owner_id INTEGER REFERENCES users(id),
-    photo_url VARCHAR(255),
-    category VARCHAR(255)
+    photo_url TEXT,
+    category VARCHAR(255),
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS transactions (

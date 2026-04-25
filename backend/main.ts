@@ -17,6 +17,12 @@ async function connectWithRetry() {
     try {
       await client.connect();
       console.log("✅ Connecté à PostgreSQL");
+      // S'assurer que photo_url est de type TEXT pour les images Base64
+      try {
+        await client.queryObject("ALTER TABLE items ALTER COLUMN photo_url TYPE TEXT");
+      } catch (e) {
+        console.log("Migration photo_url déjà effectuée ou non nécessaire.");
+      }
       break;
     } catch (err) {
       console.error("❌ Échec de la connexion. Nouvelle tentative dans 5s...", err.message);
@@ -98,7 +104,7 @@ router.get("/api/items", async (ctx) => {
 });
 
 router.post("/api/items", async (ctx) => {
-  const body = await ctx.request.body().value;
+  const body = await ctx.request.body({ limit: "10mb" }).value;
   const userId = ctx.request.headers.get("X-Sharer-User-Id");
   
   if (!userId) {
@@ -108,10 +114,56 @@ router.post("/api/items", async (ctx) => {
   }
 
   const result = await client.queryObject(
-    "INSERT INTO items (name, description, owner_id) VALUES ($1, $2, $3) RETURNING *",
-    [body.name, body.description, parseInt(userId)]
+    "INSERT INTO items (name, description, owner_id, category, photo_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+    [body.name, body.description, parseInt(userId), body.category, body.photo_url]
   );
   ctx.response.body = result.rows[0];
+});
+
+router.get("/api/items/:id", async (ctx) => {
+  const id = ctx.params.id;
+  const result = await client.queryObject(`
+    SELECT i.*, u.name as owner_name, u.email as owner_email
+    FROM items i 
+    JOIN users u ON i.owner_id = u.id
+    WHERE i.id = $1
+  `, [id]);
+  
+  if (result.rows.length > 0) {
+    ctx.response.body = result.rows[0];
+  } else {
+    ctx.response.status = 404;
+    ctx.response.body = { message: "Annonce non trouvée." };
+  }
+});
+
+router.delete("/api/items/:id", async (ctx) => {
+  const id = ctx.params.id;
+  const userId = ctx.request.headers.get("X-Sharer-User-Id");
+
+  if (!userId) {
+    ctx.response.status = 400;
+    ctx.response.body = { message: "User ID manquant." };
+    return;
+  }
+
+  // Vérifier si l'objet appartient bien à l'utilisateur
+  const item = await client.queryObject("SELECT owner_id FROM items WHERE id = $1", [id]);
+  
+  if (item.rows.length === 0) {
+    ctx.response.status = 404;
+    ctx.response.body = { message: "Annonce non trouvée." };
+    return;
+  }
+
+  if ((item.rows[0] as any).owner_id !== parseInt(userId)) {
+    ctx.response.status = 403;
+    ctx.response.body = { message: "Vous n'êtes pas autorisé à supprimer cette annonce." };
+    return;
+  }
+
+  await client.queryObject("DELETE FROM items WHERE id = $1", [id]);
+  ctx.response.body = { message: "Annonce supprimée avec succès." };
 });
 
 const app = new Application();
