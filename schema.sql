@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS items (
     quality VARCHAR(50) DEFAULT 'good',
     photo_url TEXT,
     status VARCHAR(50) DEFAULT 'available', -- available, reserved, borrowed
+    type VARCHAR(20) DEFAULT 'offer', -- offer or demand
     available_from DATE,
     available_until DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
