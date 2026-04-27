@@ -12,8 +12,8 @@ export const notify = (message, type = 'success') => {
 
     const container = document.createElement('div');
     container.id = 'notification-container';
-    container.className = `fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] flex items-center space-x-3 px-6 py-4 rounded-2xl shadow-2xl animate-scale-up ${
-        type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+    container.className = `fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] flex items-center space-x-3 px-6 py-4 rounded-xl shadow-2xl animate-scale-up ${
+        type === 'success' ? 'bg-emerald-800 text-white' : 'bg-red-700 text-white'
     }`;
 
     const icon = type === 'success' ?

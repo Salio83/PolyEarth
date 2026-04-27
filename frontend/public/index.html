@@ -15,23 +15,26 @@
     <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div class="container mx-auto px-4 h-14 flex items-center justify-between">
             <div class="flex items-center space-x-6">
-                <h1 onclick="navigate('/')" class="text-xl font-black text-emerald-600 cursor-pointer tracking-tighter">🌱 PolyEarth</h1>
+                <div onclick="navigate('/')" class="flex items-center space-x-2 cursor-pointer group">
+                    <img src="/logo-polyearth.png" alt="PolyEarth Logo" class="h-10 w-10 object-contain group-hover:scale-105 transition-transform">
+                    <h1 class="text-xl font-black text-emerald-700 tracking-tighter">PolyEarth</h1>
+                </div>
                 <nav class="hidden md:flex items-center space-x-5">
-                    <a href="/" class="text-sm font-semibold text-gray-500 hover:text-emerald-600 transition-colors">Accueil</a>
-                    <a href="/offres" class="text-sm font-semibold text-gray-500 hover:text-emerald-600 transition-colors">Annonces</a>
-                    <a href="/demandes" class="text-sm font-semibold text-gray-500 hover:text-emerald-600 transition-colors">Demandes</a>
-                    <a href="/messages" class="text-sm font-semibold text-gray-500 hover:text-emerald-600 transition-colors relative" id="navMessages">
+                    <a href="/" class="text-sm font-semibold text-gray-500 hover:text-emerald-700 transition-colors">Accueil</a>
+                    <a href="/offres" class="text-sm font-semibold text-gray-500 hover:text-emerald-700 transition-colors">Annonces</a>
+                    <a href="/demandes" class="text-sm font-semibold text-gray-500 hover:text-emerald-700 transition-colors">Demandes</a>
+                    <a href="/messages" class="text-sm font-semibold text-gray-500 hover:text-emerald-700 transition-colors relative" id="navMessages">
                         Messages
-                        <span id="unreadBadge" class="hidden absolute -top-1.5 -right-3 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                        <span id="unreadBadge" class="hidden absolute -top-1.5 -right-3 bg-red-600 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">0</span>
                     </a>
-                    <a href="/prets" class="text-sm font-semibold text-gray-500 hover:text-emerald-600 transition-colors">Mes prêts</a>
-                    <a href="/association" class="text-sm font-semibold text-gray-500 hover:text-emerald-600 transition-colors">Association</a>
+                    <a href="/prets" class="text-sm font-semibold text-gray-500 hover:text-emerald-700 transition-colors">Mes prêts</a>
+                    <a href="/association" class="text-sm font-semibold text-gray-500 hover:text-emerald-700 transition-colors">Association</a>
                 </nav>
             </div>
             <div class="flex items-center space-x-3">
                 <button onclick="navigate('/profil')" class="flex items-center space-x-2 px-3 py-1.5 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100">
-                    <div class="w-7 h-7 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-black" id="userInitial">U</div>
-                    <span class="hidden sm:inline text-sm font-semibold" id="userNameHeader">Mon Compte</span>
+                    <div class="w-7 h-7 bg-emerald-100 text-emerald-700 rounded-lg flex items-center justify-center text-xs font-black" id="userInitial">U</div>
+                    <span class="hidden sm:inline text-sm font-semibold text-gray-700" id="userNameHeader">Mon Compte</span>
                 </button>
             </div>
         </div>
@@ -43,41 +46,41 @@
 
     <!-- Modals -->
     <div id="overdueLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-scale-up">
+        <div class="bg-white rounded-2xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
             <h3 id="overdueTitle" class="text-2xl font-black text-gray-900 mb-4">Prêt en retard</h3>
             <p id="overdueText" class="text-gray-600 font-medium mb-8 leading-relaxed"></p>
             <div id="overdueActions" class="flex gap-4">
-                <button onclick="confirmReturnFromModal()" class="flex-1 bg-emerald-600 text-white py-4 rounded-2xl font-black hover:bg-emerald-700 transition-all shadow-lg">Oui, récupéré</button>
-                <button onclick="showExtensionForm()" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all">Non, prolonger</button>
+                <button onclick="confirmReturnFromModal()" class="flex-1 bg-emerald-700 text-white py-4 rounded-xl font-black hover:bg-emerald-800 transition-all shadow-lg">Oui, récupéré</button>
+                <button onclick="showExtensionForm()" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-bold hover:bg-gray-200 transition-all">Non, prolonger</button>
             </div>
             <div id="extensionForm" class="hidden space-y-4">
                 <div class="text-[10px] font-black uppercase text-gray-400 tracking-widest">Prolonger jusqu'au</div>
-                <input id="extendUntil" type="date" class="w-full p-4 bg-gray-50 border-none rounded-2xl outline-none font-bold">
+                <input id="extendUntil" type="date" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none font-bold">
                 <div class="flex gap-4">
-                    <button onclick="submitExtension()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black hover:bg-blue-700 transition-all">Confirmer</button>
-                    <button onclick="hideExtensionForm()" class="flex-1 text-gray-400 font-bold hover:bg-gray-50 rounded-2xl transition-all">Retour</button>
+                    <button onclick="submitExtension()" class="flex-1 bg-blue-700 text-white py-4 rounded-xl font-black hover:bg-blue-800 transition-all">Confirmer</button>
+                    <button onclick="hideExtensionForm()" class="flex-1 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition-all">Retour</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="lendAgainModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-scale-up">
+        <div class="bg-white rounded-2xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
             <h3 class="text-2xl font-black text-gray-900 mb-4">Prêt terminé ! 🥳</h3>
             <p class="text-gray-600 font-medium mb-8 leading-relaxed">Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?</p>
             <div class="flex gap-4">
-                <button id="reLendYesBtn" class="flex-1 bg-emerald-600 text-white py-4 rounded-2xl font-black hover:bg-emerald-700 transition-all shadow-lg">Oui, avec plaisir</button>
-                <button id="reLendNoBtn" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all">Non, c'est fini</button>
+                <button id="reLendYesBtn" class="flex-1 bg-emerald-700 text-white py-4 rounded-xl font-black hover:bg-emerald-800 transition-all shadow-lg">Oui, avec plaisir</button>
+                <button id="reLendNoBtn" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-bold hover:bg-gray-200 transition-all">Non, c'est fini</button>
             </div>
         </div>
     </div>
 
     <div id="modal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
         <!-- Add Item Modal Content -->
-        <div class="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-scale-up">
+        <div class="bg-white rounded-2xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
             <div class="flex justify-between items-start mb-8">
                 <div>
-                    <h3 class="text-3xl font-black text-gray-900">Nouvelle annonce</h3>
+                    <h3 class="text-3xl font-black text-gray-900 tracking-tight">Nouvelle annonce</h3>
                     <p class="text-gray-400 font-medium">Partagez ce que vous n'utilisez plus.</p>
                 </div>
                 <button onclick="hideModal('modal')" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
@@ -88,14 +91,14 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Type</label>
-                        <select id="itemType" class="w-full p-4 bg-gray-50 border-none rounded-2xl outline-none font-bold text-sm">
+                        <select id="itemType" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none font-bold text-sm">
                             <option value="offer">🎁 J'offre</option>
                             <option value="demand">🔍 Je cherche</option>
                         </select>
                     </div>
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Catégorie</label>
-                        <select id="itemCategory" class="w-full p-4 bg-gray-50 border-none rounded-2xl outline-none font-bold text-sm">
+                        <select id="itemCategory" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none font-bold text-sm">
                             <option value="Matériel">🛠️ Matériel</option>
                             <option value="Livres">📚 Livres</option>
                             <option value="Services">🤝 Services</option>
@@ -106,16 +109,16 @@
                 </div>
                 <div class="space-y-1">
                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nom de l'objet</label>
-                    <input id="itemName" placeholder="Ex: Calculatrice TI-84" class="w-full p-4 bg-gray-50 border-none rounded-2xl outline-none font-bold text-sm" required>
+                    <input id="itemName" placeholder="Ex: Calculatrice TI-84" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none font-bold text-sm" required>
                 </div>
                 <div class="space-y-1">
                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
-                    <textarea id="itemDesc" placeholder="État, durée max..." class="w-full p-4 bg-gray-50 border-none rounded-2xl outline-none font-medium text-sm h-24" required></textarea>
+                    <textarea id="itemDesc" placeholder="État, durée max..." class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none font-medium text-sm h-24" required></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Qualité</label>
-                        <select id="itemQuality" class="w-full p-4 bg-gray-50 border-none rounded-2xl outline-none font-bold text-sm">
+                        <select id="itemQuality" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none font-bold text-sm">
                             <option value="new">Neuf</option>
                             <option value="good" selected>Bon état</option>
                             <option value="fair">Correct</option>
@@ -123,20 +126,20 @@
                     </div>
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Photo</label>
-                        <input id="itemPhoto" type="file" accept="image/*" class="w-full p-3 bg-gray-50 rounded-2xl text-xs font-bold text-gray-400">
+                        <input id="itemPhoto" type="file" accept="image/*" class="w-full p-3 bg-gray-50 rounded-xl text-xs font-bold text-gray-400">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Du (optionnel)</label>
-                        <input id="itemFrom" type="date" class="w-full p-3 bg-gray-50 border-none rounded-2xl outline-none font-bold text-xs">
+                        <input id="itemFrom" type="date" class="w-full p-3 bg-gray-50 border-none rounded-xl outline-none font-bold text-xs">
                     </div>
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Au (optionnel)</label>
-                        <input id="itemUntil" type="date" class="w-full p-3 bg-gray-50 border-none rounded-2xl outline-none font-bold text-xs">
+                        <input id="itemUntil" type="date" class="w-full p-3 bg-gray-50 border-none rounded-xl outline-none font-bold text-xs">
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all mt-4">Publier l'annonce</button>
+                <button type="submit" class="w-full bg-emerald-700 text-white py-4 rounded-xl font-black shadow-lg shadow-emerald-900/10 hover:bg-emerald-800 transition-all mt-4">Publier l'annonce</button>
             </form>
         </div>
     </div>
