@@ -110,7 +110,7 @@ document.addEventListener('click',e=>{if(e.target.tagName==='A'&&e.target.getAtt
 // --- WEBSOCKET ---
 function initWS(){if(!isLoggedIn())return;const u=getUser();if(socket)socket.close();
   socket=new WebSocket(`${WS_URL}/${u.id}`);
-  socket.onmessage=e=>{const m=JSON.parse(e.data);
+  socket.onmessage=async e=>{const m=JSON.parse(e.data);
     const types = ['NEW_MESSAGE', 'LOAN_ACCEPTED', 'LOAN_REJECTED', 'LOAN_REQUEST', 'DISCUSSION_ENDED'];
     if(types.includes(m.type)){
       updateUnreadBadge();
