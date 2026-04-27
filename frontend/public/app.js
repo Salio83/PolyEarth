@@ -1,7 +1,8 @@
 import{API,WS_URL,$,isLoggedIn,getUser,notify,readImgB64,fmtDate,catIcon,catBadge,qBadge,stars,dispoBadge,showModal as sm, hideModal as hm}from'./lib.js';
-import{homePage,offresPage,demandesPage,messagesPage,pretsPage,profilPage,loginPage,registerPage,associationPage,itemCard,itemDetail,loanCard}from'./pages.js';
+import{homePage,offresPage,demandesPage,messagesPage,pretsPage,profilPage,loginPage,registerPage,associationPage,itemCard,itemDetail,loanRow}from'./pages.js';
 
 // --- GLOBALS ---
+window.$ = $;
 window.showModal = sm;
 window.hideModal = hm;
 
@@ -22,7 +23,34 @@ const routes={
   '/association':()=>{content.innerHTML=associationPage();hdr();},
 };
 function guard(){if(!isLoggedIn())return navigate('/login');}
-function hdr(){const u=getUser();if(u){$('userNameHeader').textContent=u.name;$('userInitial').textContent=u.name.charAt(0);}updateUnreadBadge();checkOverdueLoans();}
+function hdr(){
+  const u=getUser();
+  if(u){
+    const avatar=$('headerAvatar');
+    if(avatar) {
+      if (u.photo_url) {
+        avatar.src = u.photo_url;
+      } else {
+        avatar.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=00635d&color=fff`;
+      }
+    }
+  }
+  
+  // Update active nav link
+  const path = location.pathname;
+  document.querySelectorAll('#mainNav .nav-link').forEach(link => {
+    const isHome = path === '/' && link.getAttribute('href') === '/';
+    const isOther = link.getAttribute('href') !== '/' && path.startsWith(link.getAttribute('href'));
+    const isActive = isHome || isOther;
+    
+    link.classList.toggle('active', isActive);
+    link.classList.toggle('text-duck', isActive);
+    link.classList.toggle('text-gray-400', !isActive);
+  });
+
+  updateUnreadBadge();
+  checkOverdueLoans();
+}
 
 async function checkOverdueLoans(){
   const u=getUser();if(!u)return;
@@ -103,7 +131,7 @@ window.submitExtension=async()=>{
 };
 
 window.navigate=(p)=>{history.pushState({},'',p);handleRoute();};
-const handleRoute=()=>{const p=location.pathname;const m=p.match(/^\/item\/(\d+)$/);if(m)return renderDetail(m[1]);(routes[p]||routes['/'])();scrollTo(0,0);checkOverdueLoans();};
+const handleRoute=()=>{const p=location.pathname;const m=p.match(/^\/item\/(\d+)$/);if(m)return renderDetail(m[1]);(routes[p]||routes['/'])();scrollTo(0,0);checkOverdueLoans();if(window.lucide)lucide.createIcons();};
 window.onpopstate=handleRoute;
 document.addEventListener('click',e=>{if(e.target.tagName==='A'&&e.target.getAttribute('href')?.startsWith('/')){e.preventDefault();navigate(e.target.getAttribute('href'));}});
 
@@ -159,8 +187,21 @@ window.doRegister=async e=>{e.preventDefault();
 };
 window.doLogout=()=>{localStorage.removeItem('user');if(socket)socket.close();navigate('/login');};
 window.updateProfile=async e=>{e.preventDefault();const u=getUser();
-  const res=await fetch(`${API}/users/${u.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('editName').value,email:$('editEmail').value,school:$('editSchool').value})});
-  if(res.ok){localStorage.setItem('user',JSON.stringify(await res.json()));handleRoute();notify('Profil mis à jour !');}
+  let photo = u.photo_url;
+  const f=$('editPhoto').files[0];
+  if(f) photo = await readImgB64(f);
+  
+  const res=await fetch(`${API}/users/${u.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('editName').value,school:$('editSchool').value,photo_url:photo})});
+  if(res.ok){
+    const updated = await res.json();
+    localStorage.setItem('user',JSON.stringify(updated));
+    handleRoute();
+    hdr();
+    notify('Profil mis à jour !');
+    $('editProfileSection').classList.add('hidden');
+  } else {
+    notify('Erreur lors de la mise à jour.', 'error');
+  }
 };
 
 // --- ITEMS ---
@@ -173,6 +214,21 @@ async function fetchItems(type='offer'){
   const grid=type==='demand'?$('demandsGrid'):$('offersGrid');if(!grid)return;
   const uid=getUser()?.id||0;
   grid.innerHTML=items.filter(i=>i.owner_id!==uid).map(i=>itemCard(i)).join('')||'<div class="col-span-full text-center py-8 text-gray-400 text-sm">Aucune annonce trouvée.</div>';
+
+  // Update Stats for Home
+  if (location.pathname === '/') {
+    const allOffers = await (await fetch(`${API}/items?type=offer`)).json();
+    const statsAvailable = $('statsAvailable');
+    if (statsAvailable) statsAvailable.textContent = allOffers.length;
+
+    const resLoans = await fetch(`${API}/loans/user/${uid}`);
+    const allLoans = await resLoans.json().catch(() => []);
+    const ongoingCount = allLoans.filter(l => l.status === 'accepted').length;
+    const statsOngoing = $('statsOngoing');
+    if (statsOngoing) statsOngoing.textContent = ongoingCount;
+  }
+
+  if(window.lucide)lucide.createIcons();
 }
 window.doSearch=()=>fetchItems(location.pathname==='/demandes'?'demand':'offer');
 window.filterCat=c=>{activeCat=c;fetchItems(location.pathname==='/demandes'?'demand':'offer');setCatActive();};
@@ -193,11 +249,12 @@ async function fetchMyItems(){
   const items=await(await fetch(`${API}/items?owner_id=${u.id}`)).json();
   const grid=$('myItemsGrid');if(!grid)return;
   grid.innerHTML=items.length?items.map(i=>`
-    <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 hover:border-emerald-500 transition-all cursor-pointer group" onclick="if(event.target.tagName!=='BUTTON'&&event.target.tagName!=='svg'&&event.target.tagName!=='path')navigate('/item/${i.id}')">
+    <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 hover:border-duck-light transition-all cursor-pointer group" onclick="if(event.target.tagName!=='BUTTON'&&event.target.tagName!=='svg'&&event.target.tagName!=='path')navigate('/item/${i.id}')">
       <div class="w-12 h-12 bg-gray-50 rounded-lg flex-shrink-0 overflow-hidden">${i.photo_url?`<img src="${i.photo_url}" class="w-full h-full object-cover">`:''}</div>
-      <div class="flex-1 min-w-0"><h4 class="font-bold text-sm truncate group-hover:text-emerald-600">${i.name}</h4><div class="text-[10px] ${i.status==='available'?'text-emerald-600':'text-orange-500'} font-black uppercase">${i.status==='available'?'En ligne':i.status==='reserved'?'Réservé':'Prêté'}</div></div>
+      <div class="flex-1 min-w-0"><h4 class="font-bold text-sm truncate group-hover:text-duck-light">${i.name}</h4><div class="text-[10px] ${i.status==='available'?'text-duck-light':'text-orange-500'} font-black uppercase">${i.status==='available'?'En ligne':i.status==='reserved'?'Réservé':'Prêté'}</div></div>
       <button onclick="event.stopPropagation();deleteItem(${i.id})" class="p-1.5 text-gray-400 hover:text-red-600"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9z"/></svg></button>
     </div>`).join(''):'<div class="col-span-full text-center py-6 text-gray-400 text-sm">Aucune annonce.</div>';
+  if(window.lucide)lucide.createIcons();
 }
 
 async function renderDetail(id){
@@ -219,8 +276,9 @@ async function loadMessages(){
     const amISender = Number(m.sender_id) === u.id;
     const otherId = amISender ? Number(m.receiver_id) : Number(m.sender_id);
     const otherName = amISender ? m.receiver_name : m.sender_name;
+    const otherPhoto = amISender ? m.receiver_photo : m.sender_photo;
     const k = `${m.item_id}_${otherId}`; 
-    if(!groups[k]) groups[k]={item:m.item_name,otherName:otherName,photo:m.item_photo,msgs:[],other:otherId,itemId:m.item_id,unread:0, key: k};
+    if(!groups[k]) groups[k]={item:m.item_name,otherName:otherName,otherPhoto:otherPhoto,photo:m.item_photo,msgs:[],other:otherId,itemId:m.item_id,unread:0, key: k};
     groups[k].msgs.push(m);
     if(!m.is_read&&m.receiver_id===u.id)groups[k].unread++;
   });
@@ -230,10 +288,12 @@ async function loadMessages(){
   convList.innerHTML=entries.map(g=>`
     <div class="conv-item ${activeConv===g.key?'active':''}" onclick="openConv('${g.key}',${g.itemId},${g.other})">
       <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">${g.photo?`<img src="${g.photo}" class="w-full h-full object-cover">`:''}</div>
+        <div class="w-10 h-10 rounded-full overflow-hidden bg-duck/10 flex-shrink-0">
+          ${g.otherPhoto ? `<img src="${g.otherPhoto}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(g.otherName)}&background=00635d&color=fff" class="w-full h-full object-cover">`}
+        </div>
         <div class="flex-1 min-w-0">
-          <div class="flex justify-between items-center"><span class="font-bold text-sm truncate">${g.item}</span>${g.unread?`<span class="bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0">${g.unread}</span>`:''}</div>
-          <div class="text-[10px] text-emerald-600 font-bold truncate">${g.otherName}</div>
+          <div class="flex justify-between items-center"><span class="font-bold text-sm truncate">${g.otherName}</span>${g.unread?`<span class="bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0">${g.unread}</span>`:''}</div>
+          <div class="text-[10px] text-duck font-bold truncate">${g.item}</div>
           <div class="text-xs text-gray-400 truncate">${g.msgs[g.msgs.length-1].content}</div>
         </div>
       </div>
@@ -326,6 +386,7 @@ async function renderChat(itemId,other){
   
   let itemName = msgs[0]?.item_name || 'Chargement...';
   let otherName = msgs[0]?.sender_id === u.id ? msgs[0]?.receiver_name : msgs[0]?.sender_name;
+  let otherPhoto = msgs[0]?.sender_id === u.id ? msgs[0]?.receiver_photo : msgs[0]?.sender_photo;
   
   let isOwner=false;
   let isDemand=false;
@@ -340,6 +401,7 @@ async function renderChat(itemId,other){
        const otherRes = await fetch(`${API}/users/${targetOther}`);
        const otherD = await otherRes.json().catch(()=>({}));
        otherName = otherD.name || 'Utilisateur';
+       otherPhoto = otherD.photo_url;
     }
   }catch{}
 
@@ -364,7 +426,9 @@ async function renderChat(itemId,other){
       <div class="chat-info-section">
         <h4>Propriétaire</h4>
         <div class="flex items-center gap-2 mt-2">
-          <div class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-black text-[10px]">${itemData.owner_name?.charAt(0) || '?'}</div>
+          <div class="w-8 h-8 rounded-full overflow-hidden bg-duck/10">
+            ${itemData.owner_photo ? `<img src="${itemData.owner_photo}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(itemData.owner_name)}&background=00635d&color=fff" class="w-full h-full object-cover">`}
+          </div>
           <div>
             <div class="font-bold text-xs text-gray-900">${itemData.owner_name || '...'}</div>
             ${stars(itemData.owner_rating, itemData.owner_transaction_count)}
@@ -383,7 +447,7 @@ async function renderChat(itemId,other){
   
   let statusBanner = '';
 
-  if (tx && tx.id) { // Check tx.id to ensure it's not the empty object {}
+  if (tx && tx.id) {
     if (tx.status === 'accepted') {
       const isPendingEnd = tx.end_requested_by && tx.end_requested_by !== u.id;
       
@@ -399,6 +463,9 @@ async function renderChat(itemId,other){
     <div class="w-full">
       <div class="flex items-center p-3">
         <button class="md:hidden text-gray-400 mr-2 p-2" onclick="showConvList()">←</button>
+        <div class="w-9 h-9 rounded-full overflow-hidden bg-duck/10 mr-3 flex-shrink-0">
+          ${otherPhoto ? `<img src="${otherPhoto}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(otherName)}&background=00635d&color=fff" class="w-full h-full object-cover">`}
+        </div>
         <div class="flex-1 min-w-0">
           <div class="font-bold text-sm text-gray-900 truncate">${otherName || '...'}</div>
           <div class="text-[11px] text-gray-500 font-medium truncate flex items-center gap-1.5">
@@ -728,8 +795,12 @@ async function loadLoans(){
   const u=getUser();
   const res = await fetch(`${API}/loans/user/${u.id}`);
   const loans = await res.json().catch(() => []);
-  const list=$('loansList');if(!list)return;
-  list.innerHTML=loans.length?loans.map(t=>loanCard(t,u.id)).join(''):'<div class="text-center py-8 text-gray-400 text-sm">Aucun prêt ou emprunt.</div>';
+  const tableBody=$('loansTableBody');if(!tableBody)return;
+  tableBody.innerHTML=loans.length?loans.map(t=>loanRow(t,u.id)).join(''):'<tr><td colspan="7" class="py-20 text-center text-gray-300 text-xs font-bold uppercase tracking-widest">Aucune demande trouvée.</td></tr>';
+  if(window.lucide)lucide.createIcons();
+  
+  const paginationText = $('paginationText');
+  if(paginationText) paginationText.textContent = `1-${loans.length} of ${loans.length}`;
 }
 window.handleLoan=async(id,status)=>{
   await fetch(`${API}/loans/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status, requester_id: getUser().id})});

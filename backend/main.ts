@@ -25,6 +25,7 @@ async function connectWithRetry() {
         `ALTER TABLE items ADD COLUMN IF NOT EXISTS available_from DATE`,
         `ALTER TABLE items ADD COLUMN IF NOT EXISTS available_until DATE`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS school VARCHAR(255) DEFAULT 'Polytech Montpellier'`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_url TEXT`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS rating DECIMAL(2,1) DEFAULT 3.0`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS transaction_count INTEGER DEFAULT 0`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`,
@@ -92,7 +93,7 @@ router.post("/api/auth/login", async (ctx) => {
   const user = r.rows[0] as any;
   if (user && await bcrypt.compare(password, user.password)) {
     if (!user.is_verified) { ctx.response.status = 403; return; }
-    ctx.response.body = { id: user.id, name: user.name, email: user.email, school: user.school, rating: user.rating, transaction_count: user.transaction_count };
+    ctx.response.body = { id: user.id, name: user.name, email: user.email, school: user.school, photo_url: user.photo_url, rating: user.rating, transaction_count: user.transaction_count };
   } else ctx.response.status = 401;
 });
 
@@ -105,10 +106,10 @@ router.get("/api/auth/verify", async (ctx) => {
 // --- USERS ---
 router.patch("/api/users/:id", async (ctx) => {
   try {
-    const { name, email, school } = await ctx.request.body({ type: "json" }).value;
+    const { name, email, school, photo_url } = await ctx.request.body({ type: "json", limit: "10mb" }).value;
     const r = await client.queryObject(
-      "UPDATE users SET name=COALESCE($1,name), email=COALESCE($2,email), school=COALESCE($3,school) WHERE id=$4 RETURNING id,name,email,school,rating,transaction_count",
-      [name, email, school, ctx.params.id]
+      "UPDATE users SET name=COALESCE($1,name), email=COALESCE($2,email), school=COALESCE($3,school), photo_url=COALESCE($4,photo_url) WHERE id=$5 RETURNING id,name,email,school,photo_url,rating,transaction_count",
+      [name, email, school, photo_url, ctx.params.id]
     );
     ctx.response.body = r.rows[0];
   } catch { ctx.response.status = 400; ctx.response.body = { message: "Erreur mise à jour." }; }
@@ -121,7 +122,7 @@ router.get("/api/items", async (ctx) => {
   const type = ctx.request.url.searchParams.get("type") || "offer";
   const ownerId = ctx.request.url.searchParams.get("owner_id");
 
-  let query = `SELECT i.*, u.name as owner_name, u.rating as owner_rating, u.transaction_count as owner_transaction_count FROM items i JOIN users u ON i.owner_id=u.id WHERE i.status != 'deleted'`;
+  let query = `SELECT i.*, u.name as owner_name, u.photo_url as owner_photo, u.rating as owner_rating, u.transaction_count as owner_transaction_count FROM items i JOIN users u ON i.owner_id=u.id WHERE i.status != 'deleted'`;
   const params: unknown[] = [];
 
   if (ownerId) {
@@ -153,7 +154,7 @@ router.post("/api/items", async (ctx) => {
 
 router.get("/api/items/:id", async (ctx) => {
   const r = await client.queryObject(
-    `SELECT i.*, u.name as owner_name, u.email as owner_email, u.rating as owner_rating, u.transaction_count as owner_transaction_count FROM items i JOIN users u ON i.owner_id=u.id WHERE i.id=$1 AND i.status != 'deleted'`,
+    `SELECT i.*, u.name as owner_name, u.email as owner_email, u.photo_url as owner_photo, u.rating as owner_rating, u.transaction_count as owner_transaction_count FROM items i JOIN users u ON i.owner_id=u.id WHERE i.id=$1 AND i.status != 'deleted'`,
     [ctx.params.id]
   );
   if (!r.rows[0]) {
@@ -262,7 +263,9 @@ router.post("/api/items/:id/propose", async (ctx) => {
 
 router.get("/api/loans/user/:userId", async (ctx) => {
   const r = await client.queryObject(
-    `SELECT t.*, i.name as item_name, i.photo_url as item_photo, i.status as item_status, ub.name as borrower_name, uo.name as owner_name
+    `SELECT t.*, i.name as item_name, i.photo_url as item_photo, i.status as item_status, 
+            ub.name as borrower_name, ub.photo_url as borrower_photo,
+            uo.name as owner_name, uo.photo_url as owner_photo
      FROM transactions t JOIN items i ON t.item_id=i.id JOIN users ub ON t.borrower_id=ub.id JOIN users uo ON t.owner_id=uo.id
      WHERE (t.borrower_id=$1 OR t.owner_id=$1) ORDER BY t.created_at DESC`,
     [ctx.params.userId]
@@ -388,8 +391,8 @@ router.patch("/api/loans/:id/extend", async (ctx) => {
 router.get("/api/messages/:userId", async (ctx) => {
   const r = await client.queryObject(
     `SELECT m.*, 
-            u1.name as sender_name, 
-            u2.name as receiver_name, 
+            u1.name as sender_name, u1.photo_url as sender_photo,
+            u2.name as receiver_name, u2.photo_url as receiver_photo,
             i.name as item_name, 
             i.photo_url as item_photo,
             i.owner_id as item_owner_id

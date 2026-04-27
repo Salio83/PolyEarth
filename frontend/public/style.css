@@ -245,5 +245,16 @@ body {
 .cat-pill:hover  { background:#d1fae5; color:#065f46; }
 .cat-pill.active { background:#059669; color:white; border-color:#059669; }
 
-/* Line clamp */
-.line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+/* Scrollbar hide utility */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Custom transitions and states */
+.nav-link { position: relative; }
+.nav-link.active::after { content: ''; position: absolute; bottom: 0; left: 24px; right: 24px; height: 2px; background: #00635d; border-radius: 99px; }
+
+/* Focus teal ring */
+.focus-teal:focus { --tw-ring-color: rgba(0, 99, 93, 0.2); outline: none; border-color: #00635d; }
+
+/* Animation tweaks */
+.group:hover .group-hover-rotate { transform: rotate(12deg); }
