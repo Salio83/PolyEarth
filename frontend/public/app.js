@@ -67,7 +67,7 @@ const routes={
   '/demandes':()=>{guard();content.innerHTML=demandesPage();fetchItems('demand');hdr();setCatActive();},
   '/messages':()=>{guard();content.innerHTML=messagesPage();loadMessages();hdr();},
   '/prets':()=>{guard();content.innerHTML=pretsPage();loadLoans();hdr();},
-  '/profil':()=>{guard();content.innerHTML=profilPage(getUser());fetchMyItems();hdr();},
+  '/profil':()=>{guard();renderMyProfile();},
   '/profile/:id':(id)=>{guard();renderProfile(id);hdr();},
   '/login':()=>{content.innerHTML=loginPage();},
   '/register':()=>{content.innerHTML=registerPage();},
@@ -344,6 +344,23 @@ async function renderProfile(id){
   hdr();
 }
 
+async function renderMyProfile() {
+  const u = getUser();
+  if (!u.id) return;
+  try {
+    const res = await fetch(`${API}/users/${u.id}`);
+    const latest = await res.json();
+    localStorage.setItem('user', JSON.stringify(latest));
+    content.innerHTML = profilPage(latest);
+    fetchMyItems();
+    hdr();
+  } catch (e) {
+    content.innerHTML = profilPage(u);
+    fetchMyItems();
+    hdr();
+  }
+}
+
 // --- MESSAGES (2-column layout) ---
 async function loadMessages(){
   const u=getUser();
@@ -527,12 +544,12 @@ async function renderChat(itemId,other){
 
   if (tx && tx.id) {
     if (tx.status === 'accepted') {
-      const isPendingEnd = tx.end_requested_by && tx.end_requested_by !== u.id;
+      const hasRequestedEnd = tx.end_requested_by;
       
       statusBanner = `
         <div class="bg-emerald-50 px-4 py-2 text-[11px] font-black text-emerald-700 uppercase tracking-widest flex items-center justify-between border-b border-emerald-100">
           <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Prêt en cours</div>
-          ${isPendingEnd ? '' : `<button onclick="handleLoanAndUpdate(${tx.id},'request_end',${targetItem},${targetOther})" class="bg-emerald-600 text-white px-3 py-1 rounded shadow-sm hover:bg-emerald-700 transition-colors">Terminer le prêt</button>`}
+          ${hasRequestedEnd ? '<span class="text-[9px] text-emerald-600 opacity-60">Fin demandée</span>' : `<button onclick="handleLoanAndUpdate(${tx.id},'request_end',${targetItem},${targetOther})" class="bg-emerald-600 text-white px-3 py-1 rounded shadow-sm hover:bg-emerald-700 transition-colors">Terminer le prêt</button>`}
         </div>`;
     }
   }
@@ -575,15 +592,15 @@ async function renderChat(itemId,other){
       
       let actions = '';
       if (!isSent) {
-        if (tx && tx.id === m.loan_id && tx.status === 'pending') {
+        if (m.loan_status === 'pending') {
           actions = `
             <div class="msg-loan-card-actions">
-              <button class="btn-accept" onclick="handleLoanAndUpdate(${tx.id},'accepted',${targetItem},${targetOther})">Accepter</button>
-              <button class="btn-reject" onclick="handleLoanAndUpdate(${tx.id},'rejected',${targetItem},${targetOther})">Refuser</button>
+              <button class="btn-accept" onclick="handleLoanAndUpdate(${m.loan_id},'accepted',${targetItem},${targetOther})">Accepter</button>
+              <button class="btn-reject" onclick="handleLoanAndUpdate(${m.loan_id},'rejected',${targetItem},${targetOther})">Refuser</button>
             </div>
           `;
-        } else if (tx && tx.id === m.loan_id) {
-          actions = `<div class="px-3 pb-3 text-xs font-bold text-gray-400 text-center uppercase tracking-widest">${tx.status === 'accepted' ? 'Accepté' : 'Refusé'}</div>`;
+        } else if (m.loan_status) {
+          actions = `<div class="px-3 pb-3 text-xs font-bold text-gray-400 text-center uppercase tracking-widest">${m.loan_status === 'accepted' ? 'Accepté' : (m.loan_status === 'rejected' ? 'Refusé' : 'Terminé')}</div>`;
         } else {
           actions = `<div class="px-3 pb-3 text-xs font-bold text-gray-400 text-center uppercase tracking-widest">Traitée</div>`;
         }
@@ -636,13 +653,13 @@ async function renderChat(itemId,other){
     if (m.type === 'end_request') {
       const cls = isSent ? 'sent' : 'received';
       let actions = '';
-      if (!isSent && tx && tx.end_requested_by && tx.status === 'accepted') {
+      if (!isSent && m.loan_end_requested_by && m.loan_end_requested_by !== u.id && m.loan_status === 'accepted') {
         actions = `
           <div class="msg-end-card-actions">
-            <button class="btn-accept w-full" onclick="handleLoanAndUpdate(${tx.id},'completed',${targetItem},${targetOther})">✅ Oui, confirmer le retour</button>
+            <button class="btn-accept w-full" onclick="handleLoanAndUpdate(${m.loan_id},'completed',${targetItem},${targetOther})">✅ Oui, confirmer le retour</button>
           </div>
         `;
-      } else if (!isSent) {
+      } else if (!isSent && m.loan_status === 'completed') {
         actions = `<div class="mt-2 text-xs font-bold text-gray-400 text-center uppercase tracking-widest">Terminé</div>`;
       }
 

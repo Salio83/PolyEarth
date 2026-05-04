@@ -413,11 +413,14 @@ router.get("/api/messages/:userId", async (ctx) => {
             u2.name as receiver_name, u2.photo_url as receiver_photo,
             i.name as item_name, 
             i.photo_url as item_photo,
-            i.owner_id as item_owner_id
+            i.owner_id as item_owner_id,
+            t.status as loan_status,
+            t.end_requested_by as loan_end_requested_by
      FROM messages m 
      JOIN users u1 ON m.sender_id=u1.id 
      JOIN users u2 ON m.receiver_id=u2.id
      JOIN items i ON m.item_id=i.id
+     LEFT JOIN transactions t ON m.loan_id = t.id
      WHERE (m.sender_id=$1 OR m.receiver_id=$1) AND i.status NOT IN ('deleted', 'borrowed') 
      ORDER BY m.created_at ASC`,
     [ctx.params.userId]
@@ -495,11 +498,15 @@ router.get("/api/loans/active/:itemId/:userId", async (ctx) => {
     const { itemId, userId } = ctx.params;
     const otherId = ctx.request.url.searchParams.get("otherId");
     const r = await client.queryObject(
-      `SELECT * FROM transactions 
-       WHERE item_id=$1 
-       AND ((borrower_id=$2 AND owner_id=$3) OR (borrower_id=$3 AND owner_id=$2))
-       AND status IN ('pending', 'accepted')
-       ORDER BY created_at DESC LIMIT 1`,
+      `SELECT t.* FROM transactions t 
+       WHERE t.id IN (
+         SELECT loan_id FROM messages 
+         WHERE item_id = $1 
+         AND ((sender_id = $2 AND receiver_id = $3) OR (sender_id = $3 AND receiver_id = $2))
+         AND loan_id IS NOT NULL
+       )
+       AND t.status IN ('pending', 'accepted')
+       ORDER BY t.created_at DESC LIMIT 1`,
       [itemId, userId, otherId]
     );
     ctx.response.body = r.rows[0] || {};

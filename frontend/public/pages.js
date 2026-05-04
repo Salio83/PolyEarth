@@ -174,6 +174,7 @@ export const pretsPage = () => `
 
 export const loanRow = (t, uid) => {
     const isOwner = t.owner_id === uid;
+    const otherId = isOwner ? t.borrower_id : t.owner_id;
     const borrowerEmail = t.borrower_email || 'etu.polytech@umontpellier.fr';
     const ownerEmail = t.owner_email || 'etu.polytech@umontpellier.fr';
     const otherPhoto = isOwner ? t.borrower_photo : t.owner_photo;
@@ -189,12 +190,12 @@ export const loanRow = (t, uid) => {
             <td class="py-4 px-6">${getStatusBadge(t.status)}</td>
             <td class="py-4 px-6 font-bold text-gray-900">${t.item_name}</td>
             <td class="py-4 px-6">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 hover:opacity-70 transition-opacity" onclick="event.stopPropagation();navigate('/profile/${otherId}')">
                     <div class="w-6 h-6 rounded-full overflow-hidden bg-duck/10 flex-shrink-0">
                         ${otherPhoto ? `<img src="${otherPhoto}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(otherName)}&background=00635d&color=fff" class="w-full h-full object-cover">`}
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-gray-900">${otherName}</span>
+                        <span class="text-gray-900 font-bold">${otherName}</span>
                         <span class="text-[10px] text-gray-400 truncate w-32" title="${isOwner ? borrowerEmail : ownerEmail}">${isOwner ? borrowerEmail : ownerEmail}</span>
                     </div>
                 </div>
@@ -232,7 +233,7 @@ export const offresPage = () => `
 export const demandesPage = () => `
     <div class="flex flex-col lg:flex-row gap-8">
         <aside class="w-full lg:w-64 space-y-4">
-            <button onclick="showModal('modal')" class="w-full bg-blue-700 text-white p-4 rounded-lg font-black hover:bg-blue-800 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2">
+            <button onclick="showModal('modal')" class="w-full bg-duck text-white p-4 rounded-lg font-black hover:bg-duck-dark shadow-lg shadow-duck/10 transition-all flex items-center justify-center gap-2">
                 <span>🔍 Publier une demande</span>
             </button>
             <div class="bg-white p-6 rounded-xl border border-gray-100">
@@ -293,8 +294,20 @@ export const profilPage = (u) => `
                 ${u.photo_url ? `<img src="${u.photo_url}" class="w-full h-full object-cover">` : u.name?.charAt(0)}
             </div>
             <div class="flex-1 text-center md:text-left">
-                <h2 class="text-4xl font-black text-gray-900 mb-2">${u.name}</h2>
-                <p class="text-gray-400 font-bold mb-6 italic">Étudiant @ ${u.school || 'Polytech Montpellier'}</p>
+                <div class="flex flex-col md:flex-row md:items-center gap-4 mb-2 justify-center md:justify-start">
+                    <h2 class="text-4xl font-black text-gray-900">${u.name}</h2>
+                    <div class="bg-duck/10 text-duck px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">${u.transaction_count || 0} échanges</div>
+                </div>
+                <p class="text-gray-400 font-bold mb-4 italic">Étudiant @ ${u.school || 'Polytech Montpellier'}</p>
+                
+                <div class="flex items-center gap-3 mb-6 justify-center md:justify-start">
+                    <span class="text-2xl font-black text-gray-900">${Number(u.rating || 0).toFixed(1)}</span>
+                    <div class="flex flex-col">
+                        ${stars(u.rating, u.transaction_count)}
+                        <span class="text-[10px] text-gray-400 font-bold">Ma note globale</span>
+                    </div>
+                </div>
+
                 <div class="flex justify-center md:justify-start gap-4">
                     <button onclick="$('editProfileSection').classList.toggle('hidden')" class="bg-gray-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-gray-900 transition-all shadow-lg">Éditer mon profil</button>
                     <button onclick="doLogout()" class="text-red-500 font-bold px-8 py-3 rounded-lg border border-red-50 hover:bg-red-50 transition-all">Déconnexion</button>
@@ -386,13 +399,13 @@ export const itemCard = (i) => `
                 </span>
             </div>
         </div>
-        <div class="px-2">
-            <div class="flex justify-between items-start mb-1">
+        <div class="bg-pastel-green p-5 rounded-3xl border border-duck/5 transition-transform group-hover:scale-[1.01]">
+            <div class="flex justify-between items-start mb-2">
                 <h4 class="font-bold text-gray-900 text-lg group-hover:text-duck transition-colors truncate">${i.name}</h4>
                 <span class="text-duck font-black text-xs mt-1">Gratuit</span>
             </div>
             <div class="flex items-center gap-2" onclick="event.stopPropagation();navigate('/profile/${i.owner_id}')">
-                <div class="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                <div class="w-6 h-6 rounded-full bg-white flex items-center justify-center overflow-hidden border border-duck/10">
                     ${i.owner_photo ? `<img src="${i.owner_photo}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(i.owner_name || 'U')}&background=eee&color=999" class="w-full h-full object-cover">`}
                 </div>
                 <div class="flex flex-col">
@@ -421,19 +434,19 @@ export const itemDetail = (i, isOwner) => `
                     <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Description</h3>
                     <p class="text-gray-600 font-medium leading-relaxed">${i.description || 'Pas de description.'}</p>
                 </div>
-                <div class="p-8 bg-gray-900 rounded-3xl text-white space-y-6 shadow-2xl">
+                <div class="p-8 bg-pastel-green rounded-3xl border border-duck/5 space-y-6 shadow-sm">
                     <div class="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onclick="navigate('/profile/${i.owner_id}')">
-                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-xl overflow-hidden">
-                            ${i.owner_photo ? `<img src="${i.owner_photo}" class="w-full h-full object-cover">` : i.owner_name?.charAt(0)}
+                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-xl overflow-hidden border border-duck/10">
+                            ${i.owner_photo ? `<img src="${i.owner_photo}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(i.owner_name || 'U')}&background=eee&color=999" class="w-full h-full object-cover">`}
                         </div>
                         <div>
-                            <div class="font-bold">${i.owner_name}</div>
+                            <div class="font-bold text-gray-900">${i.owner_name}</div>
                             ${stars(i.owner_rating, i.owner_transaction_count)}
                         </div>
                     </div>
                     ${isOwner ? '' : `
-                    <div class="space-y-3 pt-4 border-t border-white/10">
-                        <textarea id="detailChatInput" placeholder="Bonjour ! J'aimerais beaucoup t'emprunter ton objet..." class="w-full bg-white/10 border-none rounded-xl p-4 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-duck outline-none h-24 transition-all"></textarea>
+                    <div class="space-y-3 pt-4 border-t border-duck/10">
+                        <textarea id="detailChatInput" placeholder="Bonjour ! J'aimerais beaucoup t'emprunter ton objet..." class="w-full bg-white border-none rounded-xl p-4 text-sm text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-duck outline-none h-24 transition-all shadow-inner"></textarea>
                         <button onclick="initChat(${i.id},${i.owner_id})" class="w-full bg-duck text-white py-4 rounded-lg font-black hover:bg-duck-dark transition-all shadow-lg shadow-duck/20">Lancer la discussion</button>
                     </div>`}
                 </div>
