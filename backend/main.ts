@@ -38,6 +38,7 @@ async function connectWithRetry() {
         `ALTER TABLE messages ADD COLUMN IF NOT EXISTS loan_id INTEGER`,
         `ALTER TABLE messages ADD COLUMN IF NOT EXISTS meta TEXT`,
         `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS end_requested_by INTEGER`,
+        `CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, transaction_id INTEGER REFERENCES transactions(id), reviewer_id INTEGER REFERENCES users(id), reviewee_id INTEGER REFERENCES users(id), rating INTEGER, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`,
         `UPDATE items SET status='available' WHERE status IS NULL`,
         `UPDATE items SET quality='good' WHERE quality IS NULL`,
         `UPDATE users SET rating=3.0 WHERE rating IS NULL`,
@@ -104,6 +105,16 @@ router.get("/api/auth/verify", async (ctx) => {
 });
 
 // --- USERS ---
+router.get("/api/users/:id", async (ctx) => {
+  try {
+    const r = await client.queryObject(
+      "SELECT id, name, email, school, photo_url, rating, transaction_count FROM users WHERE id=$1",
+      [ctx.params.id]
+    );
+    ctx.response.body = r.rows[0];
+  } catch { ctx.response.status = 404; }
+});
+
 router.patch("/api/users/:id", async (ctx) => {
   try {
     const { name, email, school, photo_url } = await ctx.request.body({ type: "json", limit: "10mb" }).value;
@@ -240,27 +251,31 @@ router.post("/api/items/:id/reserve", async (ctx) => {
 
 router.post("/api/items/:id/propose", async (ctx) => {
   try {
-    const { lender_id, borrower_id, item_name, item_desc, start_date, end_date } = await ctx.request.body({ type: "json" }).value;
-    
+    const { lender_id, borrower_id, item_name, item_desc, start_date, end_date, discussion_item_id } = await ctx.request.body({ type: "json" }).value;
+
     // Create transaction
     const txRes = await client.queryObject(
       "INSERT INTO transactions (item_id,borrower_id,owner_id,start_date,end_date,status) VALUES ($1,$2,$3,$4,$5,'pending') RETURNING *",
       [ctx.params.id, borrower_id, lender_id, start_date || null, end_date || null]
     );
 
+    const msgContent = `🤝 Proposition de prêt : ${item_name}`;
     const meta = JSON.stringify({ start_date: start_date || null, end_date: end_date || null, item_name, item_desc });
+
+    // Use discussion_item_id if provided, otherwise use the item being lent
+    const messageItemId = discussion_item_id || ctx.params.id;
+
     await client.queryObject(
       "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id,meta) VALUES ($1,$2,$3,$4,'loan_request',$5,$6)",
-      [ctx.params.id, lender_id, borrower_id, msgContent, (txRes.rows[0] as any).id, meta]
+      [messageItemId, lender_id, borrower_id, msgContent, (txRes.rows[0] as any).id, meta]
     );
 
     const borrowerSocket = connectedUsers.get(borrower_id);
-    if (borrowerSocket) borrowerSocket.send(JSON.stringify({ type: "LOAN_REQUEST", data: { item_id: ctx.params.id } }));
+    if (borrowerSocket) borrowerSocket.send(JSON.stringify({ type: "LOAN_REQUEST", data: { item_id: messageItemId } }));
 
     ctx.response.body = { message: "Proposition envoyée.", loan_id: (txRes.rows[0] as any).id };
   } catch (e) { console.error(e); ctx.response.status = 500; }
 });
-
 router.get("/api/loans/user/:userId", async (ctx) => {
   const r = await client.queryObject(
     `SELECT t.*, i.name as item_name, i.photo_url as item_photo, i.status as item_status, 
@@ -283,45 +298,48 @@ router.patch("/api/loans/:id", async (ctx) => {
 
     const otherId = tx.owner_id === requester_id ? tx.borrower_id : tx.owner_id;
 
+    // Find the original item_id used in the discussion for this loan
+    const origMsgRes = await client.queryObject(
+      "SELECT item_id FROM messages WHERE loan_id=$1 AND type='loan_request' LIMIT 1",
+      [ctx.params.id]
+    );
+    const discussionItemId = origMsgRes.rows.length > 0 ? (origMsgRes.rows[0] as any).item_id : tx.item_id;
+
     if (status === "accepted") {
       await client.queryObject("UPDATE transactions SET status='accepted' WHERE id=$1", [ctx.params.id]);
       await client.queryObject("UPDATE items SET status='reserved' WHERE id=$1", [tx.item_id]);
       await client.queryObject(
         "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'loan_response',$5)",
-        [tx.item_id, requester_id, otherId, "✅ Prêt accepté ! Coordonnez la remise de l'objet.", tx.id]
+        [discussionItemId, requester_id, otherId, "✅ Prêt accepté ! Coordonnez la remise de l'objet.", tx.id]
       );
       await client.queryObject("UPDATE users SET transaction_count=transaction_count+1 WHERE id=$1 OR id=$2", [tx.owner_id, tx.borrower_id]);
       const s = connectedUsers.get(otherId);
-      if (s) s.send(JSON.stringify({ type: "LOAN_ACCEPTED", data: { item_id: tx.item_id } }));
+      if (s) s.send(JSON.stringify({ type: "LOAN_ACCEPTED", data: { item_id: discussionItemId } }));
     } else if (status === "rejected") {
       await client.queryObject("UPDATE transactions SET status='rejected' WHERE id=$1", [ctx.params.id]);
       await client.queryObject(
         "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'loan_response',$5)",
-        [tx.item_id, requester_id, otherId, "❌ Demande de prêt refusée.", tx.id]
+        [discussionItemId, requester_id, otherId, "❌ Demande de prêt refusée.", tx.id]
       );
       const s = connectedUsers.get(otherId);
-      if (s) s.send(JSON.stringify({ type: "LOAN_REJECTED", data: { item_id: tx.item_id } }));
+      if (s) s.send(JSON.stringify({ type: "LOAN_REJECTED", data: { item_id: discussionItemId } }));
     } else if (status === "request_end") {
-      // First party requests end — store who asked
       await client.queryObject("UPDATE transactions SET end_requested_by=$1 WHERE id=$2", [requester_id, ctx.params.id]);
       await client.queryObject(
         "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'end_request',$5)",
-        [tx.item_id, requester_id, otherId, "🏁 Demande de fin de prêt — l'objet a-t-il bien été rendu ?", tx.id]
+        [discussionItemId, requester_id, otherId, "🏁 Demande de fin de prêt — l'objet a-t-il bien été rendu ?", tx.id]
       );
       const s = connectedUsers.get(otherId);
-      if (s) s.send(JSON.stringify({ type: "NEW_MESSAGE", data: { item_id: tx.item_id, sender_name: "un utilisateur" } }));
+      if (s) s.send(JSON.stringify({ type: "NEW_MESSAGE", data: { item_id: discussionItemId, sender_name: "un utilisateur" } }));
     } else if (status === "completed") {
-      // Second party confirms — both agree
       await client.queryObject("UPDATE transactions SET status='completed', end_requested_by=NULL WHERE id=$1", [ctx.params.id]);
-      // User requested that finished loans stay hidden from announcements. 
-      // We'll set it to 'borrowed' or keep it as 'reserved' to signify it's not 'available' anymore.
       await client.queryObject("UPDATE items SET status='borrowed' WHERE id=$1", [tx.item_id]);
       await client.queryObject(
         "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,'✅ Prêt terminé avec succès. Merci !','system',$4)",
-        [tx.item_id, requester_id, otherId, tx.id]
+        [discussionItemId, requester_id, otherId, tx.id]
       );
       const s = connectedUsers.get(otherId);
-      if (s) s.send(JSON.stringify({ type: "DISCUSSION_ENDED", data: { item_id: tx.item_id } }));
+      if (s) s.send(JSON.stringify({ type: "DISCUSSION_ENDED", data: { item_id: discussionItemId } }));
     }
     ctx.response.body = { success: true };
   } catch (e) { console.error(e); ctx.response.status = 500; ctx.response.body = { message: "Erreur." }; }
@@ -490,6 +508,49 @@ router.get("/api/loans/active/:itemId/:userId", async (ctx) => {
     ctx.response.status = 500;
   }
 });
+
+// --- REVIEWS ---
+router.post("/api/reviews", async (ctx) => {
+  try {
+    const { transaction_id, reviewer_id, reviewee_id, rating, comment } = await ctx.request.body({ type: "json" }).value;
+    
+    // Check if a review already exists for this transaction and reviewer
+    const existing = await client.queryObject(
+      "SELECT id FROM reviews WHERE transaction_id=$1 AND reviewer_id=$2",
+      [transaction_id, reviewer_id]
+    );
+    if (existing.rows.length > 0) {
+      ctx.response.status = 409;
+      ctx.response.body = { message: "Vous avez déjà noté cet échange." };
+      return;
+    }
+
+    // Insert review
+    await client.queryObject(
+      "INSERT INTO reviews (transaction_id, reviewer_id, reviewee_id, rating, comment) VALUES ($1,$2,$3,$4,$5)",
+      [transaction_id, reviewer_id, reviewee_id, rating, comment || null]
+    );
+
+    // Update user average rating
+    const avgRes = await client.queryObject(
+      "SELECT AVG(rating) as average FROM reviews WHERE reviewee_id=$1",
+      [reviewee_id]
+    );
+    const newAvg = (avgRes.rows[0] as any).average;
+    
+    await client.queryObject(
+      "UPDATE users SET rating=$1 WHERE id=$2",
+      [newAvg, reviewee_id]
+    );
+
+    ctx.response.body = { success: true };
+  } catch (e) {
+    console.error(e);
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Erreur lors de la notation." };
+  }
+});
+
 // --- APP ---
 const app = new Application();
 app.use(async (ctx, next) => {

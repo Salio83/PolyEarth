@@ -50,3 +50,13 @@ CREATE TABLE IF NOT EXISTS transactions (
     status VARCHAR(255) DEFAULT 'pending', -- pending, accepted, rejected, completed
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS reviews (
+    id SERIAL PRIMARY KEY,
+    transaction_id INTEGER REFERENCES transactions(id),
+    reviewer_id INTEGER REFERENCES users(id),
+    reviewee_id INTEGER REFERENCES users(id),
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

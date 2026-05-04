@@ -170,6 +170,76 @@
         </div>
     </div>
 
+    <div id="proposeLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h3 class="text-3xl font-black text-gray-900 tracking-tight">Proposer un objet</h3>
+                    <p class="text-gray-400 font-medium">Répondez à cette demande de prêt.</p>
+                </div>
+                <button onclick="hideModal('proposeLoanModal')" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="proposeLoanForm" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Choisir un de mes objets déjà en ligne</label>
+                    <select id="propMyItemSelect" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold text-sm">
+                        <option value="">-- Créer une nouvelle proposition --</option>
+                    </select>
+                </div>
+                <div id="newPropFields" class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Ou nom de l'objet à proposer</label>
+                        <input id="propItemName" placeholder="Ex: Ma calculatrice TI-84" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold text-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Précisions (état, conditions...)</label>
+                        <textarea id="propItemDesc" placeholder="Je peux te la prêter pour la semaine..." class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-medium text-sm h-24"></textarea>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Disponible du</label>
+                        <input id="propFrom" type="date" class="w-full p-3 bg-gray-50 border-none rounded-lg outline-none font-bold text-xs">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Au</label>
+                        <input id="propUntil" type="date" class="w-full p-3 bg-gray-50 border-none rounded-lg outline-none font-bold text-xs">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-duck text-white py-4 rounded-lg font-black shadow-lg shadow-duck/10 hover:bg-duck-dark transition-all mt-4">Envoyer la proposition</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="reviewModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[110]">
+        <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
+            <h3 class="text-2xl font-black text-gray-900 mb-2">Notez votre expérience ! ⭐</h3>
+            <p id="reviewTargetName" class="text-gray-500 font-medium mb-6 text-sm">Comment s'est passé l'échange avec cet utilisateur ?</p>
+            
+            <div class="flex justify-center gap-2 mb-6">
+                <button onclick="setRating(1)" class="star-btn text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
+                <button onclick="setRating(2)" class="star-btn text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
+                <button onclick="setRating(3)" class="star-btn text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
+                <button onclick="setRating(4)" class="star-btn text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
+                <button onclick="setRating(5)" class="star-btn text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
+            </div>
+            
+            <textarea id="reviewComment" placeholder="Un petit mot sur l'échange (optionnel)..." class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-medium text-sm h-24 mb-6"></textarea>
+            
+            <div id="reLendOption" class="hidden mb-6">
+                <p class="text-gray-600 font-bold mb-4 text-sm">Souhaitez-vous remettre cet objet en ligne ?</p>
+                <div class="flex gap-4">
+                    <button id="reLendYes" class="flex-1 py-3 rounded-lg border-2 border-emerald-600 text-emerald-600 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-50 transition-all">OUI, disponible</button>
+                    <button id="reLendNo" class="flex-1 py-3 rounded-lg border-2 border-gray-200 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">NON, fini</button>
+                </div>
+            </div>
+
+            <button onclick="submitReview()" class="w-full bg-duck text-white py-4 rounded-lg font-black shadow-lg hover:bg-duck-dark transition-all">Valider</button>
+        </div>
+    </div>
+
     <script type="module" src="/app.js"></script>
 </body>
 </html>

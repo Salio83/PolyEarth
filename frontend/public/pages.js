@@ -175,6 +175,7 @@ export const pretsPage = () => `
 export const loanRow = (t, uid) => {
     const isOwner = t.owner_id === uid;
     const borrowerEmail = t.borrower_email || 'etu.polytech@umontpellier.fr';
+    const ownerEmail = t.owner_email || 'etu.polytech@umontpellier.fr';
     const otherPhoto = isOwner ? t.borrower_photo : t.owner_photo;
     const otherName = isOwner ? t.borrower_name : t.owner_name;
     return `
@@ -191,17 +192,12 @@ export const loanRow = (t, uid) => {
                 <div class="flex items-center gap-2">
                     <div class="w-6 h-6 rounded-full overflow-hidden bg-duck/10 flex-shrink-0">
                         ${otherPhoto ? `<img src="${otherPhoto}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(otherName)}&background=00635d&color=fff" class="w-full h-full object-cover">`}
-                    <td class="py-4 px-6">
-                        <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 rounded-full overflow-hidden bg-duck/10 flex-shrink-0">
-                                ${otherPhoto ? `<img src="${otherPhoto}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(otherName)}&background=00635d&color=fff" class="w-full h-full object-cover">`}
-                            </div>
-                            <div class="flex flex-col">
-                                <span class="text-gray-900">${otherName}</span>
-                                <span class="text-[10px] text-gray-400 truncate w-32" title="${isOwner ? borrowerEmail : ownerEmail}">${isOwner ? borrowerEmail : ownerEmail}</span>
-                            </div>
-                        </div>
-                    </td>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-gray-900">${otherName}</span>
+                        <span class="text-[10px] text-gray-400 truncate w-32" title="${isOwner ? borrowerEmail : ownerEmail}">${isOwner ? borrowerEmail : ownerEmail}</span>
+                    </div>
+                </div>
             </td>
             <td class="py-4 px-6 text-gray-400">${fmtDate(t.created_at || new Date())}</td>
             <td class="py-4 px-6 text-duck font-bold">${fmtDate(t.start_date)}</td>
@@ -274,6 +270,14 @@ export const messagesPage = () => `
                     <input id="chatInput" placeholder="Écrire un message..." class="flex-1 bg-gray-50 border-none rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-duck transition-all outline-none">
                     <button onclick="sendReply()" class="p-2 bg-duck text-white rounded-lg hover:bg-duck-dark transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></button>
                 </div>
+                <div id="chatLoanFormContainer" class="hidden mt-3 p-4 bg-gray-50 rounded-xl border border-gray-100 animate-slide-in">
+                    <div class="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Détails du prêt</div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <input id="chatLoanFrom" type="date" class="p-2 rounded-lg border-none text-xs font-bold">
+                        <input id="chatLoanUntil" type="date" class="p-2 rounded-lg border-none text-xs font-bold">
+                    </div>
+                    <button onclick="sendLoanRequestFromChat()" class="w-full bg-duck text-white py-2 rounded-lg text-xs font-black shadow-lg shadow-duck/10 hover:bg-duck-dark">Envoyer la demande</button>
+                </div>
             </div>
         </div>
         <div id="chatInfoSidebar" class="w-64 border-l border-gray-50 bg-white p-6 hidden lg:flex flex-col">
@@ -329,6 +333,44 @@ export const profilPage = (u) => `
     </div>
 `;
 
+export const userProfilePage = (u, items) => `
+    <div class="max-w-4xl mx-auto space-y-12 animate-fade-in pb-20">
+        <div class="bg-white rounded-4xl p-12 border border-gray-100 shadow-xl shadow-gray-200/50 flex flex-col md:flex-row gap-12 items-center relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-duck/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+            <div class="w-40 h-40 bg-duck rounded-full flex items-center justify-center text-6xl font-black text-white shadow-2xl overflow-hidden border-8 border-white relative z-10 flex-shrink-0">
+                ${u.photo_url ? `<img src="${u.photo_url}" class="w-full h-full object-cover">` : u.name?.charAt(0)}
+            </div>
+            <div class="flex-1 text-center md:text-left relative z-10">
+                <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4 justify-center md:justify-start">
+                    <h2 class="text-5xl font-black text-gray-900 tracking-tighter">${u.name}</h2>
+                    <div class="bg-duck/10 text-duck px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">${u.transaction_count || 0} échanges</div>
+                </div>
+                <p class="text-gray-400 font-bold mb-8 text-lg italic">Étudiant @ ${u.school || 'Polytech Montpellier'}</p>
+                
+                <div class="flex flex-wrap gap-10 justify-center md:justify-start">
+                    <div>
+                        <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Note globale</div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl font-black text-gray-900">${Number(u.rating || 0).toFixed(1)}</span>
+                            <div class="flex flex-col">
+                                ${stars(u.rating, u.transaction_count)}
+                                <span class="text-[10px] text-gray-400 font-bold">Moyenne pondérée</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-8">
+            <h3 class="text-3xl font-black text-gray-900 tracking-tight">Annonces de ${u.name.split(' ')[0]}</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                ${items.length ? items.map(i => itemCard(i)).join('') : '<div class="col-span-full py-20 text-center bg-gray-50 rounded-3xl text-gray-400 font-bold">Aucune annonce en ligne pour le moment.</div>'}
+            </div>
+        </div>
+    </div>
+`;
+
 export const itemCard = (i) => `
     <div onclick="navigate('/item/${i.id}')" class="group cursor-pointer">
         <div class="relative aspect-[4/5] rounded-3xl overflow-hidden bg-gray-100 mb-4 shadow-sm group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
@@ -349,11 +391,14 @@ export const itemCard = (i) => `
                 <h4 class="font-bold text-gray-900 text-lg group-hover:text-duck transition-colors truncate">${i.name}</h4>
                 <span class="text-duck font-black text-xs mt-1">Gratuit</span>
             </div>
-            <div class="flex items-center gap-2 text-gray-400 text-sm font-medium">
+            <div class="flex items-center gap-2" onclick="event.stopPropagation();navigate('/profile/${i.owner_id}')">
                 <div class="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
                     ${i.owner_photo ? `<img src="${i.owner_photo}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(i.owner_name || 'U')}&background=eee&color=999" class="w-full h-full object-cover">`}
                 </div>
-                <span>${i.owner_name || 'Anonyme'}</span>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-900 leading-none">${i.owner_name || 'Anonyme'}</span>
+                    ${stars(i.owner_rating, i.owner_transaction_count)}
+                </div>
             </div>
         </div>
     </div>
@@ -376,17 +421,22 @@ export const itemDetail = (i, isOwner) => `
                     <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Description</h3>
                     <p class="text-gray-600 font-medium leading-relaxed">${i.description || 'Pas de description.'}</p>
                 </div>
-                ${isOwner ? '' : `
                 <div class="p-8 bg-gray-900 rounded-3xl text-white space-y-6 shadow-2xl">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-xl">${i.owner_name?.charAt(0)}</div>
-                        <div><div class="font-bold">${i.owner_name}</div><div class="text-white/40 text-xs font-bold uppercase tracking-widest">Propriétaire</div></div>
+                    <div class="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onclick="navigate('/profile/${i.owner_id}')">
+                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-xl overflow-hidden">
+                            ${i.owner_photo ? `<img src="${i.owner_photo}" class="w-full h-full object-cover">` : i.owner_name?.charAt(0)}
+                        </div>
+                        <div>
+                            <div class="font-bold">${i.owner_name}</div>
+                            ${stars(i.owner_rating, i.owner_transaction_count)}
+                        </div>
                     </div>
-                    <div class="space-y-3 pt-4">
+                    ${isOwner ? '' : `
+                    <div class="space-y-3 pt-4 border-t border-white/10">
                         <textarea id="detailChatInput" placeholder="Bonjour ! J'aimerais beaucoup t'emprunter ton objet..." class="w-full bg-white/10 border-none rounded-xl p-4 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-duck outline-none h-24 transition-all"></textarea>
                         <button onclick="initChat(${i.id},${i.owner_id})" class="w-full bg-duck text-white py-4 rounded-lg font-black hover:bg-duck-dark transition-all shadow-lg shadow-duck/20">Lancer la discussion</button>
-                    </div>
-                </div>`}
+                    </div>`}
+                </div>
             </div>
         </div>
     </div>
@@ -420,10 +470,50 @@ export const associationPage = () => `
         <div class="flex flex-col items-center text-center space-y-4">
             <img src="/logo-polyearth.png" alt="PolyEarth Logo" class="w-32 h-32 object-contain rounded-xl shadow-xl shadow-emerald-100 mb-4">
             <h2 class="text-5xl font-black text-gray-900 tracking-tighter">L'Association</h2>
+            <p class="text-gray-500 font-medium max-w-xl">PolyEarth — Association étudiante pour le partage et la durabilité à Polytech Montpellier.</p>
         </div>
+
         <div class="bg-duck rounded-3xl p-12 text-white shadow-2xl shadow-duck/10 relative overflow-hidden">
-            <h3 class="text-3xl font-black mb-6">Notre Vision</h3>
-            <p class="text-white/90 text-xl font-medium leading-relaxed italic">"Partager plus qu'un campus."</p>
+            <div class="relative z-10">
+                <h3 class="text-3xl font-black mb-6">Notre Vision</h3>
+                <p class="text-white/90 text-xl font-medium leading-relaxed italic">"Partager plus qu'un campus."</p>
+                <p class="text-white/80 text-lg font-medium leading-relaxed mt-4">PolyEarth favorise l'économie circulaire et l'entraide entre les étudiants de Polytech Montpellier. Emprunter plutôt qu'acheter, c'est notre devise pour réduire notre empreinte tout en renforçant les liens sur le campus.</p>
+            </div>
+            <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-duck-light rounded-full opacity-50 blur-3xl"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Instagram Section -->
+            <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 rounded-xl flex items-center justify-center text-white">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        </div>
+                        <h4 class="font-black text-gray-900">Instagram</h4>
+                    </div>
+                    <a href="https://www.instagram.com/polyearth_polytech_montpellier/" target="_blank" class="text-[10px] font-black text-duck uppercase tracking-widest hover:underline">S'abonner</a>
+                </div>
+                <div class="aspect-[4/5] bg-gray-50 rounded-xl overflow-hidden border border-gray-100 flex items-center justify-center">
+                    <iframe src="https://www.instagram.com/polyearth_polytech_montpellier/embed" class="w-full h-full border-none" scrolling="no" allowtransparency="true"></iframe>
+                </div>
+            </div>
+
+            <!-- Facebook Section -->
+            <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center text-white">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        </div>
+                        <h4 class="font-black text-gray-900">Facebook</h4>
+                    </div>
+                    <a href="https://www.facebook.com/Polyearth" target="_blank" class="text-[10px] font-black text-blue-700 uppercase tracking-widest hover:underline">Voir la page</a>
+                </div>
+                <div class="aspect-[4/5] bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+                    <iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2FPolyearth&tabs=timeline&width=340&height=500&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=false" class="w-full h-full border-none" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                </div>
+            </div>
         </div>
     </div>
 `;

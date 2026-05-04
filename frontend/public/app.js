@@ -1,5 +1,5 @@
 import{API,WS_URL,$,isLoggedIn,getUser,notify,readImgB64,fmtDate,catIcon,catBadge,qBadge,stars,dispoBadge,showModal as sm, hideModal as hm}from'./lib.js';
-import{homePage,offresPage,demandesPage,messagesPage,pretsPage,profilPage,loginPage,registerPage,associationPage,itemCard,itemDetail,loanRow}from'./pages.js';
+import{homePage,offresPage,demandesPage,messagesPage,pretsPage,profilPage,userProfilePage,loginPage,registerPage,associationPage,itemCard,itemDetail,loanRow}from'./pages.js';
 
 // --- GLOBALS ---
 window.$ = $;
@@ -10,6 +10,56 @@ const content=$('content');
 let socket=null,activeCat='all',allMessages=[];
 let activeConv=localStorage.getItem('activeConv') || null;
 
+// --- RATINGS ---
+let currentRating = 0;
+let currentTransactionId = null;
+let currentRevieweeId = null;
+let currentItemId = null;
+let currentReLendChoice = false;
+
+window.setRating = (n) => {
+  currentRating = n;
+  document.querySelectorAll('.star-btn').forEach((btn, i) => {
+    if (i < n) btn.classList.remove('grayscale');
+    else btn.classList.add('grayscale');
+  });
+};
+
+window.submitReview = async () => {
+  if (currentRating === 0) return notify('Veuillez sélectionner une note', 'error');
+  
+  const u = getUser();
+  const comment = $('reviewComment').value;
+  
+  try {
+    await fetch(`${API}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transaction_id: currentTransactionId,
+        reviewer_id: u.id,
+        reviewee_id: currentRevieweeId,
+        rating: currentRating,
+        comment
+      })
+    });
+    
+    hideModal('reviewModal');
+    notify('Merci pour votre avis !');
+    
+    // If owner chose to re-lend
+    if ($('reLendOption').classList.contains('!block')) {
+       await reLendItem(currentItemId, currentReLendChoice);
+    }
+    
+    // Refresh
+    handleRoute();
+  } catch (e) {
+    console.error(e);
+    notify('Erreur lors de l\'envoi de l\'avis', 'error');
+  }
+};
+
 // --- ROUTING ---
 const routes={
   '/'     :()=>{guard();content.innerHTML=homePage();fetchItems('offer');hdr();},
@@ -18,6 +68,7 @@ const routes={
   '/messages':()=>{guard();content.innerHTML=messagesPage();loadMessages();hdr();},
   '/prets':()=>{guard();content.innerHTML=pretsPage();loadLoans();hdr();},
   '/profil':()=>{guard();content.innerHTML=profilPage(getUser());fetchMyItems();hdr();},
+  '/profile/:id':(id)=>{guard();renderProfile(id);hdr();},
   '/login':()=>{content.innerHTML=loginPage();},
   '/register':()=>{content.innerHTML=registerPage();},
   '/association':()=>{content.innerHTML=associationPage();hdr();},
@@ -98,12 +149,18 @@ window.confirmReturnFromModal=async()=>{
   const modal = $('overdueLoanModal');
   const loanId = modal.dataset.loanId;
   if (!loanId) return;
-  await fetch(`${API}/loans/${loanId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'completed', requester_id: getUser().id})});
+  
+  const u = getUser();
+  const res = await fetch(`${API}/loans/user/${u.id}`);
+  const loans = await res.json();
+  const tx = loans.find(l => l.id == loanId);
+  
+  if (!tx) { hideModal('overdueLoanModal'); return; }
+
+  const otherId = tx.owner_id === u.id ? tx.borrower_id : tx.owner_id;
+  
   hideModal('overdueLoanModal');
-  notify('Prêt terminé avec succès !');
-  checkOverdueLoans();
-  if (location.pathname==='/messages') loadMessages();
-  if (location.pathname==='/prets') loadLoans();
+  handleLoanAndUpdate(tx.id, 'completed', tx.item_id, otherId);
 };
 
 window.showExtensionForm=()=> {
@@ -131,7 +188,19 @@ window.submitExtension=async()=>{
 };
 
 window.navigate=(p)=>{history.pushState({},'',p);handleRoute();};
-const handleRoute=()=>{const p=location.pathname;const m=p.match(/^\/item\/(\d+)$/);if(m)return renderDetail(m[1]);(routes[p]||routes['/'])();scrollTo(0,0);checkOverdueLoans();if(window.lucide)lucide.createIcons();};
+const handleRoute=()=>{
+  const p=location.pathname;
+  const itemMatch=p.match(/^\/item\/(\d+)$/);
+  if(itemMatch)return renderDetail(itemMatch[1]);
+  
+  const profileMatch=p.match(/^\/profile\/(\d+)$/);
+  if(profileMatch)return renderProfile(profileMatch[1]);
+
+  (routes[p]||routes['/'])();
+  scrollTo(0,0);
+  checkOverdueLoans();
+  if(window.lucide)lucide.createIcons();
+};
 window.onpopstate=handleRoute;
 document.addEventListener('click',e=>{if(e.target.tagName==='A'&&e.target.getAttribute('href')?.startsWith('/')){e.preventDefault();navigate(e.target.getAttribute('href'));}});
 
@@ -264,6 +333,15 @@ async function renderDetail(id){
   if(!i || i.status === 'deleted'){notify("Cet objet a été supprimé.","error");navigate("/");return;}
   const isOwner=i.owner_id===getUser()?.id;
   content.innerHTML=itemDetail(i,isOwner);hdr();
+}
+
+async function renderProfile(id){
+  const res = await fetch(`${API}/users/${id}`);
+  if(!res.ok){notify("Utilisateur introuvable.","error");navigate("/");return;}
+  const u = await res.json();
+  const items = await (await fetch(`${API}/items?owner_id=${id}`)).json();
+  content.innerHTML = userProfilePage(u, items);
+  hdr();
 }
 
 // --- MESSAGES (2-column layout) ---
@@ -633,7 +711,6 @@ window.reLendItem = async (itemId, again) => {
 
 window.handleLoanAndUpdate=async(id,status,itemId,other)=>{
   await fetch(`${API}/loans/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status, requester_id: getUser().id})});
-  notify(status==='accepted'?'Prêt accepté !':status==='rejected'?'Prêt refusé.':status==='request_end'?'Demande envoyée.':'Prêt terminé.');
   
   if (status === 'completed') {
     const u = getUser();
@@ -643,6 +720,45 @@ window.handleLoanAndUpdate=async(id,status,itemId,other)=>{
     // Automatically end discussion to hide it from messages list
     await fetch(`${API}/messages/end-discussion`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:itemId,user_id:u.id})});
     
+    // Prepare Review Modal
+    currentTransactionId = id;
+    currentRevieweeId = other;
+    currentItemId = itemId;
+    currentRating = 0;
+    $('reviewComment').value = '';
+    document.querySelectorAll('.star-btn').forEach(btn => btn.classList.add('grayscale'));
+    
+    // Get other user name
+    const txsRes = await fetch(`${API}/loans/user/${u.id}`);
+    const txs = await txsRes.json();
+    const tx = txs.find(t => t.id === id);
+    const otherName = tx ? (tx.owner_id === u.id ? tx.borrower_name : tx.owner_name) : 'cet utilisateur';
+    $('reviewTargetName').textContent = `Comment s'est passé l'échange avec ${otherName} ?`;
+
+    // Show re-lend option only for owner
+    if (item.owner_id === u.id) {
+       $('reLendOption').classList.add('!block');
+       currentReLendChoice = true; // Default to yes
+       $('reLendYes').onclick = () => { 
+          currentReLendChoice = true;
+          $('reLendYes').classList.add('bg-emerald-50','border-emerald-600');
+          $('reLendNo').classList.remove('bg-gray-50','border-gray-300');
+       };
+       $('reLendNo').onclick = () => { 
+          currentReLendChoice = false;
+          $('reLendNo').classList.add('bg-gray-50','border-gray-300');
+          $('reLendYes').classList.remove('bg-emerald-50','border-emerald-600');
+       };
+       // Initial state for buttons
+       $('reLendYes').classList.add('bg-emerald-50','border-emerald-600');
+       $('reLendNo').classList.remove('bg-gray-50','border-gray-300');
+    } else {
+       $('reLendOption').classList.remove('!block');
+    }
+
+    showModal('reviewModal');
+
+    // Reset Chat view
     activeConv=null;
     localStorage.removeItem('activeConv');
     const header = $('chatHeader');
@@ -653,36 +769,77 @@ window.handleLoanAndUpdate=async(id,status,itemId,other)=>{
     if(msgs) msgs.innerHTML='';
     if(bar) bar.classList.add('hidden');
     if(info) info.innerHTML='<div class="text-center py-20 text-gray-400 text-xs font-bold">Détails de l\'objet</div>';
-
-    if (item.owner_id === u.id) {
-       const modal = $('lendAgainModal');
-       if (modal) {
-         modal.classList.remove('hidden');
-         $('reLendYesBtn').onclick = () => { modal.classList.add('hidden'); window.reLendItem(itemId, true); };
-         $('reLendNoBtn').onclick = () => { modal.classList.add('hidden'); window.reLendItem(itemId, false); };
-       }
-    }
+    
+    notify('Prêt terminé.');
+  } else {
+    notify(status==='accepted'?'Prêt accepté !':status==='rejected'?'Prêt refusé.':'Demande envoyée.');
   }
   
   await loadMessages();
 };
 
-window.handleProposeLoan=(itemId,other)=>{
+window.handleProposeLoan=async(demandItemId,otherUserId)=>{
   const modal=$('proposeLoanModal');
   const form=$('proposeLoanForm');
-  if(!modal || !form) return;
+  const select=$('propMyItemSelect');
+  const newFields=$('newPropFields');
+  if(!modal || !form || !select) return;
+
+  const u = getUser();
+  // Fetch my items to populate the select
+  const myItems = await (await fetch(`${API}/items?owner_id=${u.id}`)).json().catch(()=>[]);
+  select.innerHTML = '<option value="">-- Créer une nouvelle proposition --</option>' + 
+    myItems.filter(i => i.type === 'offer' && i.status === 'available').map(i => `<option value="${i.id}" data-name="${i.name}" data-desc="${i.description}">${i.name}</option>`).join('');
+
+  select.onchange = () => {
+    if (select.value) {
+      newFields.classList.add('hidden');
+      $('propItemName').required = false;
+      $('propItemDesc').required = false;
+    } else {
+      newFields.classList.remove('hidden');
+      $('propItemName').required = true;
+      $('propItemDesc').required = true;
+    }
+  };
+  
+  // Reset fields
+  select.value = '';
+  newFields.classList.remove('hidden');
+  $('propItemName').value = '';
+  $('propItemDesc').value = '';
+  $('propFrom').value = '';
+  $('propUntil').value = '';
+  $('propItemName').required = true;
+  $('propItemDesc').required = true;
+
   modal.classList.remove('hidden');
+
   form.onsubmit=async(e)=>{
     e.preventDefault();
-    const name=$('propItemName').value;
-    const desc=$('propItemDesc').value;
+    let proposalItemId = select.value;
+    let name = $('propItemName').value;
+    let desc = $('propItemDesc').value;
     const sd=$('propFrom').value;
     const ed=$('propUntil').value;
+
+    // If a new item is being created
+    if (!proposalItemId) {
+      const resNew = await fetch(`${API}/items`,{method:'POST',headers:{'Content-Type':'application/json','X-Sharer-User-Id':u.id},
+        body:JSON.stringify({name,category:'Autre',quality:'good',description:desc,photo_url:'',available_from:sd||null,available_until:ed||null,type:'offer'})
+      });
+      const newItem = await resNew.json();
+      proposalItemId = newItem.id;
+    } else {
+      const opt = select.selectedOptions[0];
+      name = opt.dataset.name;
+      desc = opt.dataset.desc;
+    }
     
-    const res=await fetch(`${API}/items/${itemId}/propose`,{
+    const res=await fetch(`${API}/items/${proposalItemId}/propose`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({lender_id:getUser().id, borrower_id:other, item_name:name, item_desc:desc, start_date:sd, end_date:ed})
+      body:JSON.stringify({lender_id:u.id, borrower_id:otherUserId, item_name:name, item_desc:desc, start_date:sd, end_date:ed, discussion_item_id: demandItemId})
     });
     
     if(res.ok){
@@ -803,6 +960,16 @@ async function loadLoans(){
   if(paginationText) paginationText.textContent = `1-${loans.length} of ${loans.length}`;
 }
 window.handleLoan=async(id,status)=>{
+  if (status === 'completed') {
+    const u = getUser();
+    const res = await fetch(`${API}/loans/user/${u.id}`);
+    const loans = await res.json();
+    const tx = loans.find(l => l.id == id);
+    if (tx) {
+      const otherId = tx.owner_id === u.id ? tx.borrower_id : tx.owner_id;
+      return handleLoanAndUpdate(id, status, tx.item_id, otherId);
+    }
+  }
   await fetch(`${API}/loans/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status, requester_id: getUser().id})});
   notify(status==='accepted'?'Prêt accepté !':status==='rejected'?'Prêt refusé.':status==='request_end'?'Demande envoyée.':'Prêt terminé.');
   loadLoans();
