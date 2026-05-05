@@ -77,7 +77,7 @@ body {
 }
 .chat-info-sidebar h4 { font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; }
 .chat-info-img { width: 100%; aspect-ratio: 4/3; border-radius: 10px; overflow: hidden; background: white; border: 1px solid #f0f0f0; }
-.chat-info-img img { width: 100%; h-full; object-cover; }
+.chat-info-img img { width: 100%; height: 100%; object-fit: cover; }
 .chat-info-item-name { font-size: 15px; font-weight: 800; color: #111827; margin-top: 4px; }
 .chat-info-section { padding-top: 16px; border-top: 1px solid #f0f0f0; }
 .chat-info-desc { font-size: 12.5px; color: #4b5563; line-height: 1.5; margin-top: 8px; }
