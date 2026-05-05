@@ -339,7 +339,7 @@ router.patch("/api/loans/:id", async (ctx) => {
         [discussionItemId, requester_id, otherId, tx.id]
       );
       const s = connectedUsers.get(otherId);
-      if (s) s.send(JSON.stringify({ type: "DISCUSSION_ENDED", data: { item_id: discussionItemId } }));
+      if (s) s.send(JSON.stringify({ type: "DISCUSSION_ENDED", data: { item_id: discussionItemId, loan_id: tx.id, other_id: requester_id } }));
     }
     ctx.response.body = { success: true };
   } catch (e) { console.error(e); ctx.response.status = 500; ctx.response.body = { message: "Erreur." }; }

@@ -48,7 +48,7 @@ window.submitReview = async () => {
     notify('Merci pour votre avis !');
     
     // If owner chose to re-lend
-    if ($('reLendOption').classList.contains('!block')) {
+    if (!$('reLendOption').classList.contains('hidden')) {
        await reLendItem(currentItemId, currentReLendChoice);
     }
     
@@ -187,6 +187,27 @@ window.submitExtension=async()=>{
   if (location.pathname==='/messages') loadMessages();
 };
 
+window.promptExtension = (loanId) => {
+    const modal = $('extendLoanModal');
+    if (!modal) return;
+    modal.dataset.loanId = loanId;
+    $('newExtendUntil').value = '';
+    showModal('extendLoanModal');
+};
+
+window.submitNewExtension = async () => {
+    const modal = $('extendLoanModal');
+    const loanId = modal.dataset.loanId;
+    const date = $('newExtendUntil').value;
+    if (!loanId || !date) return notify('Veuillez choisir une date', 'error');
+    
+    await fetch(`${API}/loans/${loanId}/extend`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({new_end_date: date, requester_id: getUser().id})});
+    
+    hideModal('extendLoanModal');
+    notify('Demande d\'extension envoyée');
+    if (location.pathname==='/messages') loadMessages();
+};
+
 window.navigate=(p)=>{history.pushState({},'',p);handleRoute();};
 const handleRoute=()=>{
   const p=location.pathname;
@@ -221,7 +242,43 @@ function initWS(){if(!isLoggedIn())return;const u=getUser();if(socket)socket.clo
         const itemRes = await fetch(`${API}/items/${m.data.item_id}`);
         const item = await itemRes.json().catch(()=>({}));
 
-        if (item.owner_id === u.id) {
+        // Hide discussion from messages list for this user too
+        await fetch(`${API}/messages/end-discussion`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:m.data.item_id,user_id:u.id})});
+
+        if (m.data.loan_id && m.data.other_id) {
+           currentTransactionId = m.data.loan_id;
+           currentRevieweeId = m.data.other_id;
+           currentItemId = m.data.item_id;
+           currentRating = 0;
+           $('reviewComment').value = '';
+           document.querySelectorAll('.star-btn').forEach(btn => btn.classList.add('grayscale'));
+           
+           const txsRes = await fetch(`${API}/loans/user/${u.id}`);
+           const txs = await txsRes.json();
+           const tx = txs.find(t => t.id === m.data.loan_id);
+           const otherName = tx ? (tx.owner_id === u.id ? tx.borrower_name : tx.owner_name) : 'cet utilisateur';
+           $('reviewTargetName').textContent = `Comment s'est passé l'échange avec ${otherName} ?`;
+
+           if (item.owner_id === u.id) {
+              $('reLendOption').classList.remove('hidden');
+              currentReLendChoice = true;
+              $('reLendYes').onclick = () => { 
+                 currentReLendChoice = true;
+                 $('reLendYes').classList.add('bg-emerald-50','border-emerald-600');
+                 $('reLendNo').classList.remove('bg-gray-50','border-gray-300');
+              };
+              $('reLendNo').onclick = () => { 
+                 currentReLendChoice = false;
+                 $('reLendNo').classList.add('bg-gray-50','border-gray-300');
+                 $('reLendYes').classList.remove('bg-emerald-50','border-emerald-600');
+              };
+              $('reLendYes').classList.add('bg-emerald-50','border-emerald-600');
+              $('reLendNo').classList.remove('bg-gray-50','border-gray-300');
+           } else {
+              $('reLendOption').classList.add('hidden');
+           }
+           showModal('reviewModal');
+        } else if (item.owner_id === u.id) {
            const modal = $('lendAgainModal');
            if (modal) {
              modal.classList.remove('hidden');
@@ -549,7 +606,11 @@ async function renderChat(itemId,other){
       statusBanner = `
         <div class="bg-emerald-50 px-4 py-2 text-[11px] font-black text-emerald-700 uppercase tracking-widest flex items-center justify-between border-b border-emerald-100">
           <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Prêt en cours</div>
-          ${hasRequestedEnd ? '<span class="text-[9px] text-emerald-600 opacity-60">Fin demandée</span>' : `<button onclick="handleLoanAndUpdate(${tx.id},'request_end',${targetItem},${targetOther})" class="bg-emerald-600 text-white px-3 py-1 rounded shadow-sm hover:bg-emerald-700 transition-colors">Terminer le prêt</button>`}
+          ${hasRequestedEnd ? '<span class="text-[9px] text-emerald-600 opacity-60">Fin demandée</span>' : `
+            <div class="flex gap-2">
+              <button onclick="promptExtension(${tx.id})" class="bg-blue-600 text-white px-3 py-1 rounded shadow-sm hover:bg-blue-700 transition-colors">Prolonger</button>
+              <button onclick="handleLoanAndUpdate(${tx.id},'request_end',${targetItem},${targetOther})" class="bg-emerald-600 text-white px-3 py-1 rounded shadow-sm hover:bg-emerald-700 transition-colors">Terminer</button>
+            </div>`}
         </div>`;
     }
   }
@@ -754,7 +815,7 @@ window.handleLoanAndUpdate=async(id,status,itemId,other)=>{
 
     // Show re-lend option only for owner
     if (item.owner_id === u.id) {
-       $('reLendOption').classList.add('!block');
+       $('reLendOption').classList.remove('hidden');
        currentReLendChoice = true; // Default to yes
        $('reLendYes').onclick = () => { 
           currentReLendChoice = true;
@@ -770,7 +831,7 @@ window.handleLoanAndUpdate=async(id,status,itemId,other)=>{
        $('reLendYes').classList.add('bg-emerald-50','border-emerald-600');
        $('reLendNo').classList.remove('bg-gray-50','border-gray-300');
     } else {
-       $('reLendOption').classList.remove('!block');
+       $('reLendOption').classList.add('hidden');
     }
 
     showModal('reviewModal');

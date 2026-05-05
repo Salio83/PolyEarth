@@ -1,0 +1,264 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PolyEarth — Styles globaux */
+body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #1f2937;
+}
+
+#content { transition: opacity 0.25s ease; }
+
+/* Animations */
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes scaleUp { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+@keyframes slideIn { from { transform:translateX(-8px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.6;} }
+
+.animate-fade-in  { animation: fadeIn  0.35s ease-out forwards; }
+.animate-scale-up { animation: scaleUp 0.25s ease-out forwards; }
+.animate-slide-in { animation: slideIn 0.25s ease-out forwards; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:#f9fafb; }
+::-webkit-scrollbar-thumb { background:#e5e7eb; border-radius:10px; }
+::-webkit-scrollbar-thumb:hover { background:#d1d5db; }
+
+/* Badges qualité */
+.badge-quality { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; }
+.badge-new      { background:#f3e8ff; color:#7c3aed; }
+.badge-very_good{ background:#d1fae5; color:#065f46; }
+.badge-good     { background:#dbeafe; color:#1d4ed8; }
+.badge-fair     { background:#ffedd5; color:#c2410c; }
+.badge-poor     { background:#fee2e2; color:#b91c1c; }
+
+/* Badges catégorie */
+.badge-cat { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:700; background:#f3f4f6; color:#374151; }
+
+/* Badge dispo */
+.badge-available   { background:#d1fae5; color:#065f46; }
+.badge-unavailable { background:#fef3c7; color:#92400e; }
+.badge-status      { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+
+/* Badge retard */
+.badge-overdue { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:2px 10px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; animation:pulse 1.5s infinite; }
+
+/* ─── Messages layout 3 colonnes ─── */
+.messages-layout {
+    display: grid;
+    grid-template-columns: 268px 1fr 280px;
+    height: calc(100vh - 88px);
+    border: 1px solid #f0f0f0;
+    border-radius: 14px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 2px 16px rgba(0,0,0,.05);
+}
+@media (max-width: 1024px) {
+    .messages-layout { grid-template-columns: 268px 1fr; }
+    .chat-info-sidebar { display: none; }
+}
+@media (max-width: 768px) {
+    .messages-layout { grid-template-columns: 1fr; }
+    .chat-panel.hidden-mobile { display: none; }
+    .conv-sidebar.hidden-mobile { display: none; }
+}
+
+.chat-info-sidebar {
+    border-left: 1px solid #f3f4f6;
+    background: #fafafa;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.chat-info-sidebar h4 { font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; }
+.chat-info-img { width: 100%; aspect-ratio: 4/3; border-radius: 10px; overflow: hidden; background: white; border: 1px solid #f0f0f0; }
+.chat-info-img img { width: 100%; h-full; object-cover; }
+.chat-info-item-name { font-size: 15px; font-weight: 800; color: #111827; margin-top: 4px; }
+.chat-info-section { padding-top: 16px; border-top: 1px solid #f0f0f0; }
+.chat-info-desc { font-size: 12.5px; color: #4b5563; line-height: 1.5; margin-top: 8px; }
+
+
+.conv-sidebar {
+    border-right: 1px solid #f3f4f6;
+    overflow-y: auto;
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+}
+.conv-sidebar-header {
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -.01em;
+    flex-shrink: 0;
+}
+
+.conv-item {
+    padding: 11px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f5f5f5;
+    transition: background 0.12s;
+}
+.conv-item:hover  { background: #f0fdf4; }
+.conv-item.active { background: #ecfdf5; border-left: 3px solid #059669; padding-left: 11px; }
+
+.chat-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f9fafb;
+}
+
+.chat-header-bar {
+    background: white;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Message bubbles */
+.msg-bubble {
+    max-width: 72%;
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    font-weight: 450;
+    word-break: break-word;
+}
+.msg-bubble.sent     { align-self:flex-end; background:#059669; color:white; border-bottom-right-radius:4px; }
+.msg-bubble.received { align-self:flex-start; background:white; color:#1f2937; border:1px solid #ebebeb; border-bottom-left-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+.msg-bubble.system   { align-self:center; background:#f0fdf4; color:#065f46; font-size:12px; border-radius:999px; padding:4px 14px; font-weight:600; border:1px solid #d1fae5; }
+
+/* Loan request card bubble */
+.msg-loan-card {
+    max-width: 80%;
+    background: white;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.msg-loan-card.sent { align-self: flex-end; border-color: #a7f3d0; }
+.msg-loan-card.received { align-self: flex-start; }
+.msg-loan-card-header { padding: 10px 14px 8px; background: #f9fafb; border-bottom: 1px solid #f0f0f0; }
+.msg-loan-card-body { padding: 10px 14px; }
+.msg-loan-card-actions { padding: 8px 14px 12px; display: flex; gap: 8px; }
+.msg-loan-card-actions button { flex: 1; padding: 7px 0; border-radius: 8px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: opacity .15s; }
+.msg-loan-card-actions button:hover { opacity: .85; }
+.btn-accept { background: #059669; color: white; }
+.btn-reject { background: #fee2e2; color: #dc2626; }
+.btn-counter { background: #f3f4f6; color: #374151; }
+
+/* End/extension request card */
+.msg-end-card {
+    max-width: 80%;
+    background: #fff7ed;
+    border: 1.5px solid #fed7aa;
+    border-radius: 14px;
+    overflow: hidden;
+    padding: 12px 14px;
+    align-self: flex-start;
+}
+.msg-end-card.sent { background: #f0fdf4; border-color: #a7f3d0; align-self: flex-end; }
+.msg-end-card-actions { display: flex; gap: 8px; margin-top: 10px; }
+.msg-end-card-actions button { flex: 1; padding: 7px 0; border-radius: 8px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: opacity .15s; }
+
+/* Chat input bar */
+.chat-input-bar {
+    border-top: 1px solid #f0f0f0;
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    background: white;
+    align-items: center;
+    flex-shrink: 0;
+}
+.chat-input-bar input { flex: 1; padding: 9px 12px; background: #f5f5f5; border: 1.5px solid transparent; border-radius: 22px; outline: none; font-size: 13.5px; font-family: inherit; transition: border-color .15s; }
+.chat-input-bar input:focus { border-color: #059669; background: white; }
+
+.chat-loan-btn {
+    padding: 8px 12px;
+    background: #f0fdf4;
+    color: #059669;
+    border: 1.5px solid #a7f3d0;
+    border-radius: 22px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .15s;
+    flex-shrink: 0;
+}
+.chat-loan-btn:hover { background: #d1fae5; }
+.chat-loan-btn.active { background: #059669; color: white; border-color: #059669; }
+
+/* Inline loan form in input bar */
+.chat-loan-form {
+    background: white;
+    border-top: 1px solid #f0f0f0;
+    padding: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+.chat-loan-form label { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; display: block; margin-bottom: 3px; }
+.chat-loan-form input[type=date] { padding: 6px 8px; background: #f5f5f5; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 12px; outline: none; }
+
+/* Item cards */
+.item-card {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #f3f4f6;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.item-card:hover {
+    border-color: #059669;
+    box-shadow: 0 4px 16px rgba(5,150,105,.1);
+    transform: translateY(-2px);
+}
+
+/* Loan status pills */
+.loan-pill { padding:3px 10px; border-radius:999px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+.loan-pending   { background:#fef3c7; color:#92400e; }
+.loan-accepted  { background:#d1fae5; color:#065f46; }
+.loan-rejected  { background:#fee2e2; color:#b91c1c; }
+.loan-completed { background:#e0e7ff; color:#3730a3; }
+.loan-waiting-end { background:#fef3c7; color:#92400e; }
+
+/* Category filter pills */
+.cat-pill { padding:5px 12px; border-radius:999px; font-size:12px; font-weight:700; cursor:pointer; border:2px solid transparent; transition:all 0.15s; background:#f3f4f6; color:#374151; }
+.cat-pill:hover  { background:#d1fae5; color:#065f46; }
+.cat-pill.active { background:#059669; color:white; border-color:#059669; }
+
+/* Scrollbar hide utility */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Custom transitions and states */
+.nav-link { position: relative; }
+.nav-link.active::after { content: ''; position: absolute; bottom: 0; left: 24px; right: 24px; height: 2px; background: #00635d; border-radius: 99px; }
+
+/* Focus teal ring */
+.focus-teal:focus { --tw-ring-color: rgba(0, 99, 93, 0.2); outline: none; border-color: #00635d; }
+
+/* Animation tweaks */
+.group:hover .group-hover-rotate { transform: rotate(12deg); }

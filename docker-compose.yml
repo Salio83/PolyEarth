@@ -5,7 +5,7 @@ services:
     image: postgres:14.7-alpine
     container_name: "db-polyearth"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       - POSTGRES_DB=polyearth
       - POSTGRES_USER=root

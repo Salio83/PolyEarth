@@ -90,6 +90,20 @@
         </div>
     </div>
 
+    <div id="extendLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
+            <h3 class="text-2xl font-black text-gray-900 mb-4">Prolonger le prêt</h3>
+            <p class="text-gray-600 font-medium mb-6 leading-relaxed">Jusqu'à quelle date souhaitez-vous prolonger ce prêt ?</p>
+            <div class="space-y-4">
+                <input id="newExtendUntil" type="date" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold">
+                <div class="flex gap-4 mt-4">
+                    <button onclick="submitNewExtension()" class="flex-1 bg-blue-700 text-white py-4 rounded-lg font-black hover:bg-blue-800 transition-all">Envoyer</button>
+                    <button onclick="hideModal('extendLoanModal')" class="flex-1 text-gray-400 font-bold hover:bg-gray-50 rounded-lg transition-all">Annuler</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="lendAgainModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
         <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
             <h3 class="text-2xl font-black text-gray-900 mb-4">Prêt terminé ! 🥳</h3>
@@ -235,7 +249,7 @@
                     <button id="reLendNo" class="flex-1 py-3 rounded-lg border-2 border-gray-200 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">NON, fini</button>
                 </div>
             </div>
-
+            
             <button onclick="submitReview()" class="w-full bg-duck text-white py-4 rounded-lg font-black shadow-lg hover:bg-duck-dark transition-all">Valider</button>
         </div>
     </div>
