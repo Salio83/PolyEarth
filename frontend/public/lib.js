@@ -71,3 +71,26 @@ export const dispoBadge = (from, until, status) => {
 
 export const showModal = (id) => $(id)?.classList.remove('hidden');
 export const hideModal = (id) => $(id)?.classList.add('hidden');
+
+// JWT FETCH WRAPPER
+const originalFetch = window.fetch;
+window.fetch = async (input, init = {}) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        init.headers = {
+            ...init.headers,
+            'Authorization': `Bearer ${token}`
+        };
+    }
+    const res = await originalFetch(input, init);
+    if (res.status === 401 && !input.toString().includes('/api/auth/')) {
+        // Token expiré ou invalide - nettoyer et rediriger
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if (!window.location.pathname.startsWith('/login')) {
+            window.location.href = '/login';
+        }
+        return res; // retourner la réponse 401 sans throw pour éviter les boucles
+    }
+    return res;
+};

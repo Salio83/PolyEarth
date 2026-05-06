@@ -1,6 +1,34 @@
 import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { Client } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { create, verify, getNumericDate } from "https://deno.land/x/djwt@v2.9.1/mod.ts";
+
+const jwtKeyStr = Deno.env.get("JWT_SECRET") || "poly_earth_super_secret_key_change_in_prod";
+const jwtKey = await crypto.subtle.importKey(
+  "raw",
+  new TextEncoder().encode(jwtKeyStr.padEnd(32, "0").slice(0, 32)),
+  { name: "HMAC", hash: "SHA-512" },
+  false,
+  ["sign", "verify"]
+);
+
+async function authMiddleware(ctx: any, next: () => Promise<unknown>) {
+  const authHeader = ctx.request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    ctx.response.status = 401;
+    ctx.response.body = { message: "Non autorisé" };
+    return;
+  }
+  const token = authHeader.split(" ")[1];
+  try {
+    const payload = await verify(token, jwtKey);
+    ctx.state.userId = payload.id;
+    await next();
+  } catch (err) {
+    ctx.response.status = 401;
+    ctx.response.body = { message: "Token invalide ou expiré" };
+  }
+}
 
 const connectedUsers = new Map<number, WebSocket>();
 
@@ -10,7 +38,13 @@ async function sendVerificationEmail(email: string, _name: string, token: string
   //todo
 }
 
-const client = new Client({ user: "root", database: "polyearth", hostname: "db", password: "root", port: 5432 });
+const client = new Client({
+  user: Deno.env.get("DB_USER") || "root",
+  database: Deno.env.get("DB_NAME") || "polyearth",
+  hostname: Deno.env.get("DB_HOST") || "db",
+  password: Deno.env.get("DB_PASS") || "root",
+  port: parseInt(Deno.env.get("DB_PORT") || "5432")
+});
 
 async function connectWithRetry() {
   while (true) {
@@ -64,9 +98,17 @@ await connectWithRetry();
 const router = new Router();
 
 // --- WEBSOCKET ---
-router.get("/ws/:userId", (ctx) => {
+router.get("/ws/:userId", async (ctx) => {
   if (!ctx.isUpgradable) ctx.throw(400, "Not upgradable");
   const userId = parseInt(ctx.params.userId);
+  const token = ctx.request.url.searchParams.get("token");
+  if (!token) { ctx.response.status = 401; return; }
+  try {
+    const payload = await verify(token, jwtKey);
+    if (payload.id !== userId) { ctx.response.status = 403; return; }
+  } catch {
+    ctx.response.status = 401; return;
+  }
   const socket = ctx.upgrade();
   socket.onopen = () => { connectedUsers.set(userId, socket); };
   socket.onclose = () => { connectedUsers.delete(userId); };
@@ -94,7 +136,8 @@ router.post("/api/auth/login", async (ctx) => {
   const user = r.rows[0] as any;
   if (user && await bcrypt.compare(password, user.password)) {
     if (!user.is_verified) { ctx.response.status = 403; return; }
-    ctx.response.body = { id: user.id, name: user.name, email: user.email, school: user.school, photo_url: user.photo_url, rating: user.rating, transaction_count: user.transaction_count };
+    const jwt = await create({ alg: "HS512", typ: "JWT" }, { id: user.id, exp: getNumericDate(60 * 60 * 24 * 7) }, jwtKey);
+    ctx.response.body = { token: jwt, user: { id: user.id, name: user.name, email: user.email, school: user.school, photo_url: user.photo_url, rating: user.rating, transaction_count: user.transaction_count } };
   } else ctx.response.status = 401;
 });
 
@@ -154,7 +197,7 @@ router.get("/api/items", async (ctx) => {
 router.post("/api/items", async (ctx) => {
   try {
     const body = await ctx.request.body({ type: "json", limit: "10mb" }).value;
-    const userId = ctx.request.headers.get("X-Sharer-User-Id");
+    const userId = ctx.state.userId;
     const r = await client.queryObject(
       "INSERT INTO items (name,description,owner_id,category,quality,photo_url,available_from,available_until,type) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *",
       [body.name, body.description, parseInt(userId!), body.category, body.quality || "good", body.photo_url || null, body.available_from || null, body.available_until || null, body.type || 'offer']
@@ -179,7 +222,7 @@ router.get("/api/items/:id", async (ctx) => {
 router.patch("/api/items/:id/status", async (ctx) => {
   try {
     const { status } = await ctx.request.body({ type: "json" }).value;
-    const userId = ctx.request.headers.get("X-Sharer-User-Id");
+    const userId = ctx.state.userId;
     // Verify ownership
     const itemRes = await client.queryObject("SELECT owner_id FROM items WHERE id=$1", [ctx.params.id]);
     if (itemRes.rows.length === 0) { ctx.response.status = 404; return; }
@@ -191,7 +234,7 @@ router.patch("/api/items/:id/status", async (ctx) => {
 });
 
 router.delete("/api/items/:id", async (ctx) => {
-  const userId = ctx.request.headers.get("X-Sharer-User-Id");
+  const userId = ctx.state.userId;
   try {
     const itemRes = await client.queryObject("SELECT id, status FROM items WHERE id=$1 AND owner_id=$2", [ctx.params.id, userId]);
     if (itemRes.rows.length === 0) {
@@ -213,7 +256,8 @@ router.delete("/api/items/:id", async (ctx) => {
 // --- LOAN REQUESTS ---
 router.post("/api/items/:id/reserve", async (ctx) => {
   try {
-    const { borrower_id, start_date, end_date } = await ctx.request.body({ type: "json" }).value;
+    const { start_date, end_date } = await ctx.request.body({ type: "json" }).value;
+    const borrower_id = ctx.state.userId;
     const itemRes = await client.queryObject("SELECT owner_id, status FROM items WHERE id=$1", [ctx.params.id]);
     const item = itemRes.rows[0] as any;
     if (!item) { ctx.response.status = 404; ctx.response.body = { message: "Objet introuvable." }; return; }
@@ -251,7 +295,9 @@ router.post("/api/items/:id/reserve", async (ctx) => {
 
 router.post("/api/items/:id/propose", async (ctx) => {
   try {
-    const { lender_id, borrower_id, item_name, item_desc, start_date, end_date, discussion_item_id } = await ctx.request.body({ type: "json" }).value;
+    const { item_name, item_desc, start_date, end_date, discussion_item_id, borrower_id } = await ctx.request.body({ type: "json" }).value;
+    const lender_id = ctx.state.userId;
+    if (!borrower_id) { ctx.response.status = 400; return; }
 
     // Create transaction
     const txRes = await client.queryObject(
@@ -291,7 +337,8 @@ router.get("/api/loans/user/:userId", async (ctx) => {
 router.patch("/api/loans/:id", async (ctx) => {
   try {
     const body = await ctx.request.body({ type: "json" }).value;
-    const { status, requester_id } = body;
+    const { status } = body;
+    const requester_id = ctx.state.userId;
     const txRes0 = await client.queryObject("SELECT * FROM transactions WHERE id=$1", [ctx.params.id]);
     const tx = txRes0.rows[0] as any;
     if (!tx) { ctx.response.status = 404; return; }
@@ -361,7 +408,8 @@ router.get("/api/loans/overdue/:userId", async (ctx) => {
 // Extension request
 router.post("/api/loans/:id/extend", async (ctx) => {
   try {
-    const { new_end_date, requester_id } = await ctx.request.body({ type: "json" }).value;
+    const { new_end_date } = await ctx.request.body({ type: "json" }).value;
+    const requester_id = ctx.state.userId;
     const txRes = await client.queryObject("SELECT * FROM transactions WHERE id=$1", [ctx.params.id]);
     const tx = txRes.rows[0] as any;
     if (!tx) { ctx.response.status = 404; return; }
@@ -381,13 +429,14 @@ router.post("/api/loans/:id/extend", async (ctx) => {
 // Accept/reject extension
 router.patch("/api/loans/:id/extend", async (ctx) => {
   try {
-    const { accepted, new_end_date, requester_id } = await ctx.request.body({ type: "json" }).value;
+    const { action, new_end_date } = await ctx.request.body({ type: "json" }).value;
+    const requester_id = ctx.state.userId;
     const txRes = await client.queryObject("SELECT * FROM transactions WHERE id=$1", [ctx.params.id]);
     const tx = txRes.rows[0] as any;
     if (!tx) { ctx.response.status = 404; return; }
     const otherId = tx.owner_id === requester_id ? tx.borrower_id : tx.owner_id;
     const fmt = (d: string) => new Date(d).toLocaleDateString("fr-FR");
-    if (accepted) {
+    if (action === 'accept') {
       await client.queryObject("UPDATE transactions SET end_date=$1 WHERE id=$2", [new_end_date, ctx.params.id]);
       await client.queryObject(
         "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'system',$5)",
@@ -437,7 +486,8 @@ router.patch("/api/messages/:id/read", async (ctx) => {
 
 router.post("/api/messages", async (ctx) => {
   try {
-    const { item_id, sender_id, receiver_id, content } = await ctx.request.body({ type: "json" }).value;
+    const { item_id, receiver_id, content } = await ctx.request.body({ type: "json" }).value;
+    const sender_id = ctx.state.userId;
     
     // Check if item still exists
     const itemRes = await client.queryObject("SELECT id, status FROM items WHERE id=$1", [item_id]);
@@ -470,7 +520,8 @@ router.post("/api/messages", async (ctx) => {
 // --- MARK ALL MESSAGES READ FOR ITEM/USER ---
 router.post("/api/messages/read-all", async (ctx) => {
   try {
-    const { item_id, user_id } = await ctx.request.body({ type: "json" }).value;
+    const { item_id } = await ctx.request.body({ type: "json" }).value;
+    const user_id = ctx.state.userId;
     await client.queryObject(
       "UPDATE messages SET is_read=true, read_at=CURRENT_TIMESTAMP WHERE item_id=$1 AND receiver_id=$2 AND is_read=false",
       [item_id, user_id]
@@ -481,7 +532,8 @@ router.post("/api/messages/read-all", async (ctx) => {
 
 router.post("/api/messages/end-discussion", async (ctx) => {
   try {
-    const { item_id, user_id } = await ctx.request.body({ type: "json" }).value;
+    const { item_id } = await ctx.request.body({ type: "json" }).value;
+    const user_id = ctx.state.userId;
     // To 'end' a discussion for a user, we can delete the messages where they are sender or receiver for this item.
     // A simpler approach to hide it from both without deleting the actual history is to delete it if they both "end" it,
     // but deleting messages completely for that item is what we will do for simplicity.
@@ -519,8 +571,8 @@ router.get("/api/loans/active/:itemId/:userId", async (ctx) => {
 // --- REVIEWS ---
 router.post("/api/reviews", async (ctx) => {
   try {
-    const { transaction_id, reviewer_id, reviewee_id, rating, comment } = await ctx.request.body({ type: "json" }).value;
-    
+    const { transaction_id, reviewee_id, rating, comment } = await ctx.request.body({ type: "json" }).value;
+    const reviewer_id = ctx.state.userId;
     // Check if a review already exists for this transaction and reviewer
     const existing = await client.queryObject(
       "SELECT id FROM reviews WHERE transaction_id=$1 AND reviewer_id=$2",
@@ -563,9 +615,43 @@ const app = new Application();
 app.use(async (ctx, next) => {
   ctx.response.headers.set("Access-Control-Allow-Origin", "*");
   ctx.response.headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
-  ctx.response.headers.set("Access-Control-Allow-Headers", "*");
-  if (ctx.request.method === "OPTIONS") ctx.response.status = 204;
-  else await next();
+  ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+  if (ctx.request.method === "OPTIONS") {
+    ctx.response.status = 204;
+    return;
+  }
+
+  const path = ctx.request.url.pathname;
+  if (
+    path.startsWith("/api/auth/") ||
+    path.startsWith("/ws/") ||
+    (path === "/api/items" && ctx.request.method === "GET") ||
+    (path.match(/^\/api\/items\/\d+$/) && ctx.request.method === "GET") ||
+    (path.match(/^\/api\/users\/\d+$/) && ctx.request.method === "GET")
+  ) {
+    await next();
+    return;
+  }
+
+  if (path.startsWith("/api/")) {
+    const authHeader = ctx.request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      ctx.response.status = 401;
+      ctx.response.body = { message: "Non autorisé" };
+      return;
+    }
+    try {
+      const token = authHeader.split(" ")[1];
+      const payload = await verify(token, jwtKey);
+      ctx.state.userId = payload.id;
+      await next();
+    } catch (err) {
+      ctx.response.status = 401;
+      ctx.response.body = { message: "Token invalide ou expiré" };
+    }
+  } else {
+    await next();
+  }
 });
 app.use(router.routes());
 app.use(router.allowedMethods());

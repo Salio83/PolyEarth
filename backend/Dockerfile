@@ -4,11 +4,10 @@ WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
 
 # copier les dépendances en root
-COPY ./deps.ts ./
 COPY ./main.ts ./
 
 # Pré-téléchargement des dépendances
-RUN deno cache main.ts
+RUN deno cache main.ts && chown -R app:app /deno-dir
 
 EXPOSE 8000
 # copier le code en attribuant les droits à l'utilisateur non-root

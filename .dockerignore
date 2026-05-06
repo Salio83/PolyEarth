@@ -1,28 +1,37 @@
-# Dépendances (réinstallées dans l'image)
-node_modules/
-vendor/
-__pycache__/
-*.pyc
-
 # Git et IDE
 .git/
 .gitignore
 .vscode/
 .idea/
 *.swp
+.DS_Store
+Thumbs.db
 
-# Fichiers de build locaux
+# Dépendances (réinstallées dans l'image)
+node_modules/
+vendor/
+
+# Fichiers de build locaux et logs
 dist/
 build/
 *.log
+npm-debug.log*
 
 # Secrets et config locale (CRITIQUE : risque d'exfiltration)
 .env
-.env.local
+.env.*
 *.pem
 *.key
+certs/
 
-# Docker (optionnel — à exclure si remote build)
-# Dockerfile*
-# docker-compose*.yml
-# .dockerignore
+# Docker et Docs (Inutiles dans l'image finale)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+DEPLOY.md
+README.md
+
+# Bases de données locales
+docker-data/
+postgres-data/
+db-data/

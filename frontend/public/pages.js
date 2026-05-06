@@ -231,26 +231,69 @@ export const offresPage = () => `
 `;
 
 export const demandesPage = () => `
-    <div class="flex flex-col lg:flex-row gap-8">
-        <aside class="w-full lg:w-64 space-y-4">
-            <button onclick="showModal('modal')" class="w-full bg-duck text-white p-4 rounded-lg font-black hover:bg-duck-dark shadow-lg shadow-duck/10 transition-all flex items-center justify-center gap-2">
-                <span>🔍 Publier une demande</span>
+    <div class="space-y-8 animate-fade-in pb-20">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div class="space-y-1">
+                <h1 class="text-4xl font-black text-gray-900 tracking-tight">Ils recherchent...</h1>
+                <p class="text-gray-400 font-medium">Aidez d'autres étudiants en leur prêtant ce dont ils ont besoin</p>
+            </div>
+            <button onclick="showModal('modal')" class="bg-duck text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 hover:bg-duck-dark transition-all shadow-xl shadow-duck/20">
+                <i data-lucide="search" class="w-5 h-5"></i>
+                Publier une demande
             </button>
-            <div class="bg-white p-6 rounded-xl border border-gray-100">
-                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Catégories</h4>
-                <div class="space-y-2">
-                    ${['all', 'Matériel', 'Livres', 'Services', 'Sport', 'Autre'].map(c => `
-                        <button onclick="filterCat('${c}')" data-cat="${c}" class="cat-pill w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${c === 'all' ? 'active' : ''}">
-                            ${c === 'all' ? '📦 Toutes' : `${catIcon(c)} ${c}`}
-                        </button>
-                    `).join('')}
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            <aside class="w-full lg:w-64 space-y-4">
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 ml-1">Catégories</h4>
+                    <div class="space-y-2">
+                        ${['all', 'Matériel', 'Livres', 'Services', 'Sport', 'Autre'].map(c => `
+                            <button onclick="filterCat('${c}')" data-cat="${c}" class="cat-pill w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${c === 'all' ? 'active' : ''}">
+                                ${c === 'all' ? '📦 Toutes' : `${catIcon(c)} ${c}`}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            </aside>
+            <main class="flex-1">
+                <div id="demandsGrid" class="flex flex-col gap-4"></div>
+            </main>
+        </div>
+    </div>
+`;
+
+export const demandCard = (i) => `
+    <div onclick="navigate('/item/${i.id}')" class="bg-white p-6 rounded-3xl border border-gray-100 hover:border-duck/20 hover:shadow-xl hover:shadow-duck/5 transition-all cursor-pointer group">
+        <div class="flex flex-col md:flex-row md:items-center gap-6">
+            <div class="flex-1 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        ${catBadge(i.category)}
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Mis en ligne le ${fmtDate(i.created_at)}</span>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-black text-gray-900 group-hover:text-duck transition-colors">${i.name}</h3>
+                <p class="text-gray-500 font-medium line-clamp-2 text-sm">${i.description || 'Pas de description.'}</p>
+                <div class="flex flex-wrap items-center gap-6 pt-2">
+                    <div class="flex items-center gap-2" onclick="event.stopPropagation();navigate('/profile/${i.owner_id}')">
+                        <div class="w-8 h-8 rounded-full overflow-hidden bg-duck/10 border border-white shadow-sm">
+                            ${i.owner_photo ? `<img src="${i.owner_photo}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(i.owner_name)}&background=00635d&color=fff" class="w-full h-full object-cover">`}
+                        </div>
+                        <span class="text-sm font-bold text-gray-900 hover:text-duck transition-colors">${i.owner_name}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                        <i data-lucide="calendar" class="w-4 h-4 text-duck"></i>
+                        <span class="text-xs font-bold">Besoin pour le : <span class="text-gray-900">${fmtDate(i.available_from) || 'À convenir'}</span></span>
+                    </div>
                 </div>
             </div>
-        </aside>
-        <main class="flex-1">
-            <h2 class="text-3xl font-black text-gray-900 mb-8">Ils recherchent...</h2>
-            <div id="demandsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        </main>
+            <div class="md:w-32 flex-shrink-0">
+                <button class="w-full bg-duck text-white py-2.5 rounded-xl font-black shadow-lg shadow-duck/10 hover:bg-duck-dark transition-all text-sm">
+                    Proposer
+                </button>
+            </div>
+        </div>
     </div>
 `;
 

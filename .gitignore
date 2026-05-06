@@ -1,1 +1,36 @@
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.suo
+
+# Environment variables & secrets (Security)
 .env
+.env.*
+*.pem
+*.key
+certs/
+
+# Node / JS / CSS Build
+node_modules/
+dist/
+build/
+.npm/
+
+# Deno
+vendor/
+cov_profile/
+
+# Docker & Database local data
+docker-data/
+postgres-data/
+db-data/

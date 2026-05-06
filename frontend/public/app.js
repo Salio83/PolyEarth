@@ -1,5 +1,5 @@
 import{API,WS_URL,$,isLoggedIn,getUser,notify,readImgB64,fmtDate,catIcon,catBadge,qBadge,stars,dispoBadge,showModal as sm, hideModal as hm}from'./lib.js';
-import{homePage,offresPage,demandesPage,messagesPage,pretsPage,profilPage,userProfilePage,loginPage,registerPage,associationPage,itemCard,itemDetail,loanRow}from'./pages.js';
+import{homePage,offresPage,demandesPage,messagesPage,pretsPage,profilPage,userProfilePage,loginPage,registerPage,associationPage,itemCard,demandCard,itemDetail,loanRow}from'./pages.js';
 
 // --- GLOBALS ---
 window.$ = $;
@@ -62,18 +62,18 @@ window.submitReview = async () => {
 
 // --- ROUTING ---
 const routes={
-  '/'     :()=>{guard();content.innerHTML=homePage();fetchItems('offer');hdr();},
-  '/offres':()=>{guard();content.innerHTML=offresPage();fetchItems('offer');hdr();setCatActive();},
-  '/demandes':()=>{guard();content.innerHTML=demandesPage();fetchItems('demand');hdr();setCatActive();},
-  '/messages':()=>{guard();content.innerHTML=messagesPage();loadMessages();hdr();},
-  '/prets':()=>{guard();content.innerHTML=pretsPage();loadLoans();hdr();},
-  '/profil':()=>{guard();renderMyProfile();},
-  '/profile/:id':(id)=>{guard();renderProfile(id);hdr();},
+  '/'     :()=>{if(!guard())return;content.innerHTML=homePage();fetchItems('offer');hdr();},
+  '/offres':()=>{if(!guard())return;content.innerHTML=offresPage();fetchItems('offer');hdr();setCatActive();},
+  '/demandes':()=>{if(!guard())return;content.innerHTML=demandesPage();fetchItems('demand');hdr();setCatActive();},
+  '/messages':()=>{if(!guard())return;content.innerHTML=messagesPage();loadMessages();hdr();},
+  '/prets':()=>{if(!guard())return;content.innerHTML=pretsPage();loadLoans();hdr();},
+  '/profil':()=>{if(!guard())return;renderMyProfile();},
+  '/profile/:id':(id)=>{if(!guard())return;renderProfile(id);hdr();},
   '/login':()=>{content.innerHTML=loginPage();},
   '/register':()=>{content.innerHTML=registerPage();},
-  '/association':()=>{content.innerHTML=associationPage();hdr();},
+  '/association':()=>{if(!guard())return;content.innerHTML=associationPage();hdr();},
 };
-function guard(){if(!isLoggedIn())return navigate('/login');}
+function guard(){if(!isLoggedIn()){navigate('/login');return false;}return true;}
 function hdr(){
   const u=getUser();
   if(u){
@@ -104,7 +104,7 @@ function hdr(){
 }
 
 async function checkOverdueLoans(){
-  const u=getUser();if(!u)return;
+  const u=getUser();if(!u||!u.id)return;
   // Overdue check
   const resOverdue = await fetch(`${API}/loans/overdue/${u.id}`);
   const overdue = await resOverdue.json().catch(() => []);
@@ -219,7 +219,7 @@ const handleRoute=()=>{
 
   (routes[p]||routes['/'])();
   scrollTo(0,0);
-  checkOverdueLoans();
+  if(isLoggedIn()) checkOverdueLoans();
   if(window.lucide)lucide.createIcons();
 };
 window.onpopstate=handleRoute;
@@ -227,7 +227,7 @@ document.addEventListener('click',e=>{if(e.target.tagName==='A'&&e.target.getAtt
 
 // --- WEBSOCKET ---
 function initWS(){if(!isLoggedIn())return;const u=getUser();if(socket)socket.close();
-  socket=new WebSocket(`${WS_URL}/${u.id}`);
+  socket=new WebSocket(`${WS_URL}/${u.id}?token=${localStorage.getItem('token')}`);
   socket.onmessage=async e=>{const m=JSON.parse(e.data);
     const types = ['NEW_MESSAGE', 'LOAN_ACCEPTED', 'LOAN_REJECTED', 'LOAN_REQUEST', 'DISCUSSION_ENDED'];
     if(types.includes(m.type)){
@@ -303,7 +303,12 @@ function initWS(){if(!isLoggedIn())return;const u=getUser();if(socket)socket.clo
 // --- AUTH ---
 window.doLogin=async e=>{e.preventDefault();
   const res=await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value,password:$('password').value})});
-  if(res.ok){localStorage.setItem('user',JSON.stringify(await res.json()));initWS();navigate('/');}
+  if(res.ok){
+    const data = await res.json();
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user',JSON.stringify(data.user));
+    initWS();navigate('/');
+  }
   else notify('Identifiants incorrects.','error');
 };
 window.doRegister=async e=>{e.preventDefault();
@@ -311,7 +316,7 @@ window.doRegister=async e=>{e.preventDefault();
   if(res.ok){notify('Compte créé ! Vérifiez vos emails.');navigate('/login');}
   else notify("Erreur lors de l'inscription.",'error');
 };
-window.doLogout=()=>{localStorage.removeItem('user');if(socket)socket.close();navigate('/login');};
+window.doLogout=()=>{localStorage.removeItem('user');localStorage.removeItem('token');if(socket)socket.close();navigate('/login');};
 window.updateProfile=async e=>{e.preventDefault();const u=getUser();
   let photo = u.photo_url;
   const f=$('editPhoto').files[0];
@@ -339,7 +344,7 @@ async function fetchItems(type='offer'){
   const items=await(await fetch(`${API}/items?${params}`)).json();
   const grid=type==='demand'?$('demandsGrid'):$('offersGrid');if(!grid)return;
   const uid=getUser()?.id||0;
-  grid.innerHTML=items.filter(i=>i.owner_id!==uid).map(i=>itemCard(i)).join('')||'<div class="col-span-full text-center py-8 text-gray-400 text-sm">Aucune annonce trouvée.</div>';
+  grid.innerHTML=items.filter(i=>i.owner_id!==uid).map(i=>type==='demand'?demandCard(i):itemCard(i)).join('')||'<div class="col-span-full text-center py-8 text-gray-400 text-sm">Aucune annonce trouvée.</div>';
 
   // Update Stats for Home
   if (location.pathname === '/') {
@@ -362,13 +367,13 @@ function setCatActive(){document.querySelectorAll('.cat-pill').forEach(b=>{b.cla
 
 window.addItem=async e=>{e.preventDefault();
   let photo='';const f=$('itemPhoto').files[0];if(f)photo=await readImgB64(f);
-  await fetch(`${API}/items`,{method:'POST',headers:{'Content-Type':'application/json','X-Sharer-User-Id':getUser().id},
+  await fetch(`${API}/items`,{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({name:$('itemName').value,category:$('itemCategory').value,quality:$('itemQuality').value,description:$('itemDesc').value,photo_url:photo,available_from:$('itemFrom').value||null,available_until:$('itemUntil').value||null,type:$('itemType')?$('itemType').value:'offer'})
   });
   window.hideModal('modal');fetchItems(location.pathname==='/demandes'?'demand':'offer');notify('Annonce publiée !');
 };
 window.deleteItem=async id=>{if(!confirm('Supprimer cette annonce ?'))return;
-  await fetch(`${API}/items/${id}`,{method:'DELETE',headers:{'X-Sharer-User-Id':getUser().id}});fetchMyItems();notify('Annonce supprimée.');};
+  await fetch(`${API}/items/${id}`,{method:'DELETE'});fetchMyItems();notify('Annonce supprimée.');};
 
 async function fetchMyItems(){
   const u=getUser();if(!u)return;
@@ -495,6 +500,10 @@ window.toggleLoanForm=async()=>{
   const f = $('chatLoanFormContainer');
   const b = $('toggleLoanBtn');
   if (f.classList.contains('hidden')) {
+  // PRE-FILL
+  if (item.available_from) $('chatLoanFrom').value = item.available_from.split('T')[0];
+  if (item.available_until) $('chatLoanUntil').value = item.available_until.split('T')[0];
+    
     f.classList.remove('hidden');
     b.classList.add('active');
   } else {
@@ -772,14 +781,13 @@ window.reLendItem = async (itemId, again) => {
   if (again) {
     await fetch(`${API}/items/${itemId}/status`, {
       method: 'PATCH',
-      headers: {'Content-Type': 'application/json', 'X-Sharer-User-Id': u.id},
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({status: 'available'})
     });
     notify('Objet de nouveau disponible !');
   } else {
     await fetch(`${API}/items/${itemId}`, {
-      method: 'DELETE',
-      headers: {'X-Sharer-User-Id': u.id}
+      method: 'DELETE'
     });
     notify('Annonce supprimée.');
   }
@@ -881,13 +889,20 @@ window.handleProposeLoan=async(demandItemId,otherUserId)=>{
     }
   };
   
+  // Fetch demand item data for pre-fill
+  const itemRes = await fetch(`${API}/items/${demandItemId}`);
+  const item = await itemRes.json().catch(()=>({}));
+
   // Reset fields
   select.value = '';
   newFields.classList.remove('hidden');
   $('propItemName').value = '';
   $('propItemDesc').value = '';
-  $('propFrom').value = '';
-  $('propUntil').value = '';
+  
+  // PRE-FILL DATES
+  $('propFrom').value = item.available_from ? item.available_from.split('T')[0] : '';
+  $('propUntil').value = item.available_until ? item.available_until.split('T')[0] : '';
+  
   $('propItemName').required = true;
   $('propItemDesc').required = true;
 
@@ -903,7 +918,7 @@ window.handleProposeLoan=async(demandItemId,otherUserId)=>{
 
     // If a new item is being created
     if (!proposalItemId) {
-      const resNew = await fetch(`${API}/items`,{method:'POST',headers:{'Content-Type':'application/json','X-Sharer-User-Id':u.id},
+      const resNew = await fetch(`${API}/items`,{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({name,category:'Autre',quality:'good',description:desc,photo_url:'',available_from:sd||null,available_until:ed||null,type:'offer'})
       });
       const newItem = await resNew.json();
