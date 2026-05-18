@@ -4,8 +4,8 @@
  * Contient des helpers pour le DOM, les notifications, le formatage et les appels API.
  */
 
-export const API = 'http://localhost:8000/api';
-export const WS_URL = 'ws://localhost:8000/ws';
+export const API = '/api';
+export const WS_URL = `/ws`;
 
 /**
  * Raccourci pour document.getElementById.

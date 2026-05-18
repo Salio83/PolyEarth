@@ -615,6 +615,10 @@ export const loginPage = () => `
             <input id="password" type="password" placeholder="Mot de passe" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
             <button type="submit" class="w-full bg-duck text-white py-4 rounded-lg font-black shadow-lg shadow-duck/10 hover:bg-duck-dark transition-all">Se connecter</button>
         </form>
+        <div class="mt-8 text-center">
+            <p class="text-sm text-gray-400 font-medium mb-2">Pas encore de compte ?</p>
+            <button onclick="navigate('/register')" class="text-duck font-black text-sm hover:underline transition-all">Créer un compte</button>
+        </div>
     </div>
 `;
 
@@ -628,9 +632,13 @@ export const registerPage = () => `
         <form onsubmit="doRegister(event)" class="space-y-6">
             <input id="regName" placeholder="Prénom et Nom" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
             <input id="regEmail" type="email" placeholder="Email @etu.umontpellier.fr" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
-            <input id="regPassword" type="password" placeholder="Mot de passe" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
+            <input id="regPassword" type="password" placeholder="Mot de passe (min. 8 caractères, 1 lettre, 1 chiffre)" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
             <button type="submit" class="w-full bg-blue-700 text-white py-4 rounded-lg font-black shadow-lg shadow-blue-100 hover:bg-blue-800 transition-all">Créer mon compte</button>
         </form>
+        <div class="mt-8 text-center">
+            <p class="text-sm text-gray-400 font-medium mb-2">Déjà un compte ?</p>
+            <button onclick="navigate('/login')" class="text-duck font-black text-sm hover:underline transition-all">Se connecter</button>
+        </div>
     </div>
 `;
 

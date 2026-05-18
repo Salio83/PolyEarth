@@ -279,7 +279,8 @@ function notifyUser(userId: number, eventType: string, data: Record<string, unkn
  * @param token Token de vérification unique
  */
 async function sendVerificationEmail(email: string, _name: string, token: string) {
-  const link = `http://localhost:8000/api/auth/verify?token=${token}`;
+  const appUrl = Deno.env.get("APP_URL") || "http://localhost";
+  const link = `${appUrl}/api/auth/verify?token=${token}`;
   console.log(`\n📧 EMAIL envoyé à ${email}\nLien : ${link}\n`);
   // TODO : Intégrer un vrai service d'envoi d'emails (ex: Resend, Mailgun)
 }

@@ -502,7 +502,8 @@ window.doRegister = async e => {
     notify('Compte créé ! Vérifiez vos emails.');
     navigate('/login');
   } else {
-    notify("Erreur lors de l'inscription.", 'error');
+    const err = await res.json().catch(() => ({}));
+    notify(err.message || "Erreur lors de l'inscription.", 'error');
   }
 };
 
