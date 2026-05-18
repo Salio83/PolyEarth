@@ -1,7 +1,20 @@
+/**
+ * @file pages.js
+ * @description Templates HTML pour les différentes pages et composants de l'application PolyEarth.
+ * Utilise des fonctions retournant des chaînes de caractères (template literals).
+ */
+
 import { catIcon, catBadge, qBadge, stars, dispoBadge, fmtDate, getUser } from './lib.js';
 
-// --- HELPERS ---
+// =============================================================================
+// --- UTILITAIRES DE RENDU (HELPERS) ---
+// =============================================================================
 
+/**
+ * Génère le badge HTML correspondant au statut d'une transaction.
+ * @param {string} status - Le statut de la transaction (pending, accepted, etc.).
+ * @returns {string} Le HTML du badge.
+ */
 const getStatusBadge = (status) => {
     const configs = {
         'pending': { label: 'Demandé', cls: 'bg-blue-500 text-white' },
@@ -17,13 +30,19 @@ const getStatusBadge = (status) => {
     return `<span class="${c.cls} px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-center block w-28 mx-auto">${c.label}</span>`;
 };
 
-// --- PAGES ---
+// =============================================================================
+// --- PAGES PRINCIPALES ---
+// =============================================================================
 
+/**
+ * Page d'accueil : affiche le bandeau de recherche, les stats et le catalogue.
+ * @returns {string} HTML de la page.
+ */
 export const homePage = () => {
     const user = getUser();
     return `
     <div class="space-y-12 animate-fade-in pb-20">
-        <!-- Hero Banner Glassmorphism -->
+        <!-- Bannière Hero avec effet Glassmorphism -->
         <div class="relative rounded-4xl p-12 overflow-hidden bg-white/10 backdrop-blur-3xl border-2 border-white shadow-2xl shadow-duck/10">
             <div class="relative z-10 max-w-2xl">
                 <h2 class="text-4xl font-black text-duck mb-2 tracking-tight">Salut, ${user.name?.split(' ')[0] || 'Hugo'} 👋</h2>
@@ -38,13 +57,13 @@ export const homePage = () => {
                     </button>
                 </div>
             </div>
-            <!-- Decorative shapes -->
+            <!-- Formes décoratives en arrière-plan -->
             <div class="absolute -right-10 -top-10 w-80 h-80 bg-duck/20 rounded-full blur-3xl"></div>
             <div class="absolute right-40 bottom-0 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl"></div>
             <div class="absolute left-1/2 top-0 w-48 h-48 bg-pastel-green rounded-full blur-3xl opacity-60"></div>
         </div>
 
-        <!-- Stats Dashboard -->
+        <!-- Tableau de bord des statistiques -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div onclick="navigate('/offres')" class="bg-pastel-green p-8 rounded-3xl border border-duck/5 flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer">
                 <div>
@@ -66,7 +85,7 @@ export const homePage = () => {
             </div>
         </div>
 
-        <!-- Catalogue Controls -->
+        <!-- Contrôles du catalogue -->
         <div class="space-y-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-8">
@@ -113,9 +132,13 @@ export const homePage = () => {
     `;
 };
 
+/**
+ * Page de suivi des prêts : liste les demandes envoyées et reçues.
+ * @returns {string} HTML de la page.
+ */
 export const pretsPage = () => `
     <div class="space-y-8 animate-fade-in pb-20">
-        <!-- Toolbar Supérieure -->
+        <!-- Barre d'outils supérieure -->
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div class="space-y-1">
                 <h1 class="text-4xl font-black text-gray-900 tracking-tight">Suivi des prêts</h1>
@@ -134,7 +157,7 @@ export const pretsPage = () => `
             </div>
         </div>
 
-        <!-- Zone de Filtres -->
+        <!-- Zone de filtrage rapide -->
         <div class="flex gap-3">
             <button class="bg-white border border-gray-100 px-5 py-2 rounded-full text-xs font-bold text-gray-500 flex items-center gap-2 hover:border-duck transition-colors">
                 Statut <i data-lucide="chevron-down" class="w-3 h-3"></i>
@@ -144,7 +167,7 @@ export const pretsPage = () => `
             </button>
         </div>
 
-        <!-- Conteneur Tableau -->
+        <!-- Conteneur du tableau des transactions -->
         <div class="relative bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -154,7 +177,7 @@ export const pretsPage = () => `
                             <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="image" class="w-3.5 h-3.5 text-gray-400"></i> Aperçu</div></th>
                             <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="tag" class="w-3.5 h-3.5 text-gray-400"></i> Statut</div></th>
                             <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="package" class="w-3.5 h-3.5 text-gray-400"></i> Objet</div></th>
-                            <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="user" class="w-3.5 h-3.5 text-gray-400"></i> Emprunteur</div></th>
+                            <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="user" class="w-3.5 h-3.5 text-gray-400"></i> Interlocuteur</div></th>
                             <th class="py-5 px-6 border-b-2 border-duck/10"><div class="flex items-center gap-2">Date <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i></div></th>
                             <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="calendar" class="w-3.5 h-3.5 text-gray-400"></i> Début</div></th>
                         </tr>
@@ -164,7 +187,7 @@ export const pretsPage = () => `
                     </tbody>
                 </table>
             </div>
-            <!-- Pagination -->
+            <!-- Barre de pagination -->
             <div class="p-6 bg-gray-50/50 flex justify-end items-center border-t border-gray-100">
                 <span id="paginationText" class="text-xs font-bold text-gray-400 uppercase tracking-widest">...</span>
             </div>
@@ -172,6 +195,12 @@ export const pretsPage = () => `
     </div>
 `;
 
+/**
+ * Génère une ligne (tr) pour le tableau de suivi des prêts.
+ * @param {Object} t - Les données de la transaction.
+ * @param {number} uid - ID de l'utilisateur connecté.
+ * @returns {string} HTML de la ligne.
+ */
 export const loanRow = (t, uid) => {
     const isOwner = t.owner_id === uid;
     const otherId = isOwner ? t.borrower_id : t.owner_id;
@@ -206,6 +235,10 @@ export const loanRow = (t, uid) => {
     `;
 };
 
+/**
+ * Page de liste des offres de prêt.
+ * @returns {string} HTML de la page.
+ */
 export const offresPage = () => `
     <div class="flex flex-col lg:flex-row gap-8">
         <aside class="w-full lg:w-64 space-y-4">
@@ -230,6 +263,10 @@ export const offresPage = () => `
     </div>
 `;
 
+/**
+ * Page de liste des demandes d'objets.
+ * @returns {string} HTML de la page.
+ */
 export const demandesPage = () => `
     <div class="space-y-8 animate-fade-in pb-20">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -263,6 +300,11 @@ export const demandesPage = () => `
     </div>
 `;
 
+/**
+ * Composant Carte pour une demande d'objet.
+ * @param {Object} i - Les données de l'objet (demande).
+ * @returns {string} HTML de la carte.
+ */
 export const demandCard = (i) => `
     <div onclick="navigate('/item/${i.id}')" class="bg-white p-6 rounded-3xl border border-gray-100 hover:border-duck/20 hover:shadow-xl hover:shadow-duck/5 transition-all cursor-pointer group">
         <div class="flex flex-col md:flex-row md:items-center gap-6">
@@ -297,23 +339,31 @@ export const demandCard = (i) => `
     </div>
 `;
 
+/**
+ * Page de messagerie (interface de discussion).
+ * @returns {string} HTML de la page.
+ */
 export const messagesPage = () => `
     <div class="bg-white rounded-xl border border-gray-100 overflow-hidden flex h-[70vh] shadow-sm">
+        <!-- Barre latérale des conversations -->
         <div class="w-full md:w-80 border-r border-gray-50 flex flex-col conv-sidebar">
             <div class="p-6 border-b border-gray-50"><h3 class="text-xl font-black text-gray-900">Messages</h3></div>
             <div id="convList" class="flex-1 overflow-y-auto"></div>
         </div>
+        <!-- Panneau de discussion actif -->
         <div id="chatPanel" class="flex-1 flex flex-col hidden-mobile bg-gray-50/30">
             <div id="chatHeader" class="p-4 border-b border-gray-50 bg-white flex items-center">
                 <div class="text-sm font-bold text-gray-400">Sélectionnez une discussion</div>
             </div>
             <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+            <!-- Zone de saisie -->
             <div id="chatInputBar" class="p-4 bg-white border-t border-gray-50 hidden">
                 <div class="flex gap-2">
-                    <button id="toggleLoanBtn" onclick="toggleLoanForm()" class="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg font-bold text-xs hover:bg-gray-100 transition-all">📅 Prêt</button>
+                    <button id="toggleLoanBtn" onclick="toggleLoanForm()" class="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg font-bold text-xs hover:bg-100 transition-all">📅 Prêt</button>
                     <input id="chatInput" placeholder="Écrire un message..." class="flex-1 bg-gray-50 border-none rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-duck transition-all outline-none">
                     <button onclick="sendReply()" class="p-2 bg-duck text-white rounded-lg hover:bg-duck-dark transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></button>
                 </div>
+                <!-- Formulaire contextuel de prêt -->
                 <div id="chatLoanFormContainer" class="hidden mt-3 p-4 bg-gray-50 rounded-xl border border-gray-100 animate-slide-in">
                     <div class="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Détails du prêt</div>
                     <div class="grid grid-cols-2 gap-3 mb-3">
@@ -324,14 +374,21 @@ export const messagesPage = () => `
                 </div>
             </div>
         </div>
+        <!-- Barre latérale d'infos objet -->
         <div id="chatInfoSidebar" class="w-64 border-l border-gray-50 bg-white p-6 hidden lg:flex flex-col">
             <div class="text-center py-20 text-gray-300 text-xs font-bold">Détails de l'objet</div>
         </div>
     </div>
 `;
 
+/**
+ * Page de profil utilisateur (mon profil).
+ * @param {Object} u - Les données de l'utilisateur.
+ * @returns {string} HTML de la page.
+ */
 export const profilPage = (u) => `
     <div class="max-w-4xl mx-auto space-y-8 animate-fade-in">
+        <!-- En-tête du profil -->
         <div class="bg-white rounded-xl p-10 border border-gray-100 shadow-sm flex flex-col md:flex-row gap-10 items-center">
             <div class="w-32 h-32 bg-duck rounded-full flex items-center justify-center text-5xl font-black text-white shadow-inner overflow-hidden border-4 border-white shadow-duck/10">
                 ${u.photo_url ? `<img src="${u.photo_url}" class="w-full h-full object-cover">` : u.name?.charAt(0)}
@@ -341,7 +398,7 @@ export const profilPage = (u) => `
                     <h2 class="text-4xl font-black text-gray-900">${u.name}</h2>
                     <div class="bg-duck/10 text-duck px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">${u.transaction_count || 0} échanges</div>
                 </div>
-                <p class="text-gray-400 font-bold mb-4 italic">Étudiant @ ${u.school || 'Polytech Montpellier'}</p>
+                <p class="text-gray-400 font-bold mb-4 italic">${u.status || 'Étudiant'} @ ${u.school || 'Polytech Montpellier'}</p>
                 
                 <div class="flex items-center gap-3 mb-6 justify-center md:justify-start">
                     <span class="text-2xl font-black text-gray-900">${Number(u.rating || 0).toFixed(1)}</span>
@@ -358,6 +415,7 @@ export const profilPage = (u) => `
             </div>
         </div>
 
+        <!-- Section d'édition (masquée par défaut) -->
         <div id="editProfileSection" class="hidden bg-pastel-green p-8 rounded-xl border border-duck/5 animate-slide-in">
             <h3 class="text-xl font-black text-duck mb-6">Modifier mes informations</h3>
             <form onsubmit="updateProfile(event)" class="space-y-4">
@@ -367,13 +425,22 @@ export const profilPage = (u) => `
                         <input id="editName" value="${u.name}" class="w-full p-4 bg-white border-none rounded-lg outline-none font-bold text-sm">
                     </div>
                     <div class="space-y-1">
+                        <label class="text-[10px] font-black text-duck uppercase tracking-widest ml-1">Statut</label>
+                        <select id="editStatus" class="w-full p-4 bg-white border-none rounded-lg outline-none font-bold text-sm">
+                            <option value="Étudiant" ${u.status === 'Étudiant' ? 'selected' : ''}>Étudiant</option>
+                            <option value="Personnel" ${u.status === 'Personnel' ? 'selected' : ''}>Personnel</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
                         <label class="text-[10px] font-black text-duck uppercase tracking-widest ml-1">École / Spécialité</label>
                         <input id="editSchool" value="${u.school || ''}" placeholder="Ex: Polytech - Informatique" class="w-full p-4 bg-white border-none rounded-lg outline-none font-bold text-sm">
                     </div>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-duck uppercase tracking-widest ml-1">Photo de profil</label>
-                    <input id="editPhoto" type="file" accept="image/*" class="w-full p-3 bg-white rounded-lg text-xs font-bold text-gray-400">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-duck uppercase tracking-widest ml-1">Photo de profil</label>
+                        <input id="editPhoto" type="file" accept="image/*" class="w-full p-3 bg-white rounded-lg text-xs font-bold text-gray-400">
+                    </div>
                 </div>
                 <div class="flex gap-3 pt-2">
                     <button type="submit" class="bg-duck text-white px-8 py-3 rounded-lg font-black shadow-lg shadow-duck/10 hover:bg-duck-dark transition-all">Enregistrer</button>
@@ -383,13 +450,28 @@ export const profilPage = (u) => `
         </div>
 
         <div>
-            <h3 class="text-2xl font-black text-gray-900 mb-6">Mes annonces</h3>
-            <div id="myItemsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <h3 class="text-2xl font-black text-gray-900 mb-6">Mes offres de prêt</h3>
+            <div id="myOffersGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
+        <div>
+            <h3 class="text-2xl font-black text-gray-900 mb-6">Mes demandes</h3>
+            <div id="myDemandsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
     </div>
 `;
 
-export const userProfilePage = (u, items) => `
+/**
+ * Page de profil public d'un autre utilisateur.
+ * @param {Object} u - Les données de l'utilisateur.
+ * @param {Array} items - La liste des objets appartenant à cet utilisateur.
+ * @returns {string} HTML de la page.
+ */
+export const userProfilePage = (u, items) => {
+    const offers = items.filter(i => i.type === 'offer');
+    const demands = items.filter(i => i.type === 'demand');
+    
+    return `
     <div class="max-w-4xl mx-auto space-y-12 animate-fade-in pb-20">
         <div class="bg-white rounded-4xl p-12 border border-gray-100 shadow-xl shadow-gray-200/50 flex flex-col md:flex-row gap-12 items-center relative overflow-hidden">
             <div class="absolute top-0 right-0 w-64 h-64 bg-duck/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
@@ -401,7 +483,7 @@ export const userProfilePage = (u, items) => `
                     <h2 class="text-5xl font-black text-gray-900 tracking-tighter">${u.name}</h2>
                     <div class="bg-duck/10 text-duck px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">${u.transaction_count || 0} échanges</div>
                 </div>
-                <p class="text-gray-400 font-bold mb-8 text-lg italic">Étudiant @ ${u.school || 'Polytech Montpellier'}</p>
+                <p class="text-gray-400 font-bold mb-8 text-lg italic">${u.status || 'Étudiant'} @ ${u.school || 'Polytech Montpellier'}</p>
                 
                 <div class="flex flex-wrap gap-10 justify-center md:justify-start">
                     <div>
@@ -419,14 +501,27 @@ export const userProfilePage = (u, items) => `
         </div>
 
         <div class="space-y-8">
-            <h3 class="text-3xl font-black text-gray-900 tracking-tight">Annonces de ${u.name.split(' ')[0]}</h3>
+            <h3 class="text-3xl font-black text-gray-900 tracking-tight">Objets proposés par ${u.name.split(' ')[0]}</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                ${items.length ? items.map(i => itemCard(i)).join('') : '<div class="col-span-full py-20 text-center bg-gray-50 rounded-3xl text-gray-400 font-bold">Aucune annonce en ligne pour le moment.</div>'}
+                ${offers.length ? offers.map(i => itemCard(i)).join('') : '<div class="col-span-full py-12 text-center bg-gray-50 rounded-3xl text-gray-400 font-bold">Aucune offre pour le moment.</div>'}
+            </div>
+        </div>
+
+        <div class="space-y-8">
+            <h3 class="text-3xl font-black text-gray-900 tracking-tight">Demandes de ${u.name.split(' ')[0]}</h3>
+            <div class="grid grid-cols-1 gap-4">
+                ${demands.length ? demands.map(i => demandCard(i)).join('') : '<div class="col-span-full py-12 text-center bg-gray-50 rounded-3xl text-gray-400 font-bold">Aucune demande pour le moment.</div>'}
             </div>
         </div>
     </div>
 `;
+};
 
+/**
+ * Composant Carte pour une offre d'objet.
+ * @param {Object} i - Les données de l'objet (offre).
+ * @returns {string} HTML de la carte.
+ */
 export const itemCard = (i) => `
     <div onclick="navigate('/item/${i.id}')" class="group cursor-pointer">
         <div class="relative aspect-[4/5] rounded-3xl overflow-hidden bg-gray-100 mb-4 shadow-sm group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
@@ -460,13 +555,21 @@ export const itemCard = (i) => `
     </div>
 `;
 
+/**
+ * Page de détail d'un objet.
+ * @param {Object} i - Les données de l'objet.
+ * @param {boolean} isOwner - Si l'utilisateur connecté est le propriétaire.
+ * @returns {string} HTML de la page.
+ */
 export const itemDetail = (i, isOwner) => `
     <div class="max-w-6xl mx-auto animate-fade-in pb-20">
         <button onclick="navigate('/')" class="mb-8 flex items-center gap-2 text-gray-400 hover:text-duck font-bold transition-all">← Retour</button>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Image de l'objet -->
             <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 aspect-square relative shadow-sm">
                 ${i.photo_url ? `<img src="${i.photo_url}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-[10rem]">${catIcon(i.category)}</div>`}
             </div>
+            <!-- Informations et discussion -->
             <div class="space-y-8">
                 <div>
                     <div class="flex gap-2 mb-4">${catBadge(i.category)} ${qBadge(i.quality)}</div>
@@ -478,6 +581,7 @@ export const itemDetail = (i, isOwner) => `
                     <p class="text-gray-600 font-medium leading-relaxed">${i.description || 'Pas de description.'}</p>
                 </div>
                 <div class="p-8 bg-pastel-green rounded-3xl border border-duck/5 space-y-6 shadow-sm">
+                    <!-- Infos Propriétaire -->
                     <div class="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onclick="navigate('/profile/${i.owner_id}')">
                         <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-xl overflow-hidden border border-duck/10">
                             ${i.owner_photo ? `<img src="${i.owner_photo}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(i.owner_name || 'U')}&background=eee&color=999" class="w-full h-full object-cover">`}
@@ -487,6 +591,7 @@ export const itemDetail = (i, isOwner) => `
                             ${stars(i.owner_rating, i.owner_transaction_count)}
                         </div>
                     </div>
+                    <!-- Zone de contact rapide -->
                     ${isOwner ? '' : `
                     <div class="space-y-3 pt-4 border-t border-duck/10">
                         <textarea id="detailChatInput" placeholder="Bonjour ! J'aimerais beaucoup t'emprunter ton objet..." class="w-full bg-white border-none rounded-xl p-4 text-sm text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-duck outline-none h-24 transition-all shadow-inner"></textarea>
@@ -498,6 +603,10 @@ export const itemDetail = (i, isOwner) => `
     </div>
 `;
 
+/**
+ * Page de connexion.
+ * @returns {string} HTML de la page.
+ */
 export const loginPage = () => `
     <div class="max-w-md mx-auto bg-white p-10 rounded-xl shadow-sm border border-gray-100 mt-10">
         <h2 class="text-3xl font-black mb-10 text-center text-gray-900 tracking-tight">Bonjour ! 🌱</h2>
@@ -509,6 +618,10 @@ export const loginPage = () => `
     </div>
 `;
 
+/**
+ * Page d'inscription.
+ * @returns {string} HTML de la page.
+ */
 export const registerPage = () => `
     <div class="max-w-md mx-auto bg-white p-10 rounded-xl shadow-sm border border-gray-100 mt-10">
         <h2 class="text-3xl font-black mb-10 text-center text-gray-900 tracking-tight">Bienvenue 👋</h2>
@@ -521,6 +634,10 @@ export const registerPage = () => `
     </div>
 `;
 
+/**
+ * Page de présentation de l'association.
+ * @returns {string} HTML de la page.
+ */
 export const associationPage = () => `
     <div class="max-w-4xl mx-auto space-y-12 animate-fade-in">
         <div class="flex flex-col items-center text-center space-y-4">
@@ -539,7 +656,7 @@ export const associationPage = () => `
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Instagram Section -->
+            <!-- Section Instagram -->
             <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -555,7 +672,7 @@ export const associationPage = () => `
                 </div>
             </div>
 
-            <!-- Facebook Section -->
+            <!-- Section Facebook -->
             <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm space-y-6">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">

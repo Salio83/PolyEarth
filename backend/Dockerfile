@@ -16,7 +16,7 @@ COPY --chown=app:app . .
 USER app
 CMD ["run", "--allow-net", "--allow-env", "--allow-read", "main.ts"]
 
-#pas utiliser root pour exécuter l'application
-# restraindre au max les permissions d'accès aux ressources du système
-# utiliser des variables d'environnement pour les configurations sensibles
-# exposition des ports nécessaires uniquement
+# Ne pas utiliser l'utilisateur root pour exécuter l'application
+# Restreindre au maximum les permissions d'accès aux ressources du système
+# Utiliser des variables d'environnement pour les configurations sensibles
+# Exposition des ports nécessaires uniquement

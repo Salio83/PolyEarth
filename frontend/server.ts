@@ -1,3 +1,9 @@
+/**
+ * @file server.ts
+ * @description Serveur frontend minimal pour l'application PolyEarth (Deno/Oak).
+ * Gère le service des fichiers statiques et le routage SPA (Single Page Application).
+ */
+
 import { Application, send } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 
 const app = new Application();
@@ -5,7 +11,7 @@ const app = new Application();
 app.use(async (ctx) => {
   const path = ctx.request.url.pathname;
   
-  // SPA Routing: rediriger les routes inconnues vers index.html
+  // Routage SPA : tente de servir le fichier demandé, sinon redirige vers index.html
   try {
     await send(ctx, path, {
       root: `${Deno.cwd()}/public`,
@@ -19,5 +25,5 @@ app.use(async (ctx) => {
   }
 });
 
-console.log("Frontend server running on http://localhost:3000");
+console.log("🚀 Serveur frontend démarré sur http://localhost:3000");
 await app.listen({ port: 3000 });

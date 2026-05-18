@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password TEXT NOT NULL,
     school VARCHAR(255) DEFAULT 'Polytech Montpellier',
+    status VARCHAR(255),
     rating DECIMAL(2,1) DEFAULT 3.0,
     transaction_count INTEGER DEFAULT 0,
     is_verified BOOLEAN DEFAULT false,
@@ -21,8 +22,8 @@ CREATE TABLE IF NOT EXISTS items (
     category VARCHAR(255) DEFAULT 'Autre',
     quality VARCHAR(50) DEFAULT 'good',
     photo_url TEXT,
-    status VARCHAR(50) DEFAULT 'available', -- available, reserved, borrowed
-    type VARCHAR(20) DEFAULT 'offer', -- offer or demand
+    status VARCHAR(50) DEFAULT 'available', -- disponible, réservé, prêté
+    type VARCHAR(20) DEFAULT 'offer', -- offre ou demande
     available_from DATE,
     available_until DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
