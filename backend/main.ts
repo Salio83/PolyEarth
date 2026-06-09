@@ -93,6 +93,15 @@ function isValidPassword(password: string): { valid: boolean; message: string } 
 }
 
 /**
+ * Validation d'un numéro de téléphone (format international ou français).
+ */
+function isValidPhone(phone: string): boolean {
+  // Accepte formats: 0612345678, +33612345678, +33 6 12 34 56 78 (espaces tolérés)
+  const cleaned = phone.replace(/[\s\-\.]/g, '');
+  return /^(\+?[0-9]{7,15})$/.test(cleaned);
+}
+
+/**
  * Validation du nom d'utilisateur.
  */
 function isValidName(name: string): boolean {
@@ -336,6 +345,7 @@ async function connectWithRetry() {
         `UPDATE users SET is_verified=true WHERE is_verified IS NULL`,
         `UPDATE messages SET is_read=false WHERE is_read IS NULL`,
         `UPDATE messages SET type='text' WHERE type IS NULL`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)`,
       ];
       
       for (const q of migrations) {
@@ -425,12 +435,19 @@ router.post("/api/auth/register", async (ctx) => {
   }
 
   try {
-    const { name, email, password } = await ctx.request.body({ type: "json" }).value;
+    const { name, email, password, phone } = await ctx.request.body({ type: "json" }).value;
     
     // VALIDATION DES INPUTS
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !phone) {
       ctx.response.status = 400;
-      ctx.response.body = { message: "Tous les champs sont obligatoires." };
+      ctx.response.body = { message: "Tous les champs sont obligatoires (nom, email, mot de passe, téléphone)." };
+      return;
+    }
+
+    const cleanedPhone = phone.replace(/[\s\-\.]/g, '');
+    if (!isValidPhone(phone)) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "Le numéro de téléphone n'est pas valide." };
       return;
     }
     
@@ -467,15 +484,14 @@ router.post("/api/auth/register", async (ctx) => {
     
     // bcrypt.hash utilise le salt par défaut (10 rounds) ou un salt fourni
     const hashed = await bcrypt.hash(password);
-    const token = crypto.randomUUID();
     
+    // La vérification par email est désactivée : le compte est actif immédiatement.
     await client.queryObject(
-      "INSERT INTO users (name, email, password, verification_token, is_verified, status) VALUES ($1,$2,$3,$4,false,'Étudiant')",
-      [sanitizedName, email.toLowerCase(), hashed, token]
+      "INSERT INTO users (name, email, password, verification_token, is_verified, status, phone) VALUES ($1,$2,$3,$4,$5,'Étudiant',$6)",
+      [sanitizedName, email.toLowerCase(), hashed, null, true, cleanedPhone]
     );
     
-    await sendVerificationEmail(email, sanitizedName, token);
-    ctx.response.body = { message: "Compte créé. Veuillez vérifier vos e-mails." };
+    ctx.response.body = { message: "Compte créé avec succès. Vous pouvez maintenant vous connecter." };
   } catch (e) { 
     console.error("❌ Erreur inscription:", e);
     ctx.response.status = 500; 
@@ -587,7 +603,8 @@ router.get("/api/auth/verify", async (ctx) => {
       return;
     }
     
-    ctx.response.redirect("http://localhost:3000/login?verified=true");
+    const appUrl = Deno.env.get("APP_URL") || "http://localhost";
+    ctx.response.redirect(`${appUrl}/login?verified=true`);
   } catch (e) {
     console.error("❌ Erreur vérification:", e);
     ctx.response.status = 500;

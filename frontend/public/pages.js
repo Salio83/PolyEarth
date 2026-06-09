@@ -611,7 +611,7 @@ export const loginPage = () => `
     <div class="max-w-md mx-auto bg-white p-10 rounded-xl shadow-sm border border-gray-100 mt-10">
         <h2 class="text-3xl font-black mb-10 text-center text-gray-900 tracking-tight">Bonjour ! 🌱</h2>
         <form onsubmit="doLogin(event)" class="space-y-6">
-            <input id="email" type="email" placeholder="Email institutionnel" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
+            <input id="email" type="email" placeholder="Adresse e-mail" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
             <input id="password" type="password" placeholder="Mot de passe" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
             <button type="submit" class="w-full bg-duck text-white py-4 rounded-lg font-black shadow-lg shadow-duck/10 hover:bg-duck-dark transition-all">Se connecter</button>
         </form>
@@ -627,19 +627,131 @@ export const loginPage = () => `
  * @returns {string} HTML de la page.
  */
 export const registerPage = () => `
-    <div class="max-w-md mx-auto bg-white p-10 rounded-xl shadow-sm border border-gray-100 mt-10">
-        <h2 class="text-3xl font-black mb-10 text-center text-gray-900 tracking-tight">Bienvenue 👋</h2>
-        <form onsubmit="doRegister(event)" class="space-y-6">
-            <input id="regName" placeholder="Prénom et Nom" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
-            <input id="regEmail" type="email" placeholder="Email @etu.umontpellier.fr" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
-            <input id="regPassword" type="password" placeholder="Mot de passe (min. 8 caractères, 1 lettre, 1 chiffre)" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
-            <button type="submit" class="w-full bg-blue-700 text-white py-4 rounded-lg font-black shadow-lg shadow-blue-100 hover:bg-blue-800 transition-all">Créer mon compte</button>
-        </form>
-        <div class="mt-8 text-center">
-            <p class="text-sm text-gray-400 font-medium mb-2">Déjà un compte ?</p>
-            <button onclick="navigate('/login')" class="text-duck font-black text-sm hover:underline transition-all">Se connecter</button>
-        </div>
+<div id="registerWizard" class="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <div class="mb-8">
+      <div class="flex justify-between items-center mb-2">
+        <span id="wizardStepLabel" class="text-xs font-black text-emerald-600 uppercase tracking-widest">Étape 1 / 6</span>
+        <span id="wizardPercent" class="text-xs font-black text-gray-400">0%</span>
+      </div>
+      <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div id="wizardProgress" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500" style="width:0%"></div>
+      </div>
     </div>
+
+    <div class="bg-white rounded-3xl shadow-xl shadow-emerald-100/50 border border-emerald-50 overflow-hidden">
+
+      <!-- Étape 1 : Compte -->
+      <div id="wStep1" class="wizard-step p-8 md:p-10">
+        <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🌱</div>
+        <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Créer mon compte</h2>
+        <p class="text-sm text-gray-400 font-medium mb-8">Rejoins la communauté PolyEarth !</p>
+        <form onsubmit="wizardNext(event)" class="space-y-4">
+          <input id="regName" placeholder="Prénom et Nom" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required>
+          <input id="regEmail" type="email" placeholder="Adresse e-mail" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required>
+          <input id="regPassword" type="password" placeholder="Mot de passe (8 car. min.)" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required minlength="8">
+          <div class="relative">
+            <input id="regPhone" type="tel" placeholder="Téléphone (ex: 06 12 34 56 78)" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all pr-10" required>
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-base">📱</span>
+          </div>
+          <p class="text-xs text-gray-400 font-medium -mt-1 px-1">🔒 Ton numéro est confidentiel — jamais visible par les autres utilisateurs.</p>
+          <button type="submit" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all mt-2">Commencer ➜</button>
+        </form>
+        <div class="mt-6 text-center">
+          <button onclick="navigate('/login')" class="text-xs text-gray-400 font-bold hover:text-emerald-600 transition-colors">Déjà un compte ? Se connecter</button>
+        </div>
+      </div>
+
+      <!-- Étape 2 : Catégories -->
+      <div id="wStep2" class="wizard-step hidden p-8 md:p-10">
+        <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl mb-6">📦</div>
+        <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Tes objets</h2>
+        <p class="text-sm text-gray-400 font-medium mb-6">Dans quels domaines as-tu des objets peu utilisés ? <span class="text-emerald-600 font-black">(Choix multiples)</span></p>
+        <div class="grid grid-cols-2 gap-3 mb-8">
+          ${[['🛠️','Bricolage'],['📚','Livres / Études'],['⚽','Sport & Loisirs'],['🎮','Jeux / Électro'],['🍳','Cuisine'],['🧳','Voyage'],['🎸','Musique'],['🪴','Maison / Déco']].map(([icon, label]) => `
+          <button type="button" onclick="wizardToggle(this)" data-val="${label}"
+            class="wizard-choice flex items-center gap-3 p-3.5 rounded-xl border-2 border-gray-100 text-left font-bold text-sm text-gray-700 hover:border-emerald-300 hover:bg-emerald-50 transition-all">
+            <span class="text-xl">${icon}</span><span>${label}</span>
+          </button>`).join('')}
+        </div>
+        <button onclick="wizardNext()" id="wNextBtn2" disabled class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all opacity-50">Continuer ➜</button>
+      </div>
+
+      <!-- Étape 3 : Fréquence -->
+      <div id="wStep3" class="wizard-step hidden p-8 md:p-10">
+        <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🤔</div>
+        <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Combien d'objets ?</h2>
+        <p class="text-sm text-gray-400 font-medium mb-6">Parmi tes affaires, combien n'ont <span class="text-blue-600 font-black">pas été utilisés depuis 3 mois</span> ou plus ?</p>
+        <div class="space-y-3 mb-8">
+          ${[['0','Aucun... je suis minimaliste 😅'],['1-3','1 à 3 objets 🤔'],['4-10','4 à 10 objets 📦'],['10+','Plus de 10, j\'ai de la place à libérer ! 🏠']].map(([val, label]) => `
+          <button type="button" onclick="wizardSingle(this,'freq')" data-val="${val}"
+            class="wizard-single w-full p-4 rounded-xl border-2 border-gray-100 text-left font-bold text-sm text-gray-700 hover:border-blue-300 hover:bg-blue-50 transition-all">
+            ${label}
+          </button>`).join('')}
+        </div>
+        <button onclick="wizardNext()" id="wNextBtn3" disabled class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all opacity-50">Continuer ➜</button>
+      </div>
+
+      <!-- Étape 4 : Motivation -->
+      <div id="wStep4" class="wizard-step hidden p-8 md:p-10">
+        <div class="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center text-2xl mb-6">💡</div>
+        <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Ta motivation</h2>
+        <p class="text-sm text-gray-400 font-medium mb-6">Qu'est-ce qui t'<span class="text-purple-600 font-black">encouragerait le plus</span> à prêter un objet ?</p>
+        <div class="space-y-3 mb-8">
+          ${[['service','🤝 Rendre service à un camarade'],['place','📦 Libérer de la place chez moi'],['rep','⭐ Construire ma réputation sur PolyEarth'],['all','✨ Un peu de tout ça !']].map(([val, label]) => `
+          <button type="button" onclick="wizardSingle(this,'motiv')" data-val="${val}"
+            class="wizard-single w-full p-4 rounded-xl border-2 border-gray-100 text-left font-bold text-sm text-gray-700 hover:border-purple-300 hover:bg-purple-50 transition-all">
+            ${label}
+          </button>`).join('')}
+        </div>
+        <button onclick="wizardNext()" id="wNextBtn4" disabled class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all opacity-50">Continuer ➜</button>
+      </div>
+
+      <!-- Étape 5 : Premier objet -->
+      <div id="wStep5" class="wizard-step hidden p-8 md:p-10">
+        <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🚀</div>
+        <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Ton premier objet</h2>
+        <p class="text-sm text-gray-400 font-medium mb-6">Quel objet pourrais-tu proposer <span class="text-orange-500 font-black">dès maintenant</span> à tes camarades ?</p>
+        <input id="firstItemName" type="text" placeholder="Ex: perceuse Bosch, livre de Maths S3..." oninput="wizardInputCheck(this)"
+          class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-orange-300 transition-all mb-4">
+        <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-8 text-sm text-orange-700 font-medium">
+          ✨ Tu pourras publier cette annonce en un clic dès la création de ton compte !
+        </div>
+        <button onclick="wizardNext()" id="wNextBtn5" disabled class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all opacity-50">Presque fini ➜</button>
+      </div>
+
+      <!-- Étape 6 : Score & création -->
+      <div id="wStep6" class="wizard-step hidden p-8 md:p-10 text-center">
+        <div class="relative w-28 h-28 mx-auto mb-6">
+          <svg class="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+            <circle id="scoreCircle" cx="50" cy="50" r="42" fill="none" stroke="url(#sg)" stroke-width="8"
+              stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264" style="transition:stroke-dashoffset 1.2s ease"/>
+            <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#14b8a6"/>
+            </linearGradient></defs>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span id="scoreValue" class="text-3xl font-black text-emerald-600">0</span>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">/ 100</span>
+          </div>
+        </div>
+        <h2 class="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ton Score Partage</h2>
+        <p id="scoreMsg" class="text-sm text-gray-500 font-medium mb-6 px-4">Calcul en cours...</p>
+        <div id="scoreDetails" class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 mb-8 text-left space-y-2">
+          <p id="scoreDetail1" class="text-sm font-bold text-emerald-700"></p>
+          <p id="scoreDetail2" class="text-sm font-bold text-emerald-700"></p>
+        </div>
+        <button onclick="doRegisterWizard()" id="wFinalBtn"
+          class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all">
+          Créer mon compte 🌱
+        </button>
+        <p class="text-xs text-gray-300 font-medium mt-4">En créant un compte tu acceptes les conditions d'utilisation.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
 `;
 
 /**

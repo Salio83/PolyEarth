@@ -108,7 +108,14 @@ const routes = {
   '/profil': () => { if (!guard()) return; renderMyProfile(); },
   '/profile/:id': (id) => { if (!guard()) return; renderProfile(id); hdr(); },
   '/login': () => { content.innerHTML = loginPage(); },
-  '/register': () => { content.innerHTML = registerPage(); },
+  '/register': () => {
+    _wizardStep = 1;
+    _wizardData.categories = [];
+    _wizardData.freq = null;
+    _wizardData.motiv = null;
+    _wizardData.firstItem = '';
+    content.innerHTML = registerPage();
+  },
   '/association': () => { if (!guard()) return; content.innerHTML = associationPage(); hdr(); },
 };
 
@@ -477,33 +484,270 @@ window.doLogin = async e => {
     localStorage.setItem('user', JSON.stringify(data.user));
     initWS();
     navigate('/');
+
+    // Si un premier objet avait été renseigné pendant l'inscription, ouvrir le formulaire de publication
+    const pendingItem = sessionStorage.getItem('pendingItem');
+    if (pendingItem) {
+      sessionStorage.removeItem('pendingItem');
+      setTimeout(() => {
+        // Ouvrir la modal de publication et pré-remplir le nom
+        window.showModal('modal');
+        const nameInput = $('itemName');
+        if (nameInput) {
+          nameInput.value = pendingItem;
+          nameInput.focus();
+        }
+        notify(`🚀 Publie dès maintenant ton objet : "${pendingItem}" !`);
+      }, 600);
+    }
   } else {
-    notify('Identifiants incorrects.', 'error');
+    const err = await res.json().catch(() => ({}));
+    notify(err.message || 'Identifiants incorrects.', 'error');
   }
 };
 
-/**
- * Gère la soumission du formulaire d'inscription.
- * @param {Event} e - L'événement de soumission.
- */
-window.doRegister = async e => {
-  e.preventDefault();
+// ============================================================
+// WIZARD D'INSCRIPTION
+// ============================================================
+let _wizardStep = 1;
+const _wizardData = { categories: [], freq: null, motiv: null, firstItem: '' };
+
+/** Met à jour la barre de progression */
+function _wizardUpdateProgress(step) {
+  const pct = Math.round(((step - 1) / 5) * 100);
+  const prog = $('wizardProgress');
+  const lbl  = $('wizardStepLabel');
+  const pctEl = $('wizardPercent');
+  if (prog) prog.style.width = pct + '%';
+  if (lbl)  lbl.textContent  = `Étape ${step} / 6`;
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
+/** Passe à l'étape suivante (appelé par les boutons du wizard) */
+window.wizardNext = (e) => {
+  if (e) e.preventDefault();
+
+  // Validation étape 1
+  if (_wizardStep === 1) {
+    const name = $('regName')?.value.trim();
+    const email = $('regEmail')?.value.trim();
+    const pwd = $('regPassword')?.value;
+    const phone = $('regPhone')?.value.trim();
+    if (!name || !email || !pwd || pwd.length < 8) {
+      notify('Merci de remplir tous les champs (mot de passe 8 car. min.)', 'error');
+      return;
+    }
+    if (!phone || !/^[\+\d][\d\s\-\.]{6,}$/.test(phone)) {
+      notify('Merci de saisir un numéro de téléphone valide.', 'error');
+      return;
+    }
+  }
+
+  // Validation étape 2
+  if (_wizardStep === 2) {
+    if (!_wizardData.categories || _wizardData.categories.length === 0) {
+      notify('Merci de sélectionner au moins une catégorie.', 'error');
+      return;
+    }
+  }
+
+  // Validation étape 3
+  if (_wizardStep === 3) {
+    if (!_wizardData.freq) {
+      notify('Merci de sélectionner une réponse.', 'error');
+      return;
+    }
+  }
+
+  // Validation étape 4
+  if (_wizardStep === 4) {
+    if (!_wizardData.motiv) {
+      notify('Merci de sélectionner une réponse.', 'error');
+      return;
+    }
+  }
+
+  // Validation étape 5
+  if (_wizardStep === 5) {
+    const item = $('firstItemName')?.value.trim() || '';
+    if (item.length < 2) {
+      notify('Veuillez indiquer un objet d\'au moins 2 caractères.', 'error');
+      return;
+    }
+    _wizardData.firstItem = item;
+    // Calculer le score à l'étape 6
+    _wizardShowScore();
+  }
+
+  const current = $(`wStep${_wizardStep}`);
+  const next    = $(`wStep${_wizardStep + 1}`);
+  if (!next) return;
+
+  // Animation sortie / entrée
+  if (current) {
+    current.style.opacity = '0';
+    current.style.transform = 'translateX(-30px)';
+    current.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+    setTimeout(() => {
+      current.classList.add('hidden');
+      current.style.opacity = '';
+      current.style.transform = '';
+      next.style.opacity = '0';
+      next.style.transform = 'translateX(30px)';
+      next.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        next.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        next.style.opacity = '1';
+        next.style.transform = 'translateX(0)';
+      });
+    }, 250);
+  }
+
+  _wizardStep++;
+  _wizardUpdateProgress(_wizardStep);
+};
+
+/** Bascule la sélection d'un choix multiple (catégories) */
+window.wizardToggle = (btn) => {
+  const val = btn.dataset.val;
+  const active = btn.classList.contains('border-emerald-500');
+  if (active) {
+    btn.classList.remove('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
+    btn.classList.add('border-gray-100', 'text-gray-700');
+    _wizardData.categories = _wizardData.categories.filter(v => v !== val);
+  } else {
+    btn.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
+    btn.classList.remove('border-gray-100', 'text-gray-700');
+    _wizardData.categories.push(val);
+  }
+
+  const nextBtn = $('wNextBtn2');
+  if (nextBtn) {
+    if (_wizardData.categories.length > 0) {
+      nextBtn.disabled = false;
+      nextBtn.classList.remove('opacity-50');
+    } else {
+      nextBtn.disabled = true;
+      nextBtn.classList.add('opacity-50');
+    }
+  }
+};
+
+window.wizardInputCheck = (input) => {
+  const val = input.value.trim();
+  const nextBtn = $('wNextBtn5');
+  if (nextBtn) {
+    if (val.length >= 2) {
+      nextBtn.disabled = false;
+      nextBtn.classList.remove('opacity-50');
+    } else {
+      nextBtn.disabled = true;
+      nextBtn.classList.add('opacity-50');
+    }
+  }
+};
+
+/** Sélection unique (fréquence / motivation) */
+window.wizardSingle = (btn, key) => {
+  const group = btn.parentElement.querySelectorAll('.wizard-single');
+  group.forEach(b => {
+    b.classList.remove('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
+    b.classList.add('border-gray-100', 'text-gray-700');
+  });
+  btn.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-700');
+  btn.classList.remove('border-gray-100', 'text-gray-700');
+  _wizardData[key] = btn.dataset.val;
+
+  // Activer le bouton "Continuer"
+  const nextBtn = $(`wNextBtn${_wizardStep}`);
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.classList.remove('opacity-50');
+  }
+};
+
+/** Calcule et affiche le score PolyEarth */
+function _wizardShowScore() {
+  let score = 20; // base
+
+  // +30 si au moins 2 catégories
+  if (_wizardData.categories.length >= 2) score += 30;
+  else if (_wizardData.categories.length === 1) score += 15;
+
+  // +25 selon la fréquence
+  const freqMap = { '0': 5, '1-3': 15, '4-10': 22, '10+': 25 };
+  score += freqMap[_wizardData.freq] || 0;
+
+  // +15 si motivation service ou all
+  if (_wizardData.motiv === 'service' || _wizardData.motiv === 'all') score += 15;
+  else if (_wizardData.motiv) score += 8;
+
+  // +10 si premier objet renseigné
+  if (_wizardData.firstItem) score += 10;
+
+  score = Math.min(score, 100);
+
+  // Messages selon score
+  const msgs = [
+    [85, '🌟 Incroyable ! Tu es un pilier de l\'économie du partage. PolyEarth a besoin de toi !'],
+    [65, '🙌 Super profil ! Tu as plein d\'objets à partager, tu vas adorer PolyEarth.'],
+    [45, '😊 Bon début ! Même un seul objet partagé change tout pour tes camarades.'],
+    [0,  '🌱 Bienvenue ! Le partage, ça s\'apprend. On est là pour t\'aider à commencer.'],
+  ];
+  const msg = msgs.find(([min]) => score >= min)[1];
+
+  setTimeout(() => {
+    const circle = $('scoreCircle');
+    const valEl  = $('scoreValue');
+    const msgEl  = $('scoreMsg');
+    const d1     = $('scoreDetail1');
+    const d2     = $('scoreDetail2');
+
+    if (circle) circle.style.strokeDashoffset = 264 - (264 * score / 100);
+
+    // Compteur animé
+    let current = 0;
+    const interval = setInterval(() => {
+      current = Math.min(current + 2, score);
+      if (valEl) valEl.textContent = current;
+      if (current >= score) clearInterval(interval);
+    }, 20);
+
+    if (msgEl) msgEl.textContent = msg;
+    if (d1 && _wizardData.categories.length > 0)
+      d1.textContent = `📦 Tu as des objets dans ${_wizardData.categories.length} catégorie(s) : ${_wizardData.categories.join(', ')}`;
+    if (d2 && _wizardData.firstItem)
+      d2.textContent = `🚀 Premier objet identifié : "${_wizardData.firstItem}"`;
+  }, 400);
+}
+
+/** Soumet le formulaire d'inscription et crée le compte */
+window.doRegisterWizard = async () => {
+  const btn = $('wFinalBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Création en cours...'; }
+
+  const name     = $('regName')?.value.trim();
+  const email    = $('regEmail')?.value.trim();
+  const password = $('regPassword')?.value;
+  const phone    = $('regPhone')?.value.trim();
+
   const res = await fetch(`${API}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      name: $('regName').value, 
-      email: $('regEmail').value, 
-      password: $('regPassword').value 
-    })
+    body: JSON.stringify({ name, email, password, phone })
   });
-  
+
   if (res.ok) {
-    notify('Compte créé ! Vérifiez vos emails.');
+    notify('Compte créé ! Connecte-toi maintenant.');
+    // Si un premier objet a été renseigné, on le stocke pour le publier après connexion
+    if (_wizardData.firstItem) {
+      sessionStorage.setItem('pendingItem', _wizardData.firstItem);
+    }
     navigate('/login');
   } else {
     const err = await res.json().catch(() => ({}));
     notify(err.message || "Erreur lors de l'inscription.", 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Créer mon compte 🌱'; }
   }
 };
 

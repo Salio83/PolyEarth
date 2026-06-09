@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     transaction_count INTEGER DEFAULT 0,
     is_verified BOOLEAN DEFAULT false,
     verification_token TEXT,
+    phone VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
