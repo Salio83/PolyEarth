@@ -53,7 +53,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             # MODIFIER CE CHEMIN vers l'emplacement réel de votre application sur le serveur
-            cd /home/${{ secrets.SSH_USER }}/PolyEarth
+            cd ~/PolyEarth
             
             # Récupérer la dernière version du code (détermine automatiquement la branche courante)
             git pull
