@@ -2,9 +2,9 @@ name: PolyEarth CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 jobs:
   # Étape 1 : Linting du code
@@ -43,7 +43,7 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
     steps:
       - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v0.1.6
@@ -55,8 +55,8 @@ jobs:
             # MODIFIER CE CHEMIN vers l'emplacement réel de votre application sur le serveur
             cd /home/${{ secrets.SSH_USER }}/PolyEarth
             
-            # Récupérer la dernière version du code
-            git pull origin main
+            # Récupérer la dernière version du code (détermine automatiquement la branche courante)
+            git pull
             
             # Relancer les conteneurs avec build automatique
             docker compose down
