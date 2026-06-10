@@ -1,10 +1,10 @@
-# 🌿 PolyEarth - Guide de Déploiement
+# PolyEarth - Guide de Déploiement
 
 Ce projet est une application web moderne pour l'association **PolyEarth** de Polytech Montpellier. Il utilise **Deno** pour le backend et le frontend, et **PostgreSQL** pour la base de données.
 
 ---
 
-## 🚀 Lancement Rapide
+## Lancement Rapide
 
 La méthode recommandée est d'utiliser **Docker Desktop**.
 
