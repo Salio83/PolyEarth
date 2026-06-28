@@ -194,6 +194,7 @@ router.post("/api/auth/login", async (ctx) => {
         photo_url: user.photo_url,
         rating: user.rating,
         transaction_count: user.transaction_count,
+        is_admin: user.is_admin,
       },
     };
   } catch (e) {

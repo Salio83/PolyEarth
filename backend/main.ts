@@ -17,6 +17,7 @@ import itemsRouter from "./routes/items.ts";
 import loansRouter from "./routes/loans.ts";
 import messagesRouter from "./routes/messages.ts";
 import reviewsRouter from "./routes/reviews.ts";
+import adminRouter from "./routes/admin.ts";
 
 // Connexion à la base de données PostgreSQL & migrations
 await connectDb();
@@ -42,6 +43,9 @@ mainRouter.use(messagesRouter.allowedMethods());
 
 mainRouter.use(reviewsRouter.routes());
 mainRouter.use(reviewsRouter.allowedMethods());
+
+mainRouter.use(adminRouter.routes());
+mainRouter.use(adminRouter.allowedMethods());
 
 // Middleware CORS et Gestion des erreurs/auth globale
 app.use(async (ctx, next) => {

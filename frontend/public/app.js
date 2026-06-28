@@ -12,7 +12,7 @@ import {
 
 import { 
   homePage, offresPage, demandesPage, messagesPage, pretsPage, profilPage, userProfilePage, loginPage, registerPage, associationPage, 
-  itemCard, demandCard, itemDetail, loanRow 
+  itemCard, demandCard, itemDetail, loanRow, adminPage 
 } from './pages.js';
 
 // =============================================================================
@@ -315,6 +315,7 @@ const routes = {
     content.innerHTML = registerPage();
   },
   '/association': () => { if (!guard()) return; content.innerHTML = associationPage(); hdr(); },
+  '/admin': () => { if (!guard() || !getUser().is_admin) { navigate('/'); return; } content.innerHTML = adminPage(); loadAdminData(); hdr(); },
 };
 
 /**
@@ -345,7 +346,18 @@ function hdr() {
     }
   }
   
-  // Mise à jour de l'état actif des liens de navigation
+  // Afficher / Masquer l'onglet Administration selon le rôle de l'utilisateur
+  const adminLink = $('adminNavLink');
+  const adminLinkMobile = $('adminNavLinkMobile');
+  if (u && u.is_admin) {
+    if (adminLink) adminLink.classList.remove('hidden');
+    if (adminLinkMobile) adminLinkMobile.style.display = ''; // laisser le CSS mobile-nav-link gérer
+  } else {
+    if (adminLink) adminLink.classList.add('hidden');
+    if (adminLinkMobile) adminLinkMobile.style.display = 'none';
+  }
+  
+  // Mise à jour de l'état actif des liens de navigation desktop
   const path = location.pathname;
   document.querySelectorAll('#mainNav .nav-link').forEach(link => {
     const isHome = path === '/' && link.getAttribute('href') === '/';
@@ -355,6 +367,15 @@ function hdr() {
     link.classList.toggle('active', isActive);
     link.classList.toggle('text-duck', isActive);
     link.classList.toggle('text-gray-400', !isActive);
+  });
+
+  // Mise à jour de l'état actif des liens de navigation mobile
+  document.querySelectorAll('.mobile-nav-link').forEach(link => {
+    const linkHref = link.getAttribute('data-route') || link.getAttribute('href');
+    const isHome = path === '/' && linkHref === '/';
+    const isOther = linkHref !== '/' && path.startsWith(linkHref);
+    const isActive = isHome || isOther;
+    link.classList.toggle('active-nav', isActive);
   });
 
   updateUnreadBadge();
@@ -1406,9 +1427,31 @@ async function renderDetail(id) {
     return;
   }
   const isOwner = i.owner_id === getUser()?.id;
-  content.innerHTML = itemDetail(i, isOwner);
+  const isAdmin = getUser()?.is_admin === true;
+  content.innerHTML = itemDetail(i, isOwner, isAdmin);
   hdr();
 }
+
+window.deleteItem = async (id) => {
+  if (!confirm("Voulez-vous vraiment supprimer cette annonce ? Cette action est irréversible.")) return;
+  const token = localStorage.getItem('token');
+  try {
+    const res = await fetch(`${API}/items/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (res.ok) {
+      notify("Annonce supprimée avec succès.");
+      navigate("/");
+    } else {
+      notify(data.message || "Erreur lors de la suppression.", "error");
+    }
+  } catch (e) {
+    console.error(e);
+    notify("Erreur réseau.", "error");
+  }
+};
 
 /**
  * Affiche la page de profil public d'un utilisateur.
@@ -2334,14 +2377,123 @@ async function updateUnreadBadge() {
     const res = await fetch(`${API}/messages/${u.id}`);
     const msgs = await res.json().catch(() => []);
     const unread = msgs.filter(m => !m.is_read && m.receiver_id === u.id).length;
-    const badge = $('unreadBadge');
     
+    const badge = $('unreadBadge');
     if (badge) {
       badge.textContent = unread;
       badge.classList.toggle('hidden', !unread);
     }
+    
+    const badgeMobile = $('unreadBadgeMobile');
+    if (badgeMobile) {
+      badgeMobile.textContent = unread;
+      badgeMobile.classList.toggle('hidden', !unread);
+    }
   } catch {}
 }
+
+// =============================================================================
+// --- PANNEAU D'ADMINISTRATION ---
+// =============================================================================
+
+window.setAdminTab = (tab) => {
+  document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
+  document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+    btn.classList.remove('border-emerald-600', 'text-emerald-600');
+    btn.classList.add('border-transparent', 'text-gray-400');
+  });
+  
+  $(`adminSec-${tab}`)?.classList.remove('hidden');
+  const activeBtn = $(`tabBtn-${tab}`);
+  if (activeBtn) {
+    activeBtn.classList.remove('border-transparent', 'text-gray-400');
+    activeBtn.classList.add('border-emerald-600', 'text-emerald-600');
+  }
+};
+
+window.loadAdminData = async () => {
+  const token = localStorage.getItem('token');
+  const headers = { 'Authorization': `Bearer ${token}` };
+  
+  // 1. Charger Utilisateurs
+  try {
+    const uRes = await fetch(`${API}/admin/users`, { headers });
+    if (uRes.status === 200) {
+      const users = await uRes.json();
+      const uTable = $('adminUsersTable');
+      if (uTable) {
+        uTable.innerHTML = users.map(u => `
+          <tr class="hover:bg-gray-50/50 transition-colors">
+            <td class="py-4 px-6 font-bold text-gray-900">${u.name}</td>
+            <td class="py-4 px-6 font-medium text-gray-500">${u.email}</td>
+            <td class="py-4 px-6 text-emerald-700 font-bold">${u.phone || 'Non renseigné'}</td>
+            <td class="py-4 px-6 text-gray-500">${u.school} (${u.status})</td>
+            <td class="py-4 px-6">
+              <span class="${u.is_admin ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'} text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wider">
+                ${u.is_admin ? 'Admin' : 'Membre'}
+              </span>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+  } catch (e) {
+    console.error("Erreur chargement utilisateurs admin:", e);
+  }
+
+  // 2. Charger Transactions
+  try {
+    const tRes = await fetch(`${API}/admin/transactions`, { headers });
+    if (tRes.status === 200) {
+      const txs = await tRes.json();
+      const tTable = $('adminTxsTable');
+      if (tTable) {
+        tTable.innerHTML = txs.map(t => `
+          <tr class="hover:bg-gray-50/50 transition-colors">
+            <td class="py-4 px-6 text-gray-400 font-bold">#${t.id}</td>
+            <td class="py-4 px-6 font-bold text-gray-900">${t.item_name}</td>
+            <td class="py-4 px-6 text-gray-600 font-semibold">${t.owner_name}</td>
+            <td class="py-4 px-6 text-gray-600 font-semibold">${t.borrower_name}</td>
+            <td class="py-4 px-6 text-gray-500 text-xs font-bold">${fmtDate(t.start_date)} au ${fmtDate(t.end_date)}</td>
+            <td class="py-4 px-6">
+              <span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${
+                t.status === 'completed' ? 'bg-gray-200 text-gray-600' :
+                t.status === 'ongoing' ? 'bg-orange-100 text-orange-800' :
+                t.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+              }">${t.status}</span>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+  } catch (e) {
+    console.error("Erreur chargement transactions admin:", e);
+  }
+
+  // 3. Charger Messages
+  try {
+    const mRes = await fetch(`${API}/admin/messages`, { headers });
+    if (mRes.status === 200) {
+      const msgs = await mRes.json();
+      const mTable = $('adminMsgsTable');
+      if (mTable) {
+        mTable.innerHTML = msgs.map(m => `
+          <tr class="hover:bg-gray-50/50 transition-colors">
+            <td class="py-4 px-6 font-bold text-gray-900">${m.item_name}</td>
+            <td class="py-4 px-6 text-gray-600 font-semibold">${m.sender_name}</td>
+            <td class="py-4 px-6 text-gray-600 font-semibold">${m.receiver_name}</td>
+            <td class="py-4 px-6 text-gray-500 text-sm italic font-medium break-all max-w-xs">${m.content}</td>
+            <td class="py-4 px-6 text-gray-400 text-xs font-bold">${fmtDate(m.created_at)}</td>
+          </tr>
+        `).join('');
+      }
+    }
+  } catch (e) {
+    console.error("Erreur chargement messages admin:", e);
+  }
+  
+  if (window.lucide) lucide.createIcons();
+};
 
 // =============================================================================
 // --- INITIALISATION ---

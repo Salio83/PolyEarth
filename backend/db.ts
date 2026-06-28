@@ -57,6 +57,8 @@ export async function connectDb() {
         `UPDATE messages SET is_read=false WHERE is_read IS NULL`,
         `UPDATE messages SET type='text' WHERE type IS NULL`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)`,
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false`,
+        `UPDATE users SET is_admin=true WHERE email='admin@polyearth.com'`,
       ];
 
       for (const q of migrations) {
@@ -69,6 +71,21 @@ export async function connectDb() {
         }
       }
       console.log("✅ Migrations terminées avec succès");
+
+      // S'assurer qu'un utilisateur administrateur par défaut existe
+      const adminCheck = await client.queryObject(
+        "SELECT id FROM users WHERE email=$1",
+        ["admin@polyearth.com"]
+      );
+      if (adminCheck.rows.length === 0) {
+        const bcrypt = await import("https://deno.land/x/bcrypt@v0.4.1/mod.ts");
+        const hashedAdminPassword = await bcrypt.hash("admin123");
+        await client.queryObject(
+          "INSERT INTO users (name, email, password, is_verified, is_admin, status) VALUES ($1,$2,$3,$4,$5,$6)",
+          ["Admin PolyEarth", "admin@polyearth.com", hashedAdminPassword, true, true, "Administrateur"]
+        );
+        console.log("👤 Utilisateur Administrateur par défaut créé : admin@polyearth.com / admin123");
+      }
       break;
     } catch (err) {
       console.error(

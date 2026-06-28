@@ -23,6 +23,14 @@ app.use(async (ctx) => {
       index: "index.html",
     });
   }
+
+  // Désactiver le cache pour les fichiers HTML et JS afin de toujours servir la version à jour
+  const servedPath = ctx.request.url.pathname;
+  if (servedPath.endsWith(".html") || servedPath === "/" || servedPath.endsWith(".js")) {
+    ctx.response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+    ctx.response.headers.set("Pragma", "no-cache");
+    ctx.response.headers.set("Expires", "0");
+  }
 });
 
 console.log("🚀 Serveur frontend démarré sur http://localhost:3000");
