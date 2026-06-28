@@ -239,39 +239,68 @@ export const loanRow = (t, uid) => {
  * Page de liste des offres de prêt.
  * @returns {string} HTML de la page.
  */
-export const offresPage = () => `
-    <div class="flex flex-col lg:flex-row gap-8">
-        <aside class="w-full lg:w-64 space-y-4">
-            <button onclick="showModal('modal')" class="w-full bg-duck text-white p-4 rounded-lg font-black hover:bg-duck-dark shadow-lg shadow-duck/10 transition-all flex items-center justify-center gap-2">
-                <span>➕ Publier une offre</span>
-            </button>
-            <div class="bg-white p-6 rounded-xl border border-gray-100">
-                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Catégories</h4>
-                <div class="space-y-2">
-                    ${['all', 'Matériel', 'Livres', 'Services', 'Sport', 'Autre'].map(c => `
-                        <button onclick="filterCat('${c}')" data-cat="${c}" class="cat-pill w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all ${c === 'all' ? 'active' : ''}">
-                            ${c === 'all' ? '📦 Toutes' : `${catIcon(c)} ${c}`}
-                        </button>
-                    `).join('')}
-                </div>
+export const offresPage = () => {
+    const catSvg = {
+        'all': 'layers',
+        'Matériel': 'wrench',
+        'Livres': 'book-open',
+        'Services': 'handshake',
+        'Sport': 'trophy',
+        'Autre': 'package'
+    };
+    return `
+    <div class="space-y-8 animate-fade-in pb-20">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div class="space-y-1">
+                <h1 class="text-4xl font-black text-gray-900 tracking-tight heading-font">Objets disponibles</h1>
+                <p class="text-gray-400 font-medium">Trouvez ce dont vous avez besoin parmi les objets proposés en prêt par les étudiants</p>
             </div>
-        </aside>
-        <main class="flex-1">
-            <h2 class="text-3xl font-black text-gray-900 mb-8">Objets disponibles</h2>
-            <div id="offersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        </main>
+            <button onclick="showModal('modal')" class="bg-duck text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 hover:bg-duck-dark transition-all shadow-xl shadow-duck/20">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+                Proposer un objet
+            </button>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            <aside class="w-full lg:w-64 space-y-4">
+                <div class="bg-white p-6 rounded-2xl border border-emerald-50 shadow-sm">
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 ml-1">Catégories</h4>
+                    <div class="space-y-2">
+                        ${['all', 'Matériel', 'Livres', 'Services', 'Sport', 'Autre'].map(c => `
+                            <button onclick="filterCat('${c}')" data-cat="${c}" class="cat-pill w-full flex items-center gap-3 text-left px-5 py-3.5 rounded-xl text-base font-bold transition-all ${c === 'all' ? 'active' : ''}">
+                                <i data-lucide="${catSvg[c] || 'package'}" class="w-5 h-5 flex-shrink-0"></i>
+                                <span>${c === 'all' ? 'Toutes' : c}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            </aside>
+            <main class="flex-1">
+                <div id="offersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </main>
+        </div>
     </div>
-`;
+    `;
+};
 
 /**
  * Page de liste des demandes d'objets.
  * @returns {string} HTML de la page.
  */
-export const demandesPage = () => `
+export const demandesPage = () => {
+    const catSvg = {
+        'all': 'layers',
+        'Matériel': 'wrench',
+        'Livres': 'book-open',
+        'Services': 'handshake',
+        'Sport': 'trophy',
+        'Autre': 'package'
+    };
+    return `
     <div class="space-y-8 animate-fade-in pb-20">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div class="space-y-1">
-                <h1 class="text-4xl font-black text-gray-900 tracking-tight">Ils recherchent...</h1>
+                <h1 class="text-4xl font-black text-gray-900 tracking-tight heading-font">Ils recherchent...</h1>
                 <p class="text-gray-400 font-medium">Aidez d'autres étudiants en leur prêtant ce dont ils ont besoin</p>
             </div>
             <button onclick="showModal('modal')" class="bg-duck text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 hover:bg-duck-dark transition-all shadow-xl shadow-duck/20">
@@ -282,12 +311,13 @@ export const demandesPage = () => `
 
         <div class="flex flex-col lg:flex-row gap-8">
             <aside class="w-full lg:w-64 space-y-4">
-                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <div class="bg-white p-6 rounded-2xl border border-emerald-50 shadow-sm">
                     <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 ml-1">Catégories</h4>
                     <div class="space-y-2">
                         ${['all', 'Matériel', 'Livres', 'Services', 'Sport', 'Autre'].map(c => `
-                            <button onclick="filterCat('${c}')" data-cat="${c}" class="cat-pill w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${c === 'all' ? 'active' : ''}">
-                                ${c === 'all' ? '📦 Toutes' : `${catIcon(c)} ${c}`}
+                            <button onclick="filterCat('${c}')" data-cat="${c}" class="cat-pill w-full flex items-center gap-3 text-left px-5 py-3.5 rounded-xl text-base font-bold transition-all ${c === 'all' ? 'active' : ''}">
+                                <i data-lucide="${catSvg[c] || 'package'}" class="w-5 h-5 flex-shrink-0"></i>
+                                <span>${c === 'all' ? 'Toutes' : c}</span>
                             </button>
                         `).join('')}
                     </div>
@@ -298,7 +328,8 @@ export const demandesPage = () => `
             </main>
         </div>
     </div>
-`;
+    `;
+};
 
 /**
  * Composant Carte pour une demande d'objet.
@@ -450,7 +481,7 @@ export const profilPage = (u) => `
         </div>
 
         <div>
-            <h3 class="text-2xl font-black text-gray-900 mb-6">Mes offres de prêt</h3>
+            <h3 class="text-2xl font-black text-gray-900 mb-6">Mes propositions de prêt</h3>
             <div id="myOffersGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
@@ -503,7 +534,7 @@ export const userProfilePage = (u, items) => {
         <div class="space-y-8">
             <h3 class="text-3xl font-black text-gray-900 tracking-tight">Objets proposés par ${u.name.split(' ')[0]}</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                ${offers.length ? offers.map(i => itemCard(i)).join('') : '<div class="col-span-full py-12 text-center bg-gray-50 rounded-3xl text-gray-400 font-bold">Aucune offre pour le moment.</div>'}
+                ${offers.length ? offers.map(i => itemCard(i)).join('') : '<div class="col-span-full py-12 text-center bg-gray-50 rounded-3xl text-gray-400 font-bold">Aucune proposition pour le moment.</div>'}
             </div>
         </div>
 
@@ -644,18 +675,46 @@ export const registerPage = () => `
       <!-- Étape 1 : Compte -->
       <div id="wStep1" class="wizard-step p-8 md:p-10">
         <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🌱</div>
-        <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Créer mon compte</h2>
+        <h2 class="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight heading-font">Créer mon compte</h2>
         <p class="text-sm text-gray-400 font-medium mb-8">Rejoins la communauté PolyEarth !</p>
         <form onsubmit="wizardNext(event)" class="space-y-4">
-          <input id="regName" placeholder="Prénom et Nom" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required>
-          <input id="regEmail" type="email" placeholder="Adresse e-mail" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required>
-          <input id="regPassword" type="password" placeholder="Mot de passe (8 car. min.)" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required minlength="8">
-          <div class="relative">
-            <input id="regPhone" type="tel" placeholder="Téléphone (ex: 06 12 34 56 78)" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all pr-10" required>
-            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-base">📱</span>
+          <div>
+            <input id="regName" oninput="validateRegName(this)" placeholder="Prénom et Nom" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700" required>
+            <p id="regNameFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
+          </div>
+          <div>
+            <input id="regEmail" type="email" oninput="validateRegEmail(this)" placeholder="Adresse e-mail" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700" required>
+            <p id="regEmailFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
+          </div>
+          <div>
+            <input id="regPassword" type="password" oninput="validateRegPassword(this)" placeholder="Mot de passe (8 car. min.)" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700" required minlength="8">
+            <p id="regPasswordFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
+          </div>
+          <div>
+            <div class="flex gap-2">
+              <select id="regPhonePrefix" onchange="validateRegPhone(document.getElementById('regPhone'))" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 cursor-pointer text-sm">
+                <option value="+33" selected>🇫🇷 +33</option>
+                <option value="+32">🇧🇪 +32</option>
+                <option value="+41">🇨🇭 +41</option>
+                <option value="+1">🇨🇦 +1</option>
+                <option value="+34">🇪🇸 +34</option>
+                <option value="+39">🇮🇹 +39</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+49">🇩🇪 +49</option>
+                <option value="+212">🇲🇦 +212</option>
+                <option value="+213">🇩🇿 +213</option>
+                <option value="+216">🇹🇳 +216</option>
+                <option value="+221">🇸🇳 +221</option>
+              </select>
+              <div class="relative flex-1">
+                <input id="regPhone" type="tel" oninput="validateRegPhone(this)" placeholder="ex: 06 12 34 56 78" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 pr-10" required>
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-base">📱</span>
+              </div>
+            </div>
+            <p id="regPhoneFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
           </div>
           <p class="text-xs text-gray-400 font-medium -mt-1 px-1">🔒 Ton numéro est confidentiel — jamais visible par les autres utilisateurs.</p>
-          <button type="submit" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all mt-2">Commencer ➜</button>
+          <button type="submit" id="wNextBtn1" disabled class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all mt-2 opacity-50 shadow-lg shadow-emerald-600/10">Commencer ➜</button>
         </form>
         <div class="mt-6 text-center">
           <button onclick="navigate('/login')" class="text-xs text-gray-400 font-bold hover:text-emerald-600 transition-colors">Déjà un compte ? Se connecter</button>
@@ -664,8 +723,9 @@ export const registerPage = () => `
 
       <!-- Étape 2 : Catégories -->
       <div id="wStep2" class="wizard-step hidden p-8 md:p-10">
+        <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
         <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl mb-6">📦</div>
-        <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Tes objets</h2>
+        <h2 class="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight heading-font">Tes objets</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Dans quels domaines as-tu des objets peu utilisés ? <span class="text-emerald-600 font-black">(Choix multiples)</span></p>
         <div class="grid grid-cols-2 gap-3 mb-8">
           ${[['🛠️','Bricolage'],['📚','Livres / Études'],['⚽','Sport & Loisirs'],['🎮','Jeux / Électro'],['🍳','Cuisine'],['🧳','Voyage'],['🎸','Musique'],['🪴','Maison / Déco']].map(([icon, label]) => `
@@ -674,13 +734,14 @@ export const registerPage = () => `
             <span class="text-xl">${icon}</span><span>${label}</span>
           </button>`).join('')}
         </div>
-        <button onclick="wizardNext()" id="wNextBtn2" disabled class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all opacity-50">Continuer ➜</button>
+        <button onclick="wizardNext()" id="wNextBtn2" disabled class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10">Continuer ➜</button>
       </div>
 
       <!-- Étape 3 : Fréquence -->
       <div id="wStep3" class="wizard-step hidden p-8 md:p-10">
+        <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
         <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🤔</div>
-        <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Combien d'objets ?</h2>
+        <h2 class="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight heading-font">Combien d'objets ?</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Parmi tes affaires, combien n'ont <span class="text-blue-600 font-black">pas été utilisés depuis 3 mois</span> ou plus ?</p>
         <div class="space-y-3 mb-8">
           ${[['0','Aucun... je suis minimaliste 😅'],['1-3','1 à 3 objets 🤔'],['4-10','4 à 10 objets 📦'],['10+','Plus de 10, j\'ai de la place à libérer ! 🏠']].map(([val, label]) => `
@@ -689,13 +750,14 @@ export const registerPage = () => `
             ${label}
           </button>`).join('')}
         </div>
-        <button onclick="wizardNext()" id="wNextBtn3" disabled class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all opacity-50">Continuer ➜</button>
+        <button onclick="wizardNext()" id="wNextBtn3" disabled class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10">Continuer ➜</button>
       </div>
 
       <!-- Étape 4 : Motivation -->
       <div id="wStep4" class="wizard-step hidden p-8 md:p-10">
+        <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
         <div class="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center text-2xl mb-6">💡</div>
-        <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Ta motivation</h2>
+        <h2 class="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight heading-font">Ta motivation</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Qu'est-ce qui t'<span class="text-purple-600 font-black">encouragerait le plus</span> à prêter un objet ?</p>
         <div class="space-y-3 mb-8">
           ${[['service','🤝 Rendre service à un camarade'],['place','📦 Libérer de la place chez moi'],['rep','⭐ Construire ma réputation sur PolyEarth'],['all','✨ Un peu de tout ça !']].map(([val, label]) => `
@@ -704,24 +766,26 @@ export const registerPage = () => `
             ${label}
           </button>`).join('')}
         </div>
-        <button onclick="wizardNext()" id="wNextBtn4" disabled class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all opacity-50">Continuer ➜</button>
+        <button onclick="wizardNext()" id="wNextBtn4" disabled class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10">Continuer ➜</button>
       </div>
 
       <!-- Étape 5 : Premier objet -->
       <div id="wStep5" class="wizard-step hidden p-8 md:p-10">
+        <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
         <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🚀</div>
-        <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Ton premier objet</h2>
+        <h2 class="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight heading-font">Ton premier objet</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Quel objet pourrais-tu proposer <span class="text-orange-500 font-black">dès maintenant</span> à tes camarades ?</p>
         <input id="firstItemName" type="text" placeholder="Ex: perceuse Bosch, livre de Maths S3..." oninput="wizardInputCheck(this)"
-          class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-orange-300 transition-all mb-4">
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 mb-4">
         <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-8 text-sm text-orange-700 font-medium">
           ✨ Tu pourras publier cette annonce en un clic dès la création de ton compte !
         </div>
-        <button onclick="wizardNext()" id="wNextBtn5" disabled class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all opacity-50">Presque fini ➜</button>
+        <button onclick="wizardNext()" id="wNextBtn5" disabled class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10">Presque fini ➜</button>
       </div>
 
       <!-- Étape 6 : Score & création -->
       <div id="wStep6" class="wizard-step hidden p-8 md:p-10 text-center">
+        <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none mx-auto w-fit">&larr; Retour</button>
         <div class="relative w-28 h-28 mx-auto mb-6">
           <svg class="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="42" fill="none" stroke="#e5e7eb" stroke-width="8"/>
@@ -736,14 +800,14 @@ export const registerPage = () => `
             <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">/ 100</span>
           </div>
         </div>
-        <h2 class="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ton Score Partage</h2>
+        <h2 class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight heading-font">Ton Score Partage</h2>
         <p id="scoreMsg" class="text-sm text-gray-500 font-medium mb-6 px-4">Calcul en cours...</p>
         <div id="scoreDetails" class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 mb-8 text-left space-y-2">
           <p id="scoreDetail1" class="text-sm font-bold text-emerald-700"></p>
           <p id="scoreDetail2" class="text-sm font-bold text-emerald-700"></p>
         </div>
         <button onclick="doRegisterWizard()" id="wFinalBtn"
-          class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all">
+          class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all shadow-lg shadow-emerald-600/10">
           Créer mon compte 🌱
         </button>
         <p class="text-xs text-gray-300 font-medium mt-4">En créant un compte tu acceptes les conditions d'utilisation.</p>

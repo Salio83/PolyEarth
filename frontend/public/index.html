@@ -8,10 +8,86 @@
     <meta name="description" content="Plateforme de prêt et d'emprunt entre étudiants de Polytech Montpellier.">
 
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Work+Sans:wght@400;500;600;700&family=Fraunces:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
+    <style>
+        h1, h2, h3, .heading-font {
+            font-family: 'Fraunces', serif !important;
+        }
+        body, .body-font {
+            font-family: 'Work Sans', sans-serif !important;
+            background-color: rgb(240, 253, 244) !important;
+        }
+        header, .bg-white.sticky {
+            background-color: rgb(240, 253, 244) !important;
+        }
+        
+        .grid-cols-7 {
+            display: grid !important;
+            grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+        }
+        .max-h-90vh {
+            max-height: 90vh !important;
+        }
+        
+        /* Overrides to map the old "duck" teal color to Canva's emerald color */
+        .text-duck {
+            color: rgb(5, 150, 105) !important; /* Emerald 600 */
+        }
+        .bg-duck {
+            background-color: rgb(5, 150, 105) !important;
+        }
+        .border-duck {
+            border-color: rgb(5, 150, 105) !important;
+        }
+        .border-duck\/5 {
+            border-color: rgba(5, 150, 105, 0.05) !important;
+        }
+        .border-duck\/10 {
+            border-color: rgba(5, 150, 105, 0.1) !important;
+        }
+        .bg-duck\/5 {
+            background-color: rgba(5, 150, 105, 0.05) !important;
+        }
+        .bg-duck\/10 {
+            background-color: rgba(5, 150, 105, 0.1) !important;
+        }
+        .bg-duck\/20 {
+            background-color: rgba(5, 150, 105, 0.2) !important;
+        }
+        .text-duck\/20 {
+            color: rgba(5, 150, 105, 0.2) !important;
+        }
+        .shadow-duck\/5 {
+            --tw-shadow-color: rgba(5, 150, 105, 0.05) !important;
+        }
+        .shadow-duck\/10 {
+            --tw-shadow-color: rgba(5, 150, 105, 0.1) !important;
+        }
+        .shadow-duck\/20 {
+            --tw-shadow-color: rgba(5, 150, 105, 0.2) !important;
+        }
+        .hover\:bg-duck-dark:hover {
+            background-color: rgb(4, 120, 87) !important; /* Emerald 700 */
+        }
+        .hover\:text-duck:hover {
+            color: rgb(4, 120, 87) !important;
+        }
+        .focus\:border-duck:focus {
+            border-color: rgb(5, 150, 105) !important;
+        }
+        .focus\:ring-duck:focus {
+            --tw-ring-color: rgba(5, 150, 105, 0.3) !important;
+        }
+        .nav-link.active:after {
+            background: rgb(5, 150, 105) !important;
+        }
+        .group:hover .group-focus-within\:text-duck {
+            color: rgb(5, 150, 105) !important;
+        }
+    </style>
 </head>
-<body class="bg-white font-['Inter'] text-gray-900 min-h-screen">
+<body class="font-['Work_Sans'] text-gray-900 min-h-screen body-font">
 
     <header class="bg-white sticky top-0 z-50 py-4">
         <div class="container mx-auto px-6 flex items-center justify-between">
@@ -83,8 +159,8 @@
 
     <div id="lendAgainModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
         <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
-            <h3 class="text-2xl font-black text-gray-900 mb-4">Prêt terminé ! 🥳</h3>
-            <p class="text-gray-600 font-medium mb-8 leading-relaxed">Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?</p>
+            <h3 id="lendAgainTitle" class="text-2xl font-black text-gray-900 mb-4">Prêt terminé ! 🥳</h3>
+            <p id="lendAgainQuestionText" class="text-gray-600 font-medium mb-8 leading-relaxed">Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?</p>
             <div class="flex gap-4">
                 <button id="reLendYesBtn" class="flex-1 bg-emerald-700 text-white py-4 rounded-lg font-black hover:bg-emerald-800 transition-all shadow-lg">Oui, avec plaisir</button>
                 <button id="reLendNoBtn" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-lg font-bold hover:bg-gray-200 transition-all">Non, c'est fini</button>
@@ -94,28 +170,38 @@
 
     <div id="modal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
         <!-- Add Item Modal Content -->
-        <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
-            <div class="flex justify-between items-start mb-8">
+        <div class="bg-white rounded-2xl p-8 md:p-10 max-w-lg w-full max-h-90vh overflow-y-auto shadow-2xl animate-scale-up border border-emerald-50">
+            <div class="flex justify-between items-start mb-6">
                 <div>
-                    <h3 class="text-3xl font-black text-gray-900 tracking-tight">Nouvelle annonce</h3>
-                    <p class="text-gray-400 font-medium">Partagez ce que vous n'utilisez plus.</p>
+                    <h3 class="text-3xl font-extrabold text-gray-900 tracking-tight heading-font">Nouvelle annonce</h3>
+                    <p class="text-emerald-800 font-medium text-sm mt-1">Partagez vos objets avec la communauté DDRS</p>
                 </div>
                 <button onclick="hideModal('modal')" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             <form onsubmit="addItem(event)" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Type</label>
-                        <select id="itemType" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold text-sm">
-                            <option value="offer">🎁 J'offre</option>
+                <!-- Photo Preview Container -->
+                <div id="itemPhotoPreviewContainer" class="hidden flex justify-center mb-4">
+                    <div class="relative w-32 h-32 rounded-xl overflow-hidden border border-emerald-100 shadow-md bg-gray-50">
+                        <img id="itemPhotoPreview" src="" class="w-full h-full object-cover" alt="Aperçu de la photo">
+                        <button type="button" onclick="window.clearItemPhotoPreview()" class="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors shadow-sm select-none">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block mb-1 font-semibold text-sm text-gray-700">Type</label>
+                        <select id="itemType" onchange="window.onItemTypeChange()" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700">
+                            <option value="offer">🤝 Je prête</option>
                             <option value="demand">🔍 Je cherche</option>
                         </select>
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Catégorie</label>
-                        <select id="itemCategory" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold text-sm">
+                    <div>
+                        <label class="block mb-1 font-semibold text-sm text-gray-700">Catégorie</label>
+                        <select id="itemCategory" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700">
                             <option value="Matériel">🛠️ Matériel</option>
                             <option value="Livres">📚 Livres</option>
                             <option value="Services">🤝 Services</option>
@@ -124,82 +210,78 @@
                         </select>
                     </div>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nom de l'objet</label>
-                    <input id="itemName" placeholder="Ex: Calculatrice TI-84" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold text-sm" required>
+                <div>
+                    <label class="block mb-1 font-semibold text-sm text-gray-700">Nom de l'objet</label>
+                    <input id="itemName" placeholder="Ex: Calculatrice TI-84" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700" required>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
-                    <textarea id="itemDesc" placeholder="État, durée max..." class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-medium text-sm h-24" required></textarea>
+                <div>
+                    <label class="block mb-1 font-semibold text-sm text-gray-700">Description</label>
+                    <textarea id="itemDesc" placeholder="État, durée max..." class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 h-24 resize-none" required></textarea>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Qualité</label>
-                        <select id="itemQuality" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold text-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block mb-1 font-semibold text-sm text-gray-700">Qualité</label>
+                        <select id="itemQuality" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700">
                             <option value="new">Neuf</option>
                             <option value="good" selected>Bon état</option>
                             <option value="fair">Correct</option>
                         </select>
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Photo</label>
-                        <input id="itemPhoto" type="file" accept="image/*" class="w-full p-3 bg-gray-50 rounded-lg text-xs font-bold text-gray-400">
+                    <div id="itemPhotoContainer">
+                        <label class="block mb-1 font-semibold text-sm text-gray-700">Photo de l'objet</label>
+                        <input id="itemPhoto" type="file" accept="image/*" onchange="window.onItemPhotoChange()" class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Du (optionnel)</label>
-                        <input id="itemFrom" type="date" class="w-full p-3 bg-gray-50 border-none rounded-lg outline-none font-bold text-xs">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Au (optionnel)</label>
-                        <input id="itemUntil" type="date" class="w-full p-3 bg-gray-50 border-none rounded-lg outline-none font-bold text-xs">
-                    </div>
+                <div id="itemDatesContainer" class="space-y-1">
+                    <label id="calendarLabel" class="block mb-1 font-semibold text-sm text-gray-700">Période de disponibilité (optionnelle)</label>
+                    <div id="calendarContainer" class="w-full"></div>
+                    <input id="itemFrom" type="hidden">
+                    <input id="itemUntil" type="hidden">
                 </div>
-                <button type="submit" class="w-full bg-emerald-700 text-white py-4 rounded-lg font-black shadow-lg shadow-emerald-900/10 hover:bg-emerald-800 transition-all mt-4">Publier l'annonce</button>
+                <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-all mt-4 shadow-lg shadow-emerald-600/20 active:scale-[0.98]">Publier l'annonce</button>
             </form>
         </div>
     </div>
 
     <div id="proposeLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
-            <div class="flex justify-between items-start mb-8">
+        <div class="bg-white rounded-2xl p-8 md:p-10 max-w-lg w-full max-h-90vh overflow-y-auto shadow-2xl animate-scale-up border border-emerald-50">
+            <div class="flex justify-between items-start mb-6">
                 <div>
-                    <h3 class="text-3xl font-black text-gray-900 tracking-tight">Proposer un objet</h3>
-                    <p class="text-gray-400 font-medium">Répondez à cette demande de prêt.</p>
+                    <h3 class="text-3xl font-extrabold text-gray-900 tracking-tight heading-font">Proposer un objet</h3>
+                    <p class="text-emerald-800 font-medium text-sm mt-1">Répondez à cette demande de prêt.</p>
                 </div>
                 <button onclick="hideModal('proposeLoanModal')" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             <form id="proposeLoanForm" class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Choisir un de mes objets déjà en ligne</label>
-                    <select id="propMyItemSelect" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold text-sm">
+                <div>
+                    <label class="block mb-1 font-semibold text-sm text-gray-700">Choisir un de mes objets déjà en ligne</label>
+                    <select id="propMyItemSelect" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700">
                         <option value="">-- Créer une nouvelle proposition --</option>
                     </select>
                 </div>
                 <div id="newPropFields" class="space-y-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Ou nom de l'objet à proposer</label>
-                        <input id="propItemName" placeholder="Ex: Ma calculatrice TI-84" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold text-sm">
+                    <div>
+                        <label class="block mb-1 font-semibold text-sm text-gray-700">Ou nom de l'objet à proposer</label>
+                        <input id="propItemName" placeholder="Ex: Ma calculatrice TI-84" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700">
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Précisions (état, conditions...)</label>
-                        <textarea id="propItemDesc" placeholder="Je peux te la prêter pour la semaine..." class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-medium text-sm h-24"></textarea>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Disponible du</label>
-                        <input id="propFrom" type="date" class="w-full p-3 bg-gray-50 border-none rounded-lg outline-none font-bold text-xs">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Au</label>
-                        <input id="propUntil" type="date" class="w-full p-3 bg-gray-50 border-none rounded-lg outline-none font-bold text-xs">
+                    <div>
+                        <label class="block mb-1 font-semibold text-sm text-gray-700">Précisions (état, conditions...)</label>
+                        <textarea id="propItemDesc" placeholder="Je peux te la prêter pour la semaine..." class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 h-24 resize-none"></textarea>
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-duck text-white py-4 rounded-lg font-black shadow-lg shadow-duck/10 hover:bg-duck-dark transition-all mt-4">Envoyer la proposition</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block mb-1 font-semibold text-sm text-gray-700">Disponible du</label>
+                        <input id="propFrom" type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-xs">
+                    </div>
+                    <div>
+                        <label class="block mb-1 font-semibold text-sm text-gray-700">Au</label>
+                        <input id="propUntil" type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-xs">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-all mt-4 shadow-lg shadow-emerald-600/20 active:scale-[0.98]">Envoyer la proposition</button>
             </form>
         </div>
     </div>
@@ -220,7 +302,7 @@
             <textarea id="reviewComment" placeholder="Un petit mot sur l'échange (optionnel)..." class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-medium text-sm h-24 mb-6"></textarea>
             
             <div id="reLendOption" class="hidden mb-6">
-                <p class="text-gray-600 font-bold mb-4 text-sm">Souhaitez-vous remettre cet objet en ligne ?</p>
+                <p id="reLendQuestionText" class="text-gray-600 font-bold mb-4 text-sm">Souhaitez-vous remettre cet objet en ligne ?</p>
                 <div class="flex gap-4">
                     <button id="reLendYes" class="flex-1 py-3 rounded-lg border-2 border-emerald-600 text-emerald-600 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-50 transition-all">OUI, disponible</button>
                     <button id="reLendNo" class="flex-1 py-3 rounded-lg border-2 border-gray-200 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">NON, fini</button>

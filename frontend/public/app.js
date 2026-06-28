@@ -20,8 +20,205 @@ import {
 // =============================================================================
 
 window.$ = $;
-window.showModal = sm;
 window.hideModal = hm;
+let _calendarStart = null;
+let _calendarEnd = null;
+let _currentCalendarMonth = new Date().getMonth();
+let _currentCalendarYear = new Date().getFullYear();
+
+function renderCalendar() {
+  const container = $('calendarContainer');
+  if (!container) return;
+
+  const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+  const daysOfWeek = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
+
+  let html = `
+    <div class="border border-gray-200 rounded-xl p-3 bg-white select-none">
+      <div class="flex justify-between items-center mb-2">
+        <button type="button" onclick="changeCalendarMonth(-1)" class="p-1 hover:bg-gray-100 rounded-lg text-gray-500 text-xs font-bold">&larr;</button>
+        <span class="font-bold text-xs text-gray-800">${monthNames[_currentCalendarMonth]} ${_currentCalendarYear}</span>
+        <button type="button" onclick="changeCalendarMonth(1)" class="p-1 hover:bg-gray-100 rounded-lg text-gray-500 text-xs font-bold">&rarr;</button>
+      </div>
+      <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-gray-400 mb-1">
+        ${daysOfWeek.map(d => `<div>${d}</div>`).join('')}
+      </div>
+      <div class="grid grid-cols-7 gap-1">
+  `;
+
+  const firstDay = new Date(_currentCalendarYear, _currentCalendarMonth, 1);
+  let firstDayIndex = firstDay.getDay(); 
+  firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
+  const lastDay = new Date(_currentCalendarYear, _currentCalendarMonth + 1, 0).getDate();
+
+  for (let i = 0; i < firstDayIndex; i++) {
+    html += `<div></div>`;
+  }
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  for (let day = 1; day <= lastDay; day++) {
+    const d = new Date(_currentCalendarYear, _currentCalendarMonth, day);
+    const isPast = d < today;
+    
+    let isSelectedStart = _calendarStart && d.getTime() === _calendarStart.getTime();
+    let isSelectedEnd = _calendarEnd && d.getTime() === _calendarEnd.getTime();
+    let isInRange = _calendarStart && _calendarEnd && d > _calendarStart && d < _calendarEnd;
+
+    let btnClass = "w-7 h-7 mx-auto rounded-full flex items-center justify-center text-[11px] font-bold transition-all ";
+    if (isPast) {
+      btnClass += "text-gray-300 cursor-not-allowed";
+    } else if (isSelectedStart || isSelectedEnd) {
+      btnClass += "bg-emerald-600 text-white shadow-md shadow-emerald-600/20 cursor-pointer";
+    } else if (isInRange) {
+      btnClass += "bg-emerald-50 text-emerald-700 cursor-pointer";
+    } else {
+      btnClass += "text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer";
+    }
+
+    const onClickAttr = isPast ? "" : `onclick="handleCalendarDayClick(${d.getTime()})"`;
+
+    html += `
+      <div class="flex justify-center items-center">
+        <button type="button" ${onClickAttr} class="${btnClass}">${day}</button>
+      </div>
+    `;
+  }
+
+  html += `
+      </div>
+      <div class="mt-2.5 flex justify-between items-center text-[10px] font-semibold text-gray-500 border-t border-gray-100 pt-2">
+        <span>Sélection :</span>
+        <span class="text-emerald-700 font-bold">
+          ${_calendarStart ? fmtDate(_calendarStart) : 'Début'} 
+          ${_calendarEnd ? ` au ${fmtDate(_calendarEnd)}` : ''}
+        </span>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
+window.handleCalendarDayClick = (timestamp) => {
+  const clicked = new Date(timestamp);
+  clicked.setHours(0,0,0,0);
+
+  if (!_calendarStart || (_calendarStart && _calendarEnd)) {
+    _calendarStart = clicked;
+    _calendarEnd = null;
+  } else if (_calendarStart && !_calendarEnd) {
+    if (clicked < _calendarStart) {
+      _calendarStart = clicked;
+    } else {
+      _calendarEnd = clicked;
+    }
+  }
+
+  const fromInput = $('itemFrom');
+  const untilInput = $('itemUntil');
+  
+  if (fromInput) {
+    fromInput.value = _calendarStart ? _calendarStart.toISOString().split('T')[0] : '';
+  }
+  if (untilInput) {
+    untilInput.value = _calendarEnd ? _calendarEnd.toISOString().split('T')[0] : '';
+  }
+
+  renderCalendar();
+};
+
+window.changeCalendarMonth = (offset) => {
+  _currentCalendarMonth += offset;
+  if (_currentCalendarMonth < 0) {
+    _currentCalendarMonth = 11;
+    _currentCalendarYear--;
+  } else if (_currentCalendarMonth > 11) {
+    _currentCalendarMonth = 0;
+    _currentCalendarYear++;
+  }
+  renderCalendar();
+};
+
+window.onItemPhotoChange = async () => {
+  const fileInput = $('itemPhoto');
+  const file = fileInput?.files[0];
+  const previewContainer = $('itemPhotoPreviewContainer');
+  const previewImg = $('itemPhotoPreview');
+  if (file) {
+    const base64 = await readImgB64(file);
+    if (previewImg) previewImg.src = base64;
+    previewContainer?.classList.remove('hidden');
+  } else {
+    window.clearItemPhotoPreview();
+  }
+};
+
+window.clearItemPhotoPreview = () => {
+  const previewContainer = $('itemPhotoPreviewContainer');
+  const previewImg = $('itemPhotoPreview');
+  const fileInput = $('itemPhoto');
+  if (fileInput) fileInput.value = '';
+  if (previewImg) previewImg.src = '';
+  previewContainer?.classList.add('hidden');
+};
+
+window.onItemTypeChange = () => {
+  const type = $('itemType')?.value;
+  const photoContainer = $('itemPhotoContainer');
+  const calendarLabel = $('calendarLabel');
+  
+  if (type === 'demand') {
+    photoContainer?.classList.add('hidden');
+    if (calendarLabel) calendarLabel.textContent = "Période recherchée (optionnelle)";
+  } else {
+    photoContainer?.classList.remove('hidden');
+    if (calendarLabel) calendarLabel.textContent = "Période de disponibilité (optionnelle)";
+  }
+  
+  // Reset calendar state on type change
+  _calendarStart = null;
+  _calendarEnd = null;
+  const fromInput = $('itemFrom');
+  const untilInput = $('itemUntil');
+  if (fromInput) fromInput.value = '';
+  if (untilInput) untilInput.value = '';
+  renderCalendar();
+};
+
+window.showModal = (id) => {
+  sm(id);
+  if (id === 'modal') {
+    const typeSelect = $('itemType');
+    if (typeSelect) {
+      typeSelect.value = 'offer';
+    }
+    // Clear photo preview
+    window.clearItemPhotoPreview();
+    
+    // Reset standard form inputs
+    const nameInput = $('itemName');
+    if (nameInput) nameInput.value = '';
+    const descInput = $('itemDesc');
+    if (descInput) descInput.value = '';
+    const qualitySelect = $('itemQuality');
+    if (qualitySelect) qualitySelect.value = 'good';
+    
+    // Reset calendar variables to current date/month
+    _calendarStart = null;
+    _calendarEnd = null;
+    _currentCalendarMonth = new Date().getMonth();
+    _currentCalendarYear = new Date().getFullYear();
+    const fromInput = $('itemFrom');
+    const untilInput = $('itemUntil');
+    if (fromInput) fromInput.value = '';
+    if (untilInput) untilInput.value = '';
+    
+    window.onItemTypeChange();
+  }
+};
 
 const content = $('content');
 let socket = null;
@@ -114,6 +311,7 @@ const routes = {
     _wizardData.freq = null;
     _wizardData.motiv = null;
     _wizardData.firstItem = '';
+    _regFieldsValid = { name: false, email: false, password: false, phone: false };
     content.innerHTML = registerPage();
   },
   '/association': () => { if (!guard()) return; content.innerHTML = associationPage(); hdr(); },
@@ -414,9 +612,23 @@ function initWS() {
            const otherName = tx ? (tx.owner_id === u.id ? tx.borrower_name : tx.owner_name) : 'cet utilisateur';
            $('reviewTargetName').textContent = `Comment s'est passé l'échange avec ${otherName} ?`;
 
-           // Si l'utilisateur actuel est le propriétaire, proposer de remettre en ligne
+           // Si l'utilisateur actuel est le propriétaire, proposer de remettre en ligne ou de republier la demande
            if (item.owner_id === u.id) {
               $('reLendOption').classList.remove('hidden');
+              const questionEl = $('reLendQuestionText');
+              const yesBtn = $('reLendYes');
+              const noBtn = $('reLendNo');
+              
+              if (item.type === 'demand') {
+                if (questionEl) questionEl.textContent = "Souhaitez-vous republier votre demande ?";
+                if (yesBtn) yesBtn.textContent = "OUI, rechercher";
+                if (noBtn) noBtn.textContent = "NON, trouvé";
+              } else {
+                if (questionEl) questionEl.textContent = "Souhaitez-vous remettre cet objet en ligne ?";
+                if (yesBtn) yesBtn.textContent = "OUI, disponible";
+                if (noBtn) noBtn.textContent = "NON, fini";
+              }
+              
               currentReLendChoice = true;
               $('reLendYes').onclick = () => { 
                  currentReLendChoice = true;
@@ -438,6 +650,23 @@ function initWS() {
            // Autre cas de fin sans transaction directe (ex: annulation)
            const modal = $('lendAgainModal');
            if (modal) {
+             const titleEl = $('lendAgainTitle');
+             const questionEl = $('lendAgainQuestionText');
+             const yesBtn = $('reLendYesBtn');
+             const noBtn = $('reLendNoBtn');
+             
+             if (item.type === 'demand') {
+               if (titleEl) titleEl.textContent = "Demande clôturée !";
+               if (questionEl) questionEl.textContent = "Souhaitez-vous republier votre demande pour que d'autres étudiants puissent la voir ?";
+               if (yesBtn) yesBtn.textContent = "Oui, rechercher";
+               if (noBtn) noBtn.textContent = "Non, c'est bon";
+             } else {
+               if (titleEl) titleEl.textContent = "Prêt terminé ! 🥳";
+               if (questionEl) questionEl.textContent = "Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?";
+               if (yesBtn) yesBtn.textContent = "Oui, avec plaisir";
+               if (noBtn) noBtn.textContent = "Non, c'est fini";
+             }
+             
              modal.classList.remove('hidden');
              $('reLendYesBtn').onclick = () => { modal.classList.add('hidden'); window.reLendItem(m.data.item_id, true); };
              $('reLendNoBtn').onclick = () => { modal.classList.add('hidden'); window.reLendItem(m.data.item_id, false); };
@@ -511,6 +740,193 @@ window.doLogin = async e => {
 // ============================================================
 let _wizardStep = 1;
 const _wizardData = { categories: [], freq: null, motiv: null, firstItem: '' };
+let _regFieldsValid = { name: false, email: false, password: false, phone: false };
+let _emailCheckTimeout = null;
+
+// Helper to set styling of feedback and borders
+function _setFieldValidity(input, feedbackEl, isValid, message) {
+  if (!input || !feedbackEl) return;
+  
+  if (isValid === null) {
+    // Neutral state
+    input.classList.remove('border-red-400', 'border-emerald-400');
+    input.classList.add('border-gray-100');
+    feedbackEl.classList.add('hidden');
+    feedbackEl.textContent = '';
+    return;
+  }
+  
+  if (isValid) {
+    input.classList.remove('border-red-400', 'border-gray-100');
+    input.classList.add('border-emerald-400');
+    feedbackEl.classList.remove('hidden', 'text-red-500', 'text-blue-500');
+    feedbackEl.classList.add('text-emerald-500');
+    feedbackEl.textContent = message || '✓ Valide';
+  } else {
+    input.classList.remove('border-emerald-400', 'border-gray-100');
+    input.classList.add('border-red-400');
+    feedbackEl.classList.remove('hidden', 'text-emerald-500', 'text-blue-500');
+    feedbackEl.classList.add('text-red-500');
+    feedbackEl.textContent = message || 'Invalide';
+  }
+}
+
+window.validateRegName = (input) => {
+  const val = input.value.trim();
+  const feedback = $('regNameFeedback');
+  if (val.length === 0) {
+    _regFieldsValid.name = false;
+    _setFieldValidity(input, feedback, null);
+  } else if (val.length < 2) {
+    _regFieldsValid.name = false;
+    _setFieldValidity(input, feedback, false, 'Le nom doit contenir au moins 2 caractères.');
+  } else {
+    _regFieldsValid.name = true;
+    _setFieldValidity(input, feedback, true, '✓ Nom valide');
+  }
+  window.checkStep1Validity();
+};
+
+window.validateRegEmail = (input) => {
+  const val = input.value.trim();
+  const feedback = $('regEmailFeedback');
+  
+  clearTimeout(_emailCheckTimeout);
+  
+  if (val.length === 0) {
+    _regFieldsValid.email = false;
+    _setFieldValidity(input, feedback, null);
+    window.checkStep1Validity();
+    return;
+  }
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(val)) {
+    _regFieldsValid.email = false;
+    _setFieldValidity(input, feedback, false, 'Adresse e-mail invalide.');
+    window.checkStep1Validity();
+    return;
+  }
+  
+  // Show checking state
+  input.classList.remove('border-red-400', 'border-emerald-400', 'border-gray-100');
+  feedback.classList.remove('hidden', 'text-red-500', 'text-emerald-500');
+  feedback.classList.add('text-blue-500');
+  feedback.textContent = 'Vérification de la disponibilité...';
+  
+  _emailCheckTimeout = setTimeout(async () => {
+    try {
+      const res = await fetch(`${API}/auth/check-email?email=${encodeURIComponent(val)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.exists) {
+          _regFieldsValid.email = false;
+          _setFieldValidity(input, feedback, false, 'Cette adresse e-mail est déjà utilisée.');
+        } else {
+          _regFieldsValid.email = true;
+          _setFieldValidity(input, feedback, true, '✓ Adresse e-mail disponible');
+        }
+      } else {
+        _regFieldsValid.email = false;
+        _setFieldValidity(input, feedback, false, 'Erreur lors de la vérification.');
+      }
+    } catch (_e) {
+      _regFieldsValid.email = false;
+      _setFieldValidity(input, feedback, false, 'Erreur de connexion.');
+    }
+    window.checkStep1Validity();
+  }, 400);
+};
+
+window.validateRegPassword = (input) => {
+  const val = input.value;
+  const feedback = $('regPasswordFeedback');
+  if (val.length === 0) {
+    _regFieldsValid.password = false;
+    _setFieldValidity(input, feedback, null);
+  } else if (val.length < 8) {
+    _regFieldsValid.password = false;
+    _setFieldValidity(input, feedback, false, 'Le mot de passe doit faire au moins 8 caractères.');
+  } else if (!/[a-zA-Z]/.test(val) || !/[0-9]/.test(val)) {
+    _regFieldsValid.password = false;
+    _setFieldValidity(input, feedback, false, 'Doit contenir au moins une lettre et un chiffre.');
+  } else {
+    _regFieldsValid.password = true;
+    _setFieldValidity(input, feedback, true, '✓ Mot de passe fort');
+  }
+  window.checkStep1Validity();
+};
+
+window.validateRegPhone = (input) => {
+  if (!input) return;
+  const val = input.value.trim();
+  const prefix = $('regPhonePrefix')?.value || '+33';
+  const feedback = $('regPhoneFeedback');
+  if (val.length === 0) {
+    _regFieldsValid.phone = false;
+    _setFieldValidity(input, feedback, null);
+  } else {
+    let rest = val.replace(/^0/, '');
+    let cleanedRest = rest.replace(/[\s\-\.]/g, '');
+    const fullPhone = prefix + cleanedRest;
+    const cleanedFull = fullPhone.replace(/[\s\-\.]/g, '');
+    const isValid = /^(\+?[0-9]{7,15})$/.test(cleanedFull);
+    
+    if (!isValid || !/^[0-9]+$/.test(cleanedRest)) {
+      _regFieldsValid.phone = false;
+      _setFieldValidity(input, feedback, false, 'Numéro de téléphone invalide.');
+    } else {
+      _regFieldsValid.phone = true;
+      _setFieldValidity(input, feedback, true, '✓ Téléphone valide');
+    }
+  }
+  window.checkStep1Validity();
+};
+
+window.checkStep1Validity = () => {
+  const btn = $('wNextBtn1');
+  if (!btn) return;
+  
+  const allValid = _regFieldsValid.name && _regFieldsValid.email && _regFieldsValid.password && _regFieldsValid.phone;
+  if (allValid) {
+    btn.disabled = false;
+    btn.classList.remove('opacity-50');
+  } else {
+    btn.disabled = true;
+    btn.classList.add('opacity-50');
+  }
+};
+
+window.wizardPrev = () => {
+  if (_wizardStep <= 1) return;
+
+  const current = $(`wStep${_wizardStep}`);
+  const prev    = $(`wStep${_wizardStep - 1}`);
+  if (!prev) return;
+
+  // Animation sortie / entrée (inversée pour le retour en arrière)
+  if (current) {
+    current.style.opacity = '0';
+    current.style.transform = 'translateX(30px)';
+    current.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+    setTimeout(() => {
+      current.classList.add('hidden');
+      current.style.opacity = '';
+      current.style.transform = '';
+      prev.style.opacity = '0';
+      prev.style.transform = 'translateX(-30px)';
+      prev.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        prev.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        prev.style.opacity = '1';
+        prev.style.transform = 'translateX(0)';
+      });
+    }, 250);
+  }
+
+  _wizardStep--;
+  _wizardUpdateProgress(_wizardStep);
+};
 
 /** Met à jour la barre de progression */
 function _wizardUpdateProgress(step) {
@@ -729,7 +1145,10 @@ window.doRegisterWizard = async () => {
   const name     = $('regName')?.value.trim();
   const email    = $('regEmail')?.value.trim();
   const password = $('regPassword')?.value;
-  const phone    = $('regPhone')?.value.trim();
+  const prefix   = $('regPhonePrefix')?.value || '+33';
+  const rawPhone = $('regPhone')?.value.trim();
+  let restPhone  = rawPhone.replace(/^0/, '');
+  const phone    = prefix + restPhone;
 
   const res = await fetch(`${API}/auth/register`, {
     method: 'POST',
@@ -738,12 +1157,42 @@ window.doRegisterWizard = async () => {
   });
 
   if (res.ok) {
-    notify('Compte créé ! Connecte-toi maintenant.');
-    // Si un premier objet a été renseigné, on le stocke pour le publier après connexion
+    notify('Compte créé ! Connexion automatique...');
     if (_wizardData.firstItem) {
       sessionStorage.setItem('pendingItem', _wizardData.firstItem);
     }
-    navigate('/login');
+    
+    const loginRes = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    
+    if (loginRes.ok) {
+      const data = await loginRes.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      initWS();
+      notify('Bienvenue sur PolyEarth ! 🌱');
+      navigate('/');
+      
+      const pendingItem = sessionStorage.getItem('pendingItem');
+      if (pendingItem) {
+        sessionStorage.removeItem('pendingItem');
+        setTimeout(() => {
+          window.showModal('modal');
+          const nameInput = $('itemName');
+          if (nameInput) {
+            nameInput.value = pendingItem;
+            nameInput.focus();
+          }
+          notify(`🚀 Publie dès maintenant ton objet : "${pendingItem}" !`);
+        }, 600);
+      }
+    } else {
+      notify('Compte créé ! Connecte-toi maintenant.');
+      navigate('/login');
+    }
   } else {
     const err = await res.json().catch(() => ({}));
     notify(err.message || "Erreur lors de l'inscription.", 'error');
@@ -1583,8 +2032,8 @@ window.handleProposeLoan = async (demandItemId, otherUserId) => {
 
   select.value = '';
   newFields.classList.remove('hidden');
-  $('propItemName').value = '';
-  $('propItemDesc').value = '';
+  $('propItemName').value = item.name || '';
+  $('propItemDesc').value = item.description || '';
   
   $('propFrom').value = item.available_from ? item.available_from.split('T')[0] : '';
   $('propUntil').value = item.available_until ? item.available_until.split('T')[0] : '';
