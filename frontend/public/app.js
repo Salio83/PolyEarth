@@ -1333,26 +1333,45 @@ window.addItem = async e => {
   e.preventDefault();
   let photo = '';
   const f = $('itemPhoto').files[0];
-  if (f) photo = await readImgB64(f);
+  if (f) {
+    try {
+      photo = await readImgB64(f);
+    } catch (err) {
+      console.error(err);
+      notify("Erreur lors de la lecture de la photo", "error");
+      return;
+    }
+  }
   
-  await fetch(`${API}/items`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      name: $('itemName').value, 
-      category: $('itemCategory').value, 
-      quality: $('itemQuality').value, 
-      description: $('itemDesc').value, 
-      photo_url: photo, 
-      available_from: $('itemFrom').value || null, 
-      available_until: $('itemUntil').value || null, 
-      type: $('itemType') ? $('itemType').value : 'offer' 
-    })
-  });
-  
-  window.hideModal('modal');
-  fetchItems(location.pathname === '/demandes' ? 'demand' : 'offer');
-  notify('Annonce publiée !');
+  try {
+    const res = await fetch(`${API}/items`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        name: $('itemName').value, 
+        category: $('itemCategory').value, 
+        quality: $('itemQuality').value, 
+        description: $('itemDesc').value, 
+        photo_url: photo, 
+        available_from: $('itemFrom').value || null, 
+        available_until: $('itemUntil').value || null, 
+        type: $('itemType') ? $('itemType').value : 'offer' 
+      })
+    });
+    
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      notify(data.message || 'Erreur lors de la publication de l\'annonce.', 'error');
+      return;
+    }
+
+    window.hideModal('modal');
+    fetchItems(location.pathname === '/demandes' ? 'demand' : 'offer');
+    notify('Annonce publiée !');
+  } catch (err) {
+    console.error(err);
+    notify('Erreur de connexion.', 'error');
+  }
 };
 
 /**
