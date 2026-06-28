@@ -349,13 +349,9 @@ function hdr() {
   // Afficher / Masquer l'onglet Administration selon le rôle de l'utilisateur
   const adminLink = $('adminNavLink');
   const adminLinkMobile = $('adminNavLinkMobile');
-  if (u && u.is_admin) {
-    if (adminLink) adminLink.classList.remove('hidden');
-    if (adminLinkMobile) adminLinkMobile.style.display = ''; // laisser le CSS mobile-nav-link gérer
-  } else {
-    if (adminLink) adminLink.classList.add('hidden');
-    if (adminLinkMobile) adminLinkMobile.style.display = 'none';
-  }
+  const isAdmin = u && u.is_admin;
+  if (adminLink) adminLink.classList.toggle('hidden', !isAdmin);
+  if (adminLinkMobile) adminLinkMobile.classList.toggle('nav-hidden', !isAdmin);
   
   // Mise à jour de l'état actif des liens de navigation desktop
   const path = location.pathname;
@@ -2322,15 +2318,21 @@ async function loadLoans() {
   const res = await fetch(`${API}/loans/user/${u.id}`);
   const loans = await res.json().catch(() => []);
   const tableBody = $('loansTableBody');
-  if (!tableBody) return;
+  const cardList = $('loansCardList');
   
-  tableBody.innerHTML = loans.length ? loans.map(t => loanRow(t, u.id)).join('') 
-    : '<tr><td colspan="7" class="py-20 text-center text-gray-300 text-xs font-bold uppercase tracking-widest">Aucune demande trouvée.</td></tr>';
+  if (loans.length === 0) {
+    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="py-20 text-center text-gray-300 text-xs font-bold uppercase tracking-widest">Aucune demande trouvée.</td></tr>';
+    if (cardList) cardList.innerHTML = '<div class="text-center py-12 text-gray-400 text-sm font-bold">Aucune demande trouvée.</div>';
+  } else {
+    const rows = loans.map(t => loanRow(t, u.id));
+    if (tableBody) tableBody.innerHTML = rows.map(r => r.tableRow).join('');
+    if (cardList) cardList.innerHTML = rows.map(r => r.card).join('');
+  }
     
   if (window.lucide) lucide.createIcons();
   
   const paginationText = $('paginationText');
-  if (paginationText) paginationText.textContent = `1-${loans.length} of ${loans.length}`;
+  if (paginationText && loans.length > 0) paginationText.textContent = `${loans.length} prêt${loans.length > 1 ? 's' : ''}`;
 }
 
 /**

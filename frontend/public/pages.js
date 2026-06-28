@@ -65,23 +65,23 @@ export const homePage = () => {
         </div>
 
         <!-- Tableau de bord des statistiques -->
-        <div class="grid grid-cols-2 gap-4 md:gap-6">
-            <div onclick="navigate('/offres')" class="bg-pastel-green p-4 md:p-8 rounded-2xl md:rounded-3xl border border-duck/5 flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer">
-                <div>
-                    <p class="text-duck font-bold uppercase tracking-widest text-[8px] md:text-[10px] mb-1">Objets disponibles</p>
+        <div class="grid grid-cols-2 gap-3 md:gap-6">
+            <div onclick="navigate('/offres')" class="bg-pastel-green p-3 md:p-8 rounded-2xl md:rounded-3xl border border-duck/5 flex items-center justify-between gap-2 group hover:scale-[1.02] transition-transform cursor-pointer overflow-hidden">
+                <div class="min-w-0 flex-1">
+                    <p class="text-duck font-bold uppercase tracking-wide text-[7px] md:text-[10px] mb-0.5 leading-tight">Objets<br class="md:hidden">dispo.</p>
                     <h3 id="statsAvailable" class="text-2xl md:text-4xl font-black text-duck">...</h3>
                 </div>
-                <div class="w-10 h-10 md:w-14 md:h-14 bg-white rounded-xl md:rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform">
-                    <i data-lucide="package" class="w-5 h-5 md:w-7 md:h-7"></i>
+                <div class="w-8 h-8 md:w-14 md:h-14 bg-white rounded-lg md:rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform flex-shrink-0">
+                    <i data-lucide="package" class="w-4 h-4 md:w-7 md:h-7"></i>
                 </div>
             </div>
-            <div onclick="navigate('/prets')" class="bg-pastel-green p-4 md:p-8 rounded-2xl md:rounded-3xl border border-duck/5 flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer">
-                <div>
-                    <p class="text-duck font-bold uppercase tracking-widest text-[8px] md:text-[10px] mb-1">Prêts en cours</p>
+            <div onclick="navigate('/prets')" class="bg-pastel-green p-3 md:p-8 rounded-2xl md:rounded-3xl border border-duck/5 flex items-center justify-between gap-2 group hover:scale-[1.02] transition-transform cursor-pointer overflow-hidden">
+                <div class="min-w-0 flex-1">
+                    <p class="text-duck font-bold uppercase tracking-wide text-[7px] md:text-[10px] mb-0.5 leading-tight">Prêts<br class="md:hidden">en cours</p>
                     <h3 id="statsOngoing" class="text-2xl md:text-4xl font-black text-duck">...</h3>
                 </div>
-                <div class="w-10 h-10 md:w-14 md:h-14 bg-white rounded-xl md:rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform">
-                    <i data-lucide="refresh-cw" class="w-5 h-5 md:w-7 md:h-7"></i>
+                <div class="w-8 h-8 md:w-14 md:h-14 bg-white rounded-lg md:rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform flex-shrink-0">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 md:w-7 md:h-7"></i>
                 </div>
             </div>
         </div>
@@ -138,49 +138,32 @@ export const homePage = () => {
  * @returns {string} HTML de la page.
  */
 export const pretsPage = () => `
-    <div class="space-y-8 animate-fade-in pb-20">
-        <!-- Barre d'outils supérieure -->
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div class="space-y-6 animate-fade-in pb-24">
+        <!-- En-tête -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div class="space-y-1">
-                <h1 class="text-4xl font-black text-gray-900 tracking-tight">Suivi des prêts</h1>
-                <p class="text-gray-400 font-medium">Demandes envoyées et reçues</p>
+                <h1 class="text-2xl md:text-4xl font-black text-gray-900 tracking-tight">Suivi des prêts</h1>
+                <p class="text-gray-400 font-medium text-sm">Demandes envoyées et reçues</p>
             </div>
-            
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="relative">
-                    <input type="text" placeholder="Rechercher..." class="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-full outline-none focus:bg-white focus:border-duck transition-all text-sm font-medium w-64">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                </div>
-                <button onclick="navigate('/offres')" class="bg-duck text-white px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-duck-dark transition-all shadow-lg shadow-duck/10">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    Demander un prêt
-                </button>
-            </div>
-        </div>
-
-        <!-- Zone de filtrage rapide -->
-        <div class="flex gap-3">
-            <button class="bg-white border border-gray-100 px-5 py-2 rounded-full text-xs font-bold text-gray-500 flex items-center gap-2 hover:border-duck transition-colors">
-                Statut <i data-lucide="chevron-down" class="w-3 h-3"></i>
-            </button>
-            <button class="bg-white border border-gray-100 px-5 py-2 rounded-full text-xs font-bold text-gray-500 flex items-center gap-2 hover:border-duck transition-colors">
-                Objet <i data-lucide="chevron-down" class="w-3 h-3"></i>
+            <button onclick="navigate('/offres')" class="bg-duck text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-duck-dark transition-all shadow-lg shadow-duck/10 self-start md:self-auto">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Demander un prêt
             </button>
         </div>
 
-        <!-- Conteneur du tableau des transactions -->
-        <div class="relative bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <!-- Liste cards mobile / table desktop -->
+        <div class="hidden md:block relative bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-pastel-green text-duck text-[11px] font-black uppercase tracking-widest">
-                            <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="filter" class="w-3.5 h-3.5 text-gray-400"></i> Demande #</div></th>
+                            <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="filter" class="w-3.5 h-3.5 text-gray-400"></i> #</div></th>
                             <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="image" class="w-3.5 h-3.5 text-gray-400"></i> Aperçu</div></th>
-                            <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="tag" class="w-3.5 h-3.5 text-gray-400"></i> Statut</div></th>
-                            <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="package" class="w-3.5 h-3.5 text-gray-400"></i> Objet</div></th>
-                            <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="user" class="w-3.5 h-3.5 text-gray-400"></i> Interlocuteur</div></th>
-                            <th class="py-5 px-6 border-b-2 border-duck/10"><div class="flex items-center gap-2">Date <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i></div></th>
-                            <th class="py-5 px-6"><div class="flex items-center gap-2"><i data-lucide="calendar" class="w-3.5 h-3.5 text-gray-400"></i> Début</div></th>
+                            <th class="py-5 px-6">Statut</th>
+                            <th class="py-5 px-6">Objet</th>
+                            <th class="py-5 px-6">Interlocuteur</th>
+                            <th class="py-5 px-6">Date</th>
+                            <th class="py-5 px-6">Début</th>
                         </tr>
                     </thead>
                     <tbody id="loansTableBody" class="divide-y divide-gray-50 text-sm font-medium text-gray-600">
@@ -188,11 +171,14 @@ export const pretsPage = () => `
                     </tbody>
                 </table>
             </div>
-            <!-- Barre de pagination -->
-            <div class="p-6 bg-gray-50/50 flex justify-end items-center border-t border-gray-100">
-                <span id="paginationText" class="text-xs font-bold text-gray-400 uppercase tracking-widest">...</span>
-            </div>
         </div>
+
+        <!-- Cards mobile only -->
+        <div id="loansCardList" class="md:hidden space-y-3">
+            <div class="text-center py-12 text-gray-300 font-bold">Chargement...</div>
+        </div>
+
+        <div id="paginationText" class="text-xs font-bold text-gray-400 uppercase tracking-widest text-right"></div>
     </div>
 `;
 
@@ -209,7 +195,7 @@ export const loanRow = (t, uid) => {
     const ownerEmail = t.owner_email || 'etu.polytech@umontpellier.fr';
     const otherPhoto = isOwner ? t.borrower_photo : t.owner_photo;
     const otherName = isOwner ? t.borrower_name : t.owner_name;
-    return `
+    const tableRow = `
         <tr class="hover:bg-gray-50/50 transition-colors group cursor-pointer" onclick="navigate('/messages')">
             <td class="py-4 px-6 font-black text-gray-400 text-xs">#${t.id.toString().padStart(4, '0')}</td>
             <td class="py-4 px-6">
@@ -224,16 +210,38 @@ export const loanRow = (t, uid) => {
                     <div class="w-6 h-6 rounded-full overflow-hidden bg-duck/10 flex-shrink-0">
                         ${otherPhoto ? `<img src="${otherPhoto}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(otherName)}&background=00635d&color=fff" class="w-full h-full object-cover">`}
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-900 font-bold">${otherName}</span>
-                        <span class="text-[10px] text-gray-400 truncate w-32" title="${isOwner ? borrowerEmail : ownerEmail}">${isOwner ? borrowerEmail : ownerEmail}</span>
-                    </div>
+                    <span class="text-gray-900 font-bold truncate max-w-[100px]">${otherName}</span>
                 </div>
             </td>
             <td class="py-4 px-6 text-gray-400">${fmtDate(t.created_at || new Date())}</td>
             <td class="py-4 px-6 text-duck font-bold">${fmtDate(t.start_date)}</td>
         </tr>
     `;
+    // Card for mobile
+    const card = `
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all" onclick="navigate('/messages')">
+            <div class="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 border border-gray-50 flex-shrink-0">
+                ${t.item_photo ? `<img src="${t.item_photo}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-gray-300"><i data-lucide="package" class="w-6 h-6"></i></div>`}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="font-black text-gray-900 truncate">${t.item_name}</span>
+                    <span class="text-[9px] font-black text-gray-400 flex-shrink-0">#${t.id.toString().padStart(4,'0')}</span>
+                </div>
+                ${getStatusBadge(t.status)}
+                <div class="flex items-center gap-1.5 mt-1.5">
+                    <div class="w-5 h-5 rounded-full overflow-hidden bg-duck/10 flex-shrink-0">
+                        ${otherPhoto ? `<img src="${otherPhoto}" class="w-full h-full object-cover">` : `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(otherName)}&background=00635d&color=fff" class="w-full h-full object-cover">`}
+                    </div>
+                    <span class="text-xs text-gray-500 font-bold truncate">${otherName}</span>
+                    <span class="text-xs text-gray-300">·</span>
+                    <span class="text-xs text-duck font-bold flex-shrink-0">${fmtDate(t.start_date) || 'À convenir'}</span>
+                </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 flex-shrink-0"></i>
+        </div>
+    `;
+    return { tableRow, card };
 };
 
 /**
