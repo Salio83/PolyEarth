@@ -131,6 +131,14 @@
         .mobile-nav-link.active-nav {
             color: rgb(0, 99, 93) !important;
         }
+        /* Masquer un lien de nav mobile : 2 classes = spécificité plus haute que .mobile-nav-link seul */
+        .mobile-nav-link.nav-hidden {
+            display: none !important;
+            flex: 0 !important;
+            width: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
         .mobile-nav-link i {
             width: 22px !important;
             height: 22px !important;
@@ -209,7 +217,7 @@
             <i data-lucide="refresh-cw"></i>
             <span class="mobile-nav-label">Prêts</span>
         </a>
-        <a href="/admin" id="adminNavLinkMobile" onclick="event.preventDefault(); navigate('/admin')" class="mobile-nav-link" data-route="/admin" style="display:none">
+        <a href="/admin" id="adminNavLinkMobile" onclick="event.preventDefault(); navigate('/admin')" class="mobile-nav-link nav-hidden" data-route="/admin">
             <i data-lucide="shield"></i>
             <span class="mobile-nav-label">Admin</span>
         </a>

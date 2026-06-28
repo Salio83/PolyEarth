@@ -349,13 +349,9 @@ function hdr() {
   // Afficher / Masquer l'onglet Administration selon le rôle de l'utilisateur
   const adminLink = $('adminNavLink');
   const adminLinkMobile = $('adminNavLinkMobile');
-  if (u && u.is_admin) {
-    if (adminLink) adminLink.classList.remove('hidden');
-    if (adminLinkMobile) adminLinkMobile.style.display = ''; // laisser le CSS mobile-nav-link gérer
-  } else {
-    if (adminLink) adminLink.classList.add('hidden');
-    if (adminLinkMobile) adminLinkMobile.style.display = 'none';
-  }
+  const isAdmin = u && u.is_admin;
+  if (adminLink) adminLink.classList.toggle('hidden', !isAdmin);
+  if (adminLinkMobile) adminLinkMobile.classList.toggle('nav-hidden', !isAdmin);
   
   // Mise à jour de l'état actif des liens de navigation desktop
   const path = location.pathname;
