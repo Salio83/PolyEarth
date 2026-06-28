@@ -20,8 +20,205 @@ import {
 // =============================================================================
 
 window.$ = $;
-window.showModal = sm;
 window.hideModal = hm;
+let _calendarStart = null;
+let _calendarEnd = null;
+let _currentCalendarMonth = new Date().getMonth();
+let _currentCalendarYear = new Date().getFullYear();
+
+function renderCalendar() {
+  const container = $('calendarContainer');
+  if (!container) return;
+
+  const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+  const daysOfWeek = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
+
+  let html = `
+    <div class="border border-gray-200 rounded-xl p-3 bg-white select-none">
+      <div class="flex justify-between items-center mb-2">
+        <button type="button" onclick="changeCalendarMonth(-1)" class="p-1 hover:bg-gray-100 rounded-lg text-gray-500 text-xs font-bold">&larr;</button>
+        <span class="font-bold text-xs text-gray-800">${monthNames[_currentCalendarMonth]} ${_currentCalendarYear}</span>
+        <button type="button" onclick="changeCalendarMonth(1)" class="p-1 hover:bg-gray-100 rounded-lg text-gray-500 text-xs font-bold">&rarr;</button>
+      </div>
+      <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-gray-400 mb-1">
+        ${daysOfWeek.map(d => `<div>${d}</div>`).join('')}
+      </div>
+      <div class="grid grid-cols-7 gap-1">
+  `;
+
+  const firstDay = new Date(_currentCalendarYear, _currentCalendarMonth, 1);
+  let firstDayIndex = firstDay.getDay(); 
+  firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
+  const lastDay = new Date(_currentCalendarYear, _currentCalendarMonth + 1, 0).getDate();
+
+  for (let i = 0; i < firstDayIndex; i++) {
+    html += `<div></div>`;
+  }
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  for (let day = 1; day <= lastDay; day++) {
+    const d = new Date(_currentCalendarYear, _currentCalendarMonth, day);
+    const isPast = d < today;
+    
+    let isSelectedStart = _calendarStart && d.getTime() === _calendarStart.getTime();
+    let isSelectedEnd = _calendarEnd && d.getTime() === _calendarEnd.getTime();
+    let isInRange = _calendarStart && _calendarEnd && d > _calendarStart && d < _calendarEnd;
+
+    let btnClass = "w-7 h-7 mx-auto rounded-full flex items-center justify-center text-[11px] font-bold transition-all ";
+    if (isPast) {
+      btnClass += "text-gray-300 cursor-not-allowed";
+    } else if (isSelectedStart || isSelectedEnd) {
+      btnClass += "bg-emerald-600 text-white shadow-md shadow-emerald-600/20 cursor-pointer";
+    } else if (isInRange) {
+      btnClass += "bg-emerald-50 text-emerald-700 cursor-pointer";
+    } else {
+      btnClass += "text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer";
+    }
+
+    const onClickAttr = isPast ? "" : `onclick="handleCalendarDayClick(${d.getTime()})"`;
+
+    html += `
+      <div class="flex justify-center items-center">
+        <button type="button" ${onClickAttr} class="${btnClass}">${day}</button>
+      </div>
+    `;
+  }
+
+  html += `
+      </div>
+      <div class="mt-2.5 flex justify-between items-center text-[10px] font-semibold text-gray-500 border-t border-gray-100 pt-2">
+        <span>Sélection :</span>
+        <span class="text-emerald-700 font-bold">
+          ${_calendarStart ? fmtDate(_calendarStart) : 'Début'} 
+          ${_calendarEnd ? ` au ${fmtDate(_calendarEnd)}` : ''}
+        </span>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
+window.handleCalendarDayClick = (timestamp) => {
+  const clicked = new Date(timestamp);
+  clicked.setHours(0,0,0,0);
+
+  if (!_calendarStart || (_calendarStart && _calendarEnd)) {
+    _calendarStart = clicked;
+    _calendarEnd = null;
+  } else if (_calendarStart && !_calendarEnd) {
+    if (clicked < _calendarStart) {
+      _calendarStart = clicked;
+    } else {
+      _calendarEnd = clicked;
+    }
+  }
+
+  const fromInput = $('itemFrom');
+  const untilInput = $('itemUntil');
+  
+  if (fromInput) {
+    fromInput.value = _calendarStart ? _calendarStart.toISOString().split('T')[0] : '';
+  }
+  if (untilInput) {
+    untilInput.value = _calendarEnd ? _calendarEnd.toISOString().split('T')[0] : '';
+  }
+
+  renderCalendar();
+};
+
+window.changeCalendarMonth = (offset) => {
+  _currentCalendarMonth += offset;
+  if (_currentCalendarMonth < 0) {
+    _currentCalendarMonth = 11;
+    _currentCalendarYear--;
+  } else if (_currentCalendarMonth > 11) {
+    _currentCalendarMonth = 0;
+    _currentCalendarYear++;
+  }
+  renderCalendar();
+};
+
+window.onItemPhotoChange = async () => {
+  const fileInput = $('itemPhoto');
+  const file = fileInput?.files[0];
+  const previewContainer = $('itemPhotoPreviewContainer');
+  const previewImg = $('itemPhotoPreview');
+  if (file) {
+    const base64 = await readImgB64(file);
+    if (previewImg) previewImg.src = base64;
+    previewContainer?.classList.remove('hidden');
+  } else {
+    window.clearItemPhotoPreview();
+  }
+};
+
+window.clearItemPhotoPreview = () => {
+  const previewContainer = $('itemPhotoPreviewContainer');
+  const previewImg = $('itemPhotoPreview');
+  const fileInput = $('itemPhoto');
+  if (fileInput) fileInput.value = '';
+  if (previewImg) previewImg.src = '';
+  previewContainer?.classList.add('hidden');
+};
+
+window.onItemTypeChange = () => {
+  const type = $('itemType')?.value;
+  const photoContainer = $('itemPhotoContainer');
+  const calendarLabel = $('calendarLabel');
+  
+  if (type === 'demand') {
+    photoContainer?.classList.add('hidden');
+    if (calendarLabel) calendarLabel.textContent = "Période recherchée (optionnelle)";
+  } else {
+    photoContainer?.classList.remove('hidden');
+    if (calendarLabel) calendarLabel.textContent = "Période de disponibilité (optionnelle)";
+  }
+  
+  // Reset calendar state on type change
+  _calendarStart = null;
+  _calendarEnd = null;
+  const fromInput = $('itemFrom');
+  const untilInput = $('itemUntil');
+  if (fromInput) fromInput.value = '';
+  if (untilInput) untilInput.value = '';
+  renderCalendar();
+};
+
+window.showModal = (id) => {
+  sm(id);
+  if (id === 'modal') {
+    const typeSelect = $('itemType');
+    if (typeSelect) {
+      typeSelect.value = 'offer';
+    }
+    // Clear photo preview
+    window.clearItemPhotoPreview();
+    
+    // Reset standard form inputs
+    const nameInput = $('itemName');
+    if (nameInput) nameInput.value = '';
+    const descInput = $('itemDesc');
+    if (descInput) descInput.value = '';
+    const qualitySelect = $('itemQuality');
+    if (qualitySelect) qualitySelect.value = 'good';
+    
+    // Reset calendar variables to current date/month
+    _calendarStart = null;
+    _calendarEnd = null;
+    _currentCalendarMonth = new Date().getMonth();
+    _currentCalendarYear = new Date().getFullYear();
+    const fromInput = $('itemFrom');
+    const untilInput = $('itemUntil');
+    if (fromInput) fromInput.value = '';
+    if (untilInput) untilInput.value = '';
+    
+    window.onItemTypeChange();
+  }
+};
 
 const content = $('content');
 let socket = null;
@@ -953,9 +1150,13 @@ window.doRegisterWizard = async () => {
         sessionStorage.removeItem('pendingItem');
         setTimeout(() => {
           window.showModal('modal');
-          const titleEl = $('itemTitle');
-          if (titleEl) titleEl.value = pendingItem;
-        }, 500);
+          const nameInput = $('itemName');
+          if (nameInput) {
+            nameInput.value = pendingItem;
+            nameInput.focus();
+          }
+          notify(`🚀 Publie dès maintenant ton objet : "${pendingItem}" !`);
+        }, 600);
       }
     } else {
       notify('Compte créé ! Connecte-toi maintenant.');
