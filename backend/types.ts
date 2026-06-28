@@ -15,6 +15,8 @@ export interface User {
   transaction_count: number;
   is_verified: boolean;
   verification_token: string | null;
+  phone?: string | null;
+  is_admin?: boolean;
 }
 
 export interface Item {

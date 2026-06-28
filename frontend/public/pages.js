@@ -41,19 +41,20 @@ const getStatusBadge = (status) => {
 export const homePage = () => {
     const user = getUser();
     return `
-    <div class="space-y-12 animate-fade-in pb-20">
+    <div class="space-y-3 md:space-y-12 animate-fade-in pb-20">
         <!-- Bannière Hero avec effet Glassmorphism -->
-        <div class="relative rounded-4xl p-12 overflow-hidden bg-white/10 backdrop-blur-3xl border-2 border-white shadow-2xl shadow-duck/10">
+        <div class="relative rounded-2xl p-4 md:p-12 overflow-hidden bg-white/10 backdrop-blur-3xl border-2 border-white shadow-2xl shadow-duck/10">
             <div class="relative z-10 max-w-2xl">
-                <h2 class="text-4xl font-black text-duck mb-2 tracking-tight">Salut, ${user.name?.split(' ')[0] || 'Hugo'} 👋</h2>
-                <p class="text-gray-500 font-medium mb-8 text-lg">Que souhaites-tu emprunter aujourd'hui ?</p>
+                <h2 class="text-xl md:text-4xl font-black text-duck mb-1 md:mb-2 tracking-tight">Salut, ${user.name?.split(' ')[0] || 'Hugo'} 👋</h2>
+                <p class="text-gray-500 font-medium mb-3 md:mb-8 text-sm md:text-lg">Que souhaites-tu emprunter aujourd'hui ?</p>
                 
                 <div class="relative group">
-                    <input id="searchInput" type="text" placeholder="Rechercher un objet (ex: Perceuse, Tente...)" 
-                        class="w-full pl-14 pr-4 py-5 bg-white/40 backdrop-blur-xl shadow-xl shadow-duck/5 rounded-2xl outline-none border-2 border-transparent focus:border-duck transition-all font-semibold text-gray-700 placeholder-gray-400">
-                    <i data-lucide="search" class="w-6 h-6 absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-duck transition-colors"></i>
-                    <button onclick="doSearch()" class="absolute right-3 top-3 bottom-3 bg-duck text-white px-8 rounded-lg font-bold hover:bg-duck-dark transition-all shadow-lg shadow-duck/20">
-                        Rechercher
+                    <input id="searchInput" type="text" placeholder="Rechercher un objet..." 
+                        class="w-full pl-10 md:pl-14 pr-12 md:pr-32 py-3 md:py-5 bg-white/40 backdrop-blur-xl shadow-xl shadow-duck/5 rounded-xl md:rounded-2xl outline-none border-2 border-transparent focus:border-duck transition-all font-semibold text-gray-700 placeholder-gray-400 text-sm md:text-base">
+                    <i data-lucide="search" class="w-4 h-4 md:w-6 md:h-6 absolute left-3 md:left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-duck transition-colors"></i>
+                    <button onclick="doSearch()" class="absolute right-2 top-2 bottom-2 bg-duck text-white px-3 md:px-8 rounded-lg font-bold hover:bg-duck-dark transition-all shadow-lg shadow-duck/20 text-xs md:text-sm flex items-center justify-center">
+                        <span class="hidden md:inline">Rechercher</span>
+                        <i data-lucide="search" class="w-4 h-4 md:hidden"></i>
                     </button>
                 </div>
             </div>
@@ -64,23 +65,23 @@ export const homePage = () => {
         </div>
 
         <!-- Tableau de bord des statistiques -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div onclick="navigate('/offres')" class="bg-pastel-green p-8 rounded-3xl border border-duck/5 flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer">
+        <div class="grid grid-cols-2 gap-4 md:gap-6">
+            <div onclick="navigate('/offres')" class="bg-pastel-green p-4 md:p-8 rounded-2xl md:rounded-3xl border border-duck/5 flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer">
                 <div>
-                    <p class="text-duck font-bold uppercase tracking-widest text-[10px] mb-1">Objets disponibles</p>
-                    <h3 id="statsAvailable" class="text-4xl font-black text-duck">...</h3>
+                    <p class="text-duck font-bold uppercase tracking-widest text-[8px] md:text-[10px] mb-1">Objets disponibles</p>
+                    <h3 id="statsAvailable" class="text-2xl md:text-4xl font-black text-duck">...</h3>
                 </div>
-                <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform">
-                    <i data-lucide="package" class="w-7 h-7"></i>
+                <div class="w-10 h-10 md:w-14 md:h-14 bg-white rounded-xl md:rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform">
+                    <i data-lucide="package" class="w-5 h-5 md:w-7 md:h-7"></i>
                 </div>
             </div>
-            <div onclick="navigate('/prets')" class="bg-pastel-green p-8 rounded-3xl border border-duck/5 flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer">
+            <div onclick="navigate('/prets')" class="bg-pastel-green p-4 md:p-8 rounded-2xl md:rounded-3xl border border-duck/5 flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer">
                 <div>
-                    <p class="text-duck font-bold uppercase tracking-widest text-[10px] mb-1">Prêts en cours</p>
-                    <h3 id="statsOngoing" class="text-4xl font-black text-duck">...</h3>
+                    <p class="text-duck font-bold uppercase tracking-widest text-[8px] md:text-[10px] mb-1">Prêts en cours</p>
+                    <h3 id="statsOngoing" class="text-2xl md:text-4xl font-black text-duck">...</h3>
                 </div>
-                <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform">
-                    <i data-lucide="refresh-cw" class="w-7 h-7"></i>
+                <div class="w-10 h-10 md:w-14 md:h-14 bg-white rounded-xl md:rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform">
+                    <i data-lucide="refresh-cw" class="w-5 h-5 md:w-7 md:h-7"></i>
                 </div>
             </div>
         </div>
@@ -122,7 +123,7 @@ export const homePage = () => {
             </div>
         </div>
 
-        <div id="offersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div id="offersGrid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-8">
             <div class="col-span-full text-center py-20 text-gray-300">
                 <div class="animate-spin w-10 h-10 border-4 border-duck border-t-transparent rounded-full mx-auto mb-4"></div>
                 <p class="font-bold">Chargement du catalogue...</p>
@@ -555,7 +556,7 @@ export const userProfilePage = (u, items) => {
  */
 export const itemCard = (i) => `
     <div onclick="navigate('/item/${i.id}')" class="group cursor-pointer">
-        <div class="relative aspect-[4/5] rounded-3xl overflow-hidden bg-gray-100 mb-4 shadow-sm group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
+        <div class="relative aspect-[4/3] rounded-3xl overflow-hidden bg-gray-100 mb-4 shadow-sm group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
             ${i.photo_url ? 
                 `<img src="${i.photo_url}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">` : 
                 `<div class="w-full h-full flex items-center justify-center text-7xl bg-pastel-green/30 text-duck/20">
@@ -568,10 +569,10 @@ export const itemCard = (i) => `
                 </span>
             </div>
         </div>
-        <div class="bg-pastel-green p-5 rounded-3xl border border-duck/5 transition-transform group-hover:scale-[1.01]">
+        <div class="bg-pastel-green p-3 md:p-5 rounded-2xl md:rounded-3xl border border-duck/5 transition-transform group-hover:scale-[1.01]">
             <div class="flex justify-between items-start mb-2">
-                <h4 class="font-bold text-gray-900 text-lg group-hover:text-duck transition-colors truncate">${i.name}</h4>
-                <span class="text-duck font-black text-xs mt-1">Gratuit</span>
+                <h4 class="font-bold text-gray-900 text-sm md:text-lg group-hover:text-duck transition-colors truncate">${i.name}</h4>
+                <span class="text-duck font-black text-xs mt-0.5">Gratuit</span>
             </div>
             <div class="flex items-center gap-2" onclick="event.stopPropagation();navigate('/profile/${i.owner_id}')">
                 <div class="w-6 h-6 rounded-full bg-white flex items-center justify-center overflow-hidden border border-duck/10">
@@ -592,20 +593,23 @@ export const itemCard = (i) => `
  * @param {boolean} isOwner - Si l'utilisateur connecté est le propriétaire.
  * @returns {string} HTML de la page.
  */
-export const itemDetail = (i, isOwner) => `
+export const itemDetail = (i, isOwner, isAdmin) => {
+    const canDelete = isOwner || isAdmin;
+    const showContact = !isOwner;
+    return `
     <div class="max-w-6xl mx-auto animate-fade-in pb-20">
         <button onclick="navigate('/')" class="mb-8 flex items-center gap-2 text-gray-400 hover:text-duck font-bold transition-all">← Retour</button>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <!-- Image de l'objet -->
-            <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 aspect-square relative shadow-sm">
-                ${i.photo_url ? `<img src="${i.photo_url}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-[10rem]">${catIcon(i.category)}</div>`}
+            <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 max-h-[450px] aspect-[4/3] flex items-center justify-center bg-gray-50/50 relative shadow-sm">
+                ${i.photo_url ? `<img src="${i.photo_url}" class="max-h-full max-w-full object-contain">` : `<div class="w-full h-full flex items-center justify-center text-[8rem]">${catIcon(i.category)}</div>`}
             </div>
             <!-- Informations et discussion -->
             <div class="space-y-8">
                 <div>
                     <div class="flex gap-2 mb-4">${catBadge(i.category)} ${qBadge(i.quality)}</div>
                     <h2 class="text-5xl font-black text-gray-900 mb-2 tracking-tight">${i.name}</h2>
-                    <div class="text-duck font-black text-xl tracking-widest uppercase">Prêt Gratuit</div>
+                    <div class="text-duck font-black text-xl tracking-widest uppercase">${i.type === 'offer' ? 'Prêt Gratuit' : 'Recherche de Prêt'}</div>
                 </div>
                 <div class="p-8 bg-white rounded-2xl border border-gray-100 space-y-4 shadow-sm">
                     <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Description</h3>
@@ -623,16 +627,22 @@ export const itemDetail = (i, isOwner) => `
                         </div>
                     </div>
                     <!-- Zone de contact rapide -->
-                    ${isOwner ? '' : `
+                    ${showContact ? `
                     <div class="space-y-3 pt-4 border-t border-duck/10">
                         <textarea id="detailChatInput" placeholder="Bonjour ! J'aimerais beaucoup t'emprunter ton objet..." class="w-full bg-white border-none rounded-xl p-4 text-sm text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-duck outline-none h-24 transition-all shadow-inner"></textarea>
                         <button onclick="initChat(${i.id},${i.owner_id})" class="w-full bg-duck text-white py-4 rounded-lg font-black hover:bg-duck-dark transition-all shadow-lg shadow-duck/20">Lancer la discussion</button>
-                    </div>`}
+                    </div>` : ''}
+
+                    ${canDelete ? `
+                    <div class="pt-4 ${showContact ? 'border-t border-duck/10' : ''}">
+                        <button onclick="deleteItem(${i.id})" class="w-full bg-red-600 text-white py-4 rounded-lg font-black hover:bg-red-700 transition-all shadow-lg shadow-red-600/10 active:scale-[0.98]">🗑️ Supprimer l'annonce</button>
+                    </div>` : ''}
                 </div>
             </div>
         </div>
     </div>
 `;
+};
 
 /**
  * Page de connexion.
@@ -873,4 +883,87 @@ export const associationPage = () => `
             </div>
         </div>
     </div>
+`;
+
+export const adminPage = () => `
+<div class="space-y-8 animate-fade-in pb-20">
+    <div class="space-y-1">
+        <h1 class="text-4xl font-black text-gray-900 tracking-tight heading-font">Panneau d'Administration 🛠️</h1>
+        <p class="text-gray-400 font-medium">Gestion globale des utilisateurs, transactions et messages de PolyEarth</p>
+    </div>
+
+    <!-- Onglets Admin -->
+    <div class="flex border-b border-gray-200 gap-6">
+        <button onclick="setAdminTab('users')" id="tabBtn-users" class="admin-tab-btn pb-4 text-sm font-bold border-b-2 border-emerald-600 text-emerald-600">Utilisateurs</button>
+        <button onclick="setAdminTab('txs')" id="tabBtn-txs" class="admin-tab-btn pb-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600">Transactions</button>
+        <button onclick="setAdminTab('msgs')" id="tabBtn-msgs" class="admin-tab-btn pb-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600">Messages</button>
+    </div>
+
+    <!-- Section : Utilisateurs -->
+    <div id="adminSec-users" class="admin-section space-y-6">
+        <div class="bg-white rounded-2xl border border-emerald-50 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-emerald-50 text-emerald-700 text-[11px] font-black uppercase tracking-widest border-b border-emerald-100">
+                            <th class="py-4 px-6">Utilisateur</th>
+                            <th class="py-4 px-6">Email</th>
+                            <th class="py-4 px-6">Téléphone</th>
+                            <th class="py-4 px-6">École / Statut</th>
+                            <th class="py-4 px-6">Rôle</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUsersTable" class="divide-y divide-gray-50 text-sm font-medium text-gray-600">
+                        <tr><td colspan="5" class="py-10 text-center text-gray-400">Chargement...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section : Transactions -->
+    <div id="adminSec-txs" class="admin-section hidden space-y-6">
+        <div class="bg-white rounded-2xl border border-emerald-50 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-emerald-50 text-emerald-700 text-[11px] font-black uppercase tracking-widest border-b border-emerald-100">
+                            <th class="py-4 px-6">ID</th>
+                            <th class="py-4 px-6">Objet</th>
+                            <th class="py-4 px-6">Prêteur</th>
+                            <th class="py-4 px-6">Emprunteur</th>
+                            <th class="py-4 px-6">Période</th>
+                            <th class="py-4 px-6">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTxsTable" class="divide-y divide-gray-50 text-sm font-medium text-gray-600">
+                        <tr><td colspan="6" class="py-10 text-center text-gray-400">Chargement...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section : Messages -->
+    <div id="adminSec-msgs" class="admin-section hidden space-y-6">
+        <div class="bg-white rounded-2xl border border-emerald-50 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-emerald-50 text-emerald-700 text-[11px] font-black uppercase tracking-widest border-b border-emerald-100">
+                            <th class="py-4 px-6">Objet concerné</th>
+                            <th class="py-4 px-6">De</th>
+                            <th class="py-4 px-6">À</th>
+                            <th class="py-4 px-6">Message</th>
+                            <th class="py-4 px-6">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminMsgsTable" class="divide-y divide-gray-50 text-sm font-medium text-gray-600">
+                        <tr><td colspan="5" class="py-10 text-center text-gray-400">Chargement...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 `;

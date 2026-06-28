@@ -145,9 +145,16 @@ router.patch("/api/items/:id/status", async (ctx) => {
 router.delete("/api/items/:id", async (ctx) => {
   const userId = ctx.state.userId;
   try {
+    const userRes = await client.queryObject(
+      "SELECT is_admin FROM users WHERE id=$1",
+      [userId]
+    );
+    const currentUser = userRes.rows[0] as { is_admin?: boolean };
+    const isAdmin = currentUser?.is_admin === true;
+
     const itemRes = await client.queryObject(
-      "SELECT id, status FROM items WHERE id=$1 AND owner_id=$2",
-      [ctx.params.id, userId],
+      isAdmin ? "SELECT id, status FROM items WHERE id=$1" : "SELECT id, status FROM items WHERE id=$1 AND owner_id=$2",
+      isAdmin ? [ctx.params.id] : [ctx.params.id, userId],
     );
     if (itemRes.rows.length === 0) {
       ctx.response.status = 403;
