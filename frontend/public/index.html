@@ -224,59 +224,62 @@
     </nav>
 
     <!-- Modals -->
-    <div id="overdueLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
-            <h3 id="overdueTitle" class="text-2xl font-black text-gray-900 mb-4">Prêt en retard</h3>
-            <p id="overdueText" class="text-gray-600 font-medium mb-8 leading-relaxed"></p>
+    <div id="overdueLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[100]">
+        <div class="bg-white rounded-t-3xl md:rounded-2xl p-6 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 pb-safe">
+            <h3 id="overdueTitle" class="text-xl md:text-2xl font-black text-gray-900 mb-3">Prêt en retard</h3>
+            <p id="overdueText" class="text-gray-600 font-medium mb-6 leading-relaxed text-sm md:text-base"></p>
             <div id="overdueActions" class="flex gap-4">
-                <button onclick="confirmReturnFromModal()" class="flex-1 bg-emerald-700 text-white py-4 rounded-lg font-black hover:bg-emerald-800 transition-all shadow-lg">Oui, récupéré</button>
-                <button onclick="showExtensionForm()" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-lg font-bold hover:bg-gray-200 transition-all">Non, prolonger</button>
+                <button onclick="confirmReturnFromModal()" class="flex-1 bg-emerald-700 text-white py-3 md:py-4 rounded-xl font-bold hover:bg-emerald-800 transition-all shadow-lg text-sm">Oui, récupéré</button>
+                <button onclick="showExtensionForm()" class="flex-1 bg-gray-100 text-gray-600 py-3 md:py-4 rounded-xl font-bold hover:bg-gray-200 transition-all text-sm">Non, prolonger</button>
             </div>
             <div id="extensionForm" class="hidden space-y-4">
                 <div class="text-[10px] font-black uppercase text-gray-400 tracking-widest">Prolonger jusqu'au</div>
-                <input id="extendUntil" type="date" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold">
+                <input id="extendUntil" type="date" class="w-full p-3 bg-gray-50 border-none rounded-xl outline-none font-bold text-sm">
                 <div class="flex gap-4">
-                    <button onclick="submitExtension()" class="flex-1 bg-blue-700 text-white py-4 rounded-lg font-black hover:bg-blue-800 transition-all">Confirmer</button>
-                    <button onclick="hideExtensionForm()" class="flex-1 text-gray-400 font-bold hover:bg-gray-50 rounded-lg transition-all">Retour</button>
+                    <button onclick="submitExtension()" class="flex-1 bg-blue-700 text-white py-3 md:py-4 rounded-xl font-bold hover:bg-blue-800 transition-all text-sm">Confirmer</button>
+                    <button onclick="hideExtensionForm()" class="flex-1 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition-all text-sm">Retour</button>
                 </div>
             </div>
+            <div class="h-4 md:hidden"></div>
         </div>
     </div>
 
-    <div id="extendLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
-            <h3 class="text-2xl font-black text-gray-900 mb-4">Prolonger le prêt</h3>
-            <p class="text-gray-600 font-medium mb-6 leading-relaxed">Jusqu'à quelle date souhaitez-vous prolonger ce prêt ?</p>
+    <div id="extendLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[100]">
+        <div class="bg-white rounded-t-3xl md:rounded-2xl p-6 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 pb-safe">
+            <h3 class="text-xl md:text-2xl font-black text-gray-900 mb-3">Prolonger le prêt</h3>
+            <p class="text-gray-600 font-medium mb-5 leading-relaxed text-sm md:text-base">Jusqu'à quelle date souhaitez-vous prolonger ce prêt ?</p>
             <div class="space-y-4">
-                <input id="newExtendUntil" type="date" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold">
-                <div class="flex gap-4 mt-4">
-                    <button onclick="submitNewExtension()" class="flex-1 bg-blue-700 text-white py-4 rounded-lg font-black hover:bg-blue-800 transition-all">Envoyer</button>
-                    <button onclick="hideModal('extendLoanModal')" class="flex-1 text-gray-400 font-bold hover:bg-gray-50 rounded-lg transition-all">Annuler</button>
+                <input id="newExtendUntil" type="date" class="w-full p-3 bg-gray-50 border-none rounded-xl outline-none font-bold text-sm">
+                <div class="flex gap-4 mt-2">
+                    <button onclick="submitNewExtension()" class="flex-1 bg-blue-700 text-white py-3 md:py-4 rounded-xl font-bold hover:bg-blue-800 transition-all text-sm">Envoyer</button>
+                    <button onclick="hideModal('extendLoanModal')" class="flex-1 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition-all text-sm">Annuler</button>
                 </div>
             </div>
+            <div class="h-4 md:hidden"></div>
         </div>
     </div>
 
-    <div id="lendAgainModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
-            <h3 id="lendAgainTitle" class="text-2xl font-black text-gray-900 mb-4">Prêt terminé ! 🥳</h3>
-            <p id="lendAgainQuestionText" class="text-gray-600 font-medium mb-8 leading-relaxed">Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?</p>
+    <div id="lendAgainModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[100]">
+        <div class="bg-white rounded-t-3xl md:rounded-2xl p-6 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 pb-safe">
+            <h3 id="lendAgainTitle" class="text-xl md:text-2xl font-black text-gray-900 mb-3">Prêt terminé ! 🥳</h3>
+            <p id="lendAgainQuestionText" class="text-gray-600 font-medium mb-6 leading-relaxed text-sm md:text-base">Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?</p>
             <div class="flex gap-4">
-                <button id="reLendYesBtn" class="flex-1 bg-emerald-700 text-white py-4 rounded-lg font-black hover:bg-emerald-800 transition-all shadow-lg">Oui, avec plaisir</button>
-                <button id="reLendNoBtn" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-lg font-bold hover:bg-gray-200 transition-all">Non, c'est fini</button>
+                <button id="reLendYesBtn" class="flex-1 bg-emerald-700 text-white py-3 md:py-4 rounded-xl font-bold hover:bg-emerald-800 transition-all shadow-lg text-sm">Oui, avec plaisir</button>
+                <button id="reLendNoBtn" class="flex-1 bg-gray-100 text-gray-600 py-3 md:py-4 rounded-xl font-bold hover:bg-gray-200 transition-all text-sm">Non, c'est fini</button>
             </div>
+            <div class="h-4 md:hidden"></div>
         </div>
     </div>
 
-    <div id="modal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+    <div id="modal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[100]">
         <!-- Add Item Modal Content -->
-        <div class="bg-white rounded-2xl p-8 md:p-10 max-w-lg w-full max-h-90vh overflow-y-auto shadow-2xl animate-scale-up border border-emerald-50">
-            <div class="flex justify-between items-start mb-6">
+        <div class="bg-white rounded-t-3xl md:rounded-2xl p-5 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-emerald-50 pb-safe">
+            <div class="flex justify-between items-start mb-5">
                 <div>
-                    <h3 class="text-3xl font-extrabold text-gray-900 tracking-tight heading-font">Nouvelle annonce</h3>
-                    <p class="text-emerald-800 font-medium text-sm mt-1">Partagez vos objets avec la communauté DDRS</p>
+                    <h3 class="text-xl md:text-3xl font-extrabold text-gray-900 tracking-tight heading-font">Nouvelle annonce</h3>
+                    <p class="text-emerald-800 font-medium text-xs md:text-sm mt-1">Partagez vos objets avec la communauté DDRS</p>
                 </div>
-                <button onclick="hideModal('modal')" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                <button onclick="hideModal('modal')" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 flex-shrink-0">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -291,17 +294,17 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block mb-1 font-semibold text-sm text-gray-700">Type</label>
-                        <select id="itemType" onchange="window.onItemTypeChange()" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700">
+                        <select id="itemType" onchange="window.onItemTypeChange()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-sm">
                             <option value="offer">🤝 Je prête</option>
                             <option value="demand">🔍 Je cherche</option>
                         </select>
                     </div>
                     <div>
                         <label class="block mb-1 font-semibold text-sm text-gray-700">Catégorie</label>
-                        <select id="itemCategory" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700">
+                        <select id="itemCategory" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-sm">
                             <option value="Matériel">🛠️ Matériel</option>
                             <option value="Livres">📚 Livres</option>
                             <option value="Services">🤝 Services</option>
@@ -312,24 +315,24 @@
                 </div>
                 <div>
                     <label class="block mb-1 font-semibold text-sm text-gray-700">Nom de l'objet</label>
-                    <input id="itemName" placeholder="Ex: Calculatrice TI-84" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700" required>
+                    <input id="itemName" placeholder="Ex: Calculatrice TI-84" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-sm" required>
                 </div>
                 <div>
                     <label class="block mb-1 font-semibold text-sm text-gray-700">Description</label>
-                    <textarea id="itemDesc" placeholder="État, durée max..." class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 h-24 resize-none" required></textarea>
+                    <textarea id="itemDesc" placeholder="État, durée max..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 h-20 resize-none text-sm" required></textarea>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block mb-1 font-semibold text-sm text-gray-700">Qualité</label>
-                        <select id="itemQuality" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700">
+                        <select id="itemQuality" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-sm">
                             <option value="new">Neuf</option>
                             <option value="good" selected>Bon état</option>
                             <option value="fair">Correct</option>
                         </select>
                     </div>
                     <div id="itemPhotoContainer">
-                        <label class="block mb-1 font-semibold text-sm text-gray-700">Photo de l'objet</label>
-                        <input id="itemPhoto" type="file" accept="image/*" onchange="window.onItemPhotoChange()" class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-white text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <label class="block mb-1 font-semibold text-sm text-gray-700">Photo</label>
+                        <input id="itemPhoto" type="file" accept="image/*" onchange="window.onItemPhotoChange()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 bg-white text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                 </div>
                 <div id="itemDatesContainer" class="space-y-1">
@@ -338,78 +341,82 @@
                     <input id="itemFrom" type="hidden">
                     <input id="itemUntil" type="hidden">
                 </div>
-                <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-all mt-4 shadow-lg shadow-emerald-600/20 active:scale-[0.98]">Publier l'annonce</button>
+                <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all mt-2 shadow-lg shadow-emerald-600/20 active:scale-[0.98] text-sm">Publier l'annonce</button>
+                <!-- Safe area for mobile nav -->
+                <div class="h-4 md:hidden"></div>
             </form>
         </div>
     </div>
 
-    <div id="proposeLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white rounded-2xl p-8 md:p-10 max-w-lg w-full max-h-90vh overflow-y-auto shadow-2xl animate-scale-up border border-emerald-50">
-            <div class="flex justify-between items-start mb-6">
+    <div id="proposeLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[100]">
+        <div class="bg-white rounded-t-3xl md:rounded-2xl p-5 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-emerald-50">
+            <div class="flex justify-between items-start mb-5">
                 <div>
-                    <h3 class="text-3xl font-extrabold text-gray-900 tracking-tight heading-font">Proposer un objet</h3>
-                    <p class="text-emerald-800 font-medium text-sm mt-1">Répondez à cette demande de prêt.</p>
+                    <h3 class="text-xl md:text-3xl font-extrabold text-gray-900 tracking-tight heading-font">Proposer un objet</h3>
+                    <p class="text-emerald-800 font-medium text-xs md:text-sm mt-1">Répondez à cette demande de prêt.</p>
                 </div>
-                <button onclick="hideModal('proposeLoanModal')" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                <button onclick="hideModal('proposeLoanModal')" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 flex-shrink-0">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             <form id="proposeLoanForm" class="space-y-4">
                 <div>
                     <label class="block mb-1 font-semibold text-sm text-gray-700">Choisir un de mes objets déjà en ligne</label>
-                    <select id="propMyItemSelect" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700">
+                    <select id="propMyItemSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-sm">
                         <option value="">-- Créer une nouvelle proposition --</option>
                     </select>
                 </div>
                 <div id="newPropFields" class="space-y-4">
                     <div>
                         <label class="block mb-1 font-semibold text-sm text-gray-700">Ou nom de l'objet à proposer</label>
-                        <input id="propItemName" placeholder="Ex: Ma calculatrice TI-84" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700">
+                        <input id="propItemName" placeholder="Ex: Ma calculatrice TI-84" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-sm">
                     </div>
                     <div>
                         <label class="block mb-1 font-semibold text-sm text-gray-700">Précisions (état, conditions...)</label>
-                        <textarea id="propItemDesc" placeholder="Je peux te la prêter pour la semaine..." class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 h-24 resize-none"></textarea>
+                        <textarea id="propItemDesc" placeholder="Je peux te la prêter pour la semaine..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 h-20 resize-none text-sm"></textarea>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block mb-1 font-semibold text-sm text-gray-700">Disponible du</label>
-                        <input id="propFrom" type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-xs">
+                        <input id="propFrom" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-sm">
                     </div>
                     <div>
                         <label class="block mb-1 font-semibold text-sm text-gray-700">Au</label>
-                        <input id="propUntil" type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-xs">
+                        <input id="propUntil" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 text-sm">
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-all mt-4 shadow-lg shadow-emerald-600/20 active:scale-[0.98]">Envoyer la proposition</button>
+                <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98] text-sm">Envoyer la proposition</button>
+                <div class="h-4 md:hidden"></div>
             </form>
         </div>
     </div>
 
-    <div id="reviewModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[110]">
-        <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
-            <h3 class="text-2xl font-black text-gray-900 mb-2">Notez votre expérience ! ⭐</h3>
-            <p id="reviewTargetName" class="text-gray-500 font-medium mb-6 text-sm">Comment s'est passé l'échange avec cet utilisateur ?</p>
+    <div id="reviewModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[110]">
+        <div class="bg-white rounded-t-3xl md:rounded-2xl p-5 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 pb-safe">
+            <h3 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Notez votre expérience ! ⭐</h3>
+            <p id="reviewTargetName" class="text-gray-500 font-medium mb-4 text-xs md:text-sm">Comment s'est passé l'échange avec cet utilisateur ?</p>
             
-            <div class="flex justify-center gap-2 mb-6">
-                <button onclick="setRating(1)" class="star-btn text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
-                <button onclick="setRating(2)" class="star-btn text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
-                <button onclick="setRating(3)" class="star-btn text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
-                <button onclick="setRating(4)" class="star-btn text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
-                <button onclick="setRating(5)" class="star-btn text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
+            <div class="flex justify-center gap-2 mb-4">
+                <button onclick="setRating(1)" class="star-btn text-2xl md:text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
+                <button onclick="setRating(2)" class="star-btn text-2xl md:text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
+                <button onclick="setRating(3)" class="star-btn text-2xl md:text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
+                <button onclick="setRating(4)" class="star-btn text-2xl md:text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
+                <button onclick="setRating(5)" class="star-btn text-2xl md:text-3xl hover:scale-110 transition-transform grayscale">⭐</button>
             </div>
             
-            <textarea id="reviewComment" placeholder="Un petit mot sur l'échange (optionnel)..." class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-medium text-sm h-24 mb-6"></textarea>
+            <textarea id="reviewComment" placeholder="Un petit mot sur l'échange (optionnel)..." class="w-full p-3 bg-gray-50 border-none rounded-xl outline-none font-medium text-xs md:text-sm h-20 mb-4 resize-none"></textarea>
             
-            <div id="reLendOption" class="hidden mb-6">
-                <p id="reLendQuestionText" class="text-gray-600 font-bold mb-4 text-sm">Souhaitez-vous remettre cet objet en ligne ?</p>
+            <div id="reLendOption" class="hidden mb-4">
+                <p id="reLendQuestionText" class="text-gray-600 font-bold mb-3 text-xs md:text-sm">Souhaitez-vous remettre cet objet en ligne ?</p>
                 <div class="flex gap-4">
-                    <button id="reLendYes" class="flex-1 py-3 rounded-lg border-2 border-emerald-600 text-emerald-600 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-50 transition-all">OUI, disponible</button>
-                    <button id="reLendNo" class="flex-1 py-3 rounded-lg border-2 border-gray-200 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">NON, fini</button>
+                    <button id="reLendYes" class="flex-1 py-2.5 rounded-lg border-2 border-emerald-600 text-emerald-600 font-black text-[9px] uppercase tracking-widest hover:bg-emerald-50 transition-all">OUI, disponible</button>
+                    <button id="reLendNo" class="flex-1 py-2.5 rounded-lg border-2 border-gray-200 text-gray-400 font-black text-[9px] uppercase tracking-widest hover:bg-gray-50 transition-all">NON, fini</button>
                 </div>
             </div>
             
-            <button onclick="submitReview()" class="w-full bg-duck text-white py-4 rounded-lg font-black shadow-lg hover:bg-duck-dark transition-all">Valider</button>
+            <button onclick="submitReview()" class="w-full bg-duck text-white py-3 rounded-xl font-bold shadow-lg hover:bg-duck-dark transition-all text-sm">Valider</button>
+            <div class="h-4 md:hidden"></div>
         </div>
     </div>
 
