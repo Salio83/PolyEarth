@@ -114,6 +114,7 @@ const routes = {
     _wizardData.freq = null;
     _wizardData.motiv = null;
     _wizardData.firstItem = '';
+    _regFieldsValid = { name: false, email: false, password: false, phone: false };
     content.innerHTML = registerPage();
   },
   '/association': () => { if (!guard()) return; content.innerHTML = associationPage(); hdr(); },
@@ -511,6 +512,193 @@ window.doLogin = async e => {
 // ============================================================
 let _wizardStep = 1;
 const _wizardData = { categories: [], freq: null, motiv: null, firstItem: '' };
+let _regFieldsValid = { name: false, email: false, password: false, phone: false };
+let _emailCheckTimeout = null;
+
+// Helper to set styling of feedback and borders
+function _setFieldValidity(input, feedbackEl, isValid, message) {
+  if (!input || !feedbackEl) return;
+  
+  if (isValid === null) {
+    // Neutral state
+    input.classList.remove('border-red-400', 'border-emerald-400');
+    input.classList.add('border-gray-100');
+    feedbackEl.classList.add('hidden');
+    feedbackEl.textContent = '';
+    return;
+  }
+  
+  if (isValid) {
+    input.classList.remove('border-red-400', 'border-gray-100');
+    input.classList.add('border-emerald-400');
+    feedbackEl.classList.remove('hidden', 'text-red-500', 'text-blue-500');
+    feedbackEl.classList.add('text-emerald-500');
+    feedbackEl.textContent = message || '✓ Valide';
+  } else {
+    input.classList.remove('border-emerald-400', 'border-gray-100');
+    input.classList.add('border-red-400');
+    feedbackEl.classList.remove('hidden', 'text-emerald-500', 'text-blue-500');
+    feedbackEl.classList.add('text-red-500');
+    feedbackEl.textContent = message || 'Invalide';
+  }
+}
+
+window.validateRegName = (input) => {
+  const val = input.value.trim();
+  const feedback = $('regNameFeedback');
+  if (val.length === 0) {
+    _regFieldsValid.name = false;
+    _setFieldValidity(input, feedback, null);
+  } else if (val.length < 2) {
+    _regFieldsValid.name = false;
+    _setFieldValidity(input, feedback, false, 'Le nom doit contenir au moins 2 caractères.');
+  } else {
+    _regFieldsValid.name = true;
+    _setFieldValidity(input, feedback, true, '✓ Nom valide');
+  }
+  window.checkStep1Validity();
+};
+
+window.validateRegEmail = (input) => {
+  const val = input.value.trim();
+  const feedback = $('regEmailFeedback');
+  
+  clearTimeout(_emailCheckTimeout);
+  
+  if (val.length === 0) {
+    _regFieldsValid.email = false;
+    _setFieldValidity(input, feedback, null);
+    window.checkStep1Validity();
+    return;
+  }
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(val)) {
+    _regFieldsValid.email = false;
+    _setFieldValidity(input, feedback, false, 'Adresse e-mail invalide.');
+    window.checkStep1Validity();
+    return;
+  }
+  
+  // Show checking state
+  input.classList.remove('border-red-400', 'border-emerald-400', 'border-gray-100');
+  feedback.classList.remove('hidden', 'text-red-500', 'text-emerald-500');
+  feedback.classList.add('text-blue-500');
+  feedback.textContent = 'Vérification de la disponibilité...';
+  
+  _emailCheckTimeout = setTimeout(async () => {
+    try {
+      const res = await fetch(`${API}/auth/check-email?email=${encodeURIComponent(val)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.exists) {
+          _regFieldsValid.email = false;
+          _setFieldValidity(input, feedback, false, 'Cette adresse e-mail est déjà utilisée.');
+        } else {
+          _regFieldsValid.email = true;
+          _setFieldValidity(input, feedback, true, '✓ Adresse e-mail disponible');
+        }
+      } else {
+        _regFieldsValid.email = false;
+        _setFieldValidity(input, feedback, false, 'Erreur lors de la vérification.');
+      }
+    } catch (_e) {
+      _regFieldsValid.email = false;
+      _setFieldValidity(input, feedback, false, 'Erreur de connexion.');
+    }
+    window.checkStep1Validity();
+  }, 400);
+};
+
+window.validateRegPassword = (input) => {
+  const val = input.value;
+  const feedback = $('regPasswordFeedback');
+  if (val.length === 0) {
+    _regFieldsValid.password = false;
+    _setFieldValidity(input, feedback, null);
+  } else if (val.length < 8) {
+    _regFieldsValid.password = false;
+    _setFieldValidity(input, feedback, false, 'Le mot de passe doit faire au moins 8 caractères.');
+  } else if (!/[a-zA-Z]/.test(val) || !/[0-9]/.test(val)) {
+    _regFieldsValid.password = false;
+    _setFieldValidity(input, feedback, false, 'Doit contenir au moins une lettre et un chiffre.');
+  } else {
+    _regFieldsValid.password = true;
+    _setFieldValidity(input, feedback, true, '✓ Mot de passe fort');
+  }
+  window.checkStep1Validity();
+};
+
+window.validateRegPhone = (input) => {
+  if (!input) return;
+  const val = input.value.trim();
+  const prefix = $('regPhonePrefix')?.value || '+33';
+  const feedback = $('regPhoneFeedback');
+  if (val.length === 0) {
+    _regFieldsValid.phone = false;
+    _setFieldValidity(input, feedback, null);
+  } else {
+    let rest = val.replace(/^0/, '');
+    let cleanedRest = rest.replace(/[\s\-\.]/g, '');
+    const fullPhone = prefix + cleanedRest;
+    const cleanedFull = fullPhone.replace(/[\s\-\.]/g, '');
+    const isValid = /^(\+?[0-9]{7,15})$/.test(cleanedFull);
+    
+    if (!isValid || !/^[0-9]+$/.test(cleanedRest)) {
+      _regFieldsValid.phone = false;
+      _setFieldValidity(input, feedback, false, 'Numéro de téléphone invalide.');
+    } else {
+      _regFieldsValid.phone = true;
+      _setFieldValidity(input, feedback, true, '✓ Téléphone valide');
+    }
+  }
+  window.checkStep1Validity();
+};
+
+window.checkStep1Validity = () => {
+  const btn = $('wNextBtn1');
+  if (!btn) return;
+  
+  const allValid = _regFieldsValid.name && _regFieldsValid.email && _regFieldsValid.password && _regFieldsValid.phone;
+  if (allValid) {
+    btn.disabled = false;
+    btn.classList.remove('opacity-50');
+  } else {
+    btn.disabled = true;
+    btn.classList.add('opacity-50');
+  }
+};
+
+window.wizardPrev = () => {
+  if (_wizardStep <= 1) return;
+
+  const current = $(`wStep${_wizardStep}`);
+  const prev    = $(`wStep${_wizardStep - 1}`);
+  if (!prev) return;
+
+  // Animation sortie / entrée (inversée pour le retour en arrière)
+  if (current) {
+    current.style.opacity = '0';
+    current.style.transform = 'translateX(30px)';
+    current.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+    setTimeout(() => {
+      current.classList.add('hidden');
+      current.style.opacity = '';
+      current.style.transform = '';
+      prev.style.opacity = '0';
+      prev.style.transform = 'translateX(-30px)';
+      prev.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        prev.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        prev.style.opacity = '1';
+        prev.style.transform = 'translateX(0)';
+      });
+    }, 250);
+  }
+
+  _wizardStep--;
+  _wizardUpdateProgress(_wizardStep);
+};
 
 /** Met à jour la barre de progression */
 function _wizardUpdateProgress(step) {
@@ -729,7 +917,10 @@ window.doRegisterWizard = async () => {
   const name     = $('regName')?.value.trim();
   const email    = $('regEmail')?.value.trim();
   const password = $('regPassword')?.value;
-  const phone    = $('regPhone')?.value.trim();
+  const prefix   = $('regPhonePrefix')?.value || '+33';
+  const rawPhone = $('regPhone')?.value.trim();
+  let restPhone  = rawPhone.replace(/^0/, '');
+  const phone    = prefix + restPhone;
 
   const res = await fetch(`${API}/auth/register`, {
     method: 'POST',
@@ -738,12 +929,38 @@ window.doRegisterWizard = async () => {
   });
 
   if (res.ok) {
-    notify('Compte créé ! Connecte-toi maintenant.');
-    // Si un premier objet a été renseigné, on le stocke pour le publier après connexion
+    notify('Compte créé ! Connexion automatique...');
     if (_wizardData.firstItem) {
       sessionStorage.setItem('pendingItem', _wizardData.firstItem);
     }
-    navigate('/login');
+    
+    const loginRes = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    
+    if (loginRes.ok) {
+      const data = await loginRes.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      initWS();
+      notify('Bienvenue sur PolyEarth ! 🌱');
+      navigate('/');
+      
+      const pendingItem = sessionStorage.getItem('pendingItem');
+      if (pendingItem) {
+        sessionStorage.removeItem('pendingItem');
+        setTimeout(() => {
+          window.showModal('modal');
+          const titleEl = $('itemTitle');
+          if (titleEl) titleEl.value = pendingItem;
+        }, 500);
+      }
+    } else {
+      notify('Compte créé ! Connecte-toi maintenant.');
+      navigate('/login');
+    }
   } else {
     const err = await res.json().catch(() => ({}));
     notify(err.message || "Erreur lors de l'inscription.", 'error');

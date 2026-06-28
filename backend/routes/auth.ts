@@ -205,4 +205,29 @@ router.post("/api/auth/login", async (ctx) => {
   }
 });
 
+/**
+ * Vérifie si une adresse email est déjà enregistrée.
+ */
+router.get("/api/auth/check-email", async (ctx) => {
+  try {
+    const email = ctx.request.url.searchParams.get("email");
+    if (!email) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "L'e-mail est obligatoire." };
+      return;
+    }
+
+    const r = await client.queryObject(
+      "SELECT id FROM users WHERE email=$1",
+      [email.toLowerCase()],
+    );
+    
+    ctx.response.body = { exists: r.rows.length > 0 };
+  } catch (e) {
+    console.error("❌ Erreur check-email:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Erreur serveur lors de la vérification de l'adresse e-mail." };
+  }
+});
+
 export default router;

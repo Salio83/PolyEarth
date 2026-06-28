@@ -647,15 +647,43 @@ export const registerPage = () => `
         <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Créer mon compte</h2>
         <p class="text-sm text-gray-400 font-medium mb-8">Rejoins la communauté PolyEarth !</p>
         <form onsubmit="wizardNext(event)" class="space-y-4">
-          <input id="regName" placeholder="Prénom et Nom" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required>
-          <input id="regEmail" type="email" placeholder="Adresse e-mail" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required>
-          <input id="regPassword" type="password" placeholder="Mot de passe (8 car. min.)" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required minlength="8">
-          <div class="relative">
-            <input id="regPhone" type="tel" placeholder="Téléphone (ex: 06 12 34 56 78)" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all pr-10" required>
-            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-base">📱</span>
+          <div>
+            <input id="regName" oninput="validateRegName(this)" placeholder="Prénom et Nom" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required>
+            <p id="regNameFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
+          </div>
+          <div>
+            <input id="regEmail" type="email" oninput="validateRegEmail(this)" placeholder="Adresse e-mail" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required>
+            <p id="regEmailFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
+          </div>
+          <div>
+            <input id="regPassword" type="password" oninput="validateRegPassword(this)" placeholder="Mot de passe (8 car. min.)" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all" required minlength="8">
+            <p id="regPasswordFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
+          </div>
+          <div>
+            <div class="flex gap-2">
+              <select id="regPhonePrefix" onchange="validateRegPhone(document.getElementById('regPhone'))" class="p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all cursor-pointer">
+                <option value="+33" selected>🇫🇷 +33</option>
+                <option value="+32">🇧🇪 +32</option>
+                <option value="+41">🇨🇭 +41</option>
+                <option value="+1">🇨🇦 +1</option>
+                <option value="+34">🇪🇸 +34</option>
+                <option value="+39">🇮🇹 +39</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+49">🇩🇪 +49</option>
+                <option value="+212">🇲🇦 +212</option>
+                <option value="+213">🇩🇿 +213</option>
+                <option value="+216">🇹🇳 +216</option>
+                <option value="+221">🇸🇳 +221</option>
+              </select>
+              <div class="relative flex-1">
+                <input id="regPhone" type="tel" oninput="validateRegPhone(this)" placeholder="ex: 06 12 34 56 78" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-gray-800 focus:border-emerald-300 transition-all pr-10" required>
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-base">📱</span>
+              </div>
+            </div>
+            <p id="regPhoneFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
           </div>
           <p class="text-xs text-gray-400 font-medium -mt-1 px-1">🔒 Ton numéro est confidentiel — jamais visible par les autres utilisateurs.</p>
-          <button type="submit" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all mt-2">Commencer ➜</button>
+          <button type="submit" id="wNextBtn1" disabled class="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all mt-2 opacity-50">Commencer ➜</button>
         </form>
         <div class="mt-6 text-center">
           <button onclick="navigate('/login')" class="text-xs text-gray-400 font-bold hover:text-emerald-600 transition-colors">Déjà un compte ? Se connecter</button>
@@ -664,6 +692,7 @@ export const registerPage = () => `
 
       <!-- Étape 2 : Catégories -->
       <div id="wStep2" class="wizard-step hidden p-8 md:p-10">
+        <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
         <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl mb-6">📦</div>
         <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Tes objets</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Dans quels domaines as-tu des objets peu utilisés ? <span class="text-emerald-600 font-black">(Choix multiples)</span></p>
@@ -679,6 +708,7 @@ export const registerPage = () => `
 
       <!-- Étape 3 : Fréquence -->
       <div id="wStep3" class="wizard-step hidden p-8 md:p-10">
+        <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
         <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🤔</div>
         <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Combien d'objets ?</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Parmi tes affaires, combien n'ont <span class="text-blue-600 font-black">pas été utilisés depuis 3 mois</span> ou plus ?</p>
@@ -694,6 +724,7 @@ export const registerPage = () => `
 
       <!-- Étape 4 : Motivation -->
       <div id="wStep4" class="wizard-step hidden p-8 md:p-10">
+        <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
         <div class="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center text-2xl mb-6">💡</div>
         <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Ta motivation</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Qu'est-ce qui t'<span class="text-purple-600 font-black">encouragerait le plus</span> à prêter un objet ?</p>
@@ -709,6 +740,7 @@ export const registerPage = () => `
 
       <!-- Étape 5 : Premier objet -->
       <div id="wStep5" class="wizard-step hidden p-8 md:p-10">
+        <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
         <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🚀</div>
         <h2 class="text-2xl font-black text-gray-900 mb-1 tracking-tight">Ton premier objet</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Quel objet pourrais-tu proposer <span class="text-orange-500 font-black">dès maintenant</span> à tes camarades ?</p>
@@ -722,6 +754,7 @@ export const registerPage = () => `
 
       <!-- Étape 6 : Score & création -->
       <div id="wStep6" class="wizard-step hidden p-8 md:p-10 text-center">
+        <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none mx-auto w-fit">&larr; Retour</button>
         <div class="relative w-28 h-28 mx-auto mb-6">
           <svg class="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="42" fill="none" stroke="#e5e7eb" stroke-width="8"/>
