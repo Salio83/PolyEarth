@@ -612,9 +612,23 @@ function initWS() {
            const otherName = tx ? (tx.owner_id === u.id ? tx.borrower_name : tx.owner_name) : 'cet utilisateur';
            $('reviewTargetName').textContent = `Comment s'est passé l'échange avec ${otherName} ?`;
 
-           // Si l'utilisateur actuel est le propriétaire, proposer de remettre en ligne
+           // Si l'utilisateur actuel est le propriétaire, proposer de remettre en ligne ou de republier la demande
            if (item.owner_id === u.id) {
               $('reLendOption').classList.remove('hidden');
+              const questionEl = $('reLendQuestionText');
+              const yesBtn = $('reLendYes');
+              const noBtn = $('reLendNo');
+              
+              if (item.type === 'demand') {
+                if (questionEl) questionEl.textContent = "Souhaitez-vous republier votre demande ?";
+                if (yesBtn) yesBtn.textContent = "OUI, rechercher";
+                if (noBtn) noBtn.textContent = "NON, trouvé";
+              } else {
+                if (questionEl) questionEl.textContent = "Souhaitez-vous remettre cet objet en ligne ?";
+                if (yesBtn) yesBtn.textContent = "OUI, disponible";
+                if (noBtn) noBtn.textContent = "NON, fini";
+              }
+              
               currentReLendChoice = true;
               $('reLendYes').onclick = () => { 
                  currentReLendChoice = true;
@@ -636,6 +650,23 @@ function initWS() {
            // Autre cas de fin sans transaction directe (ex: annulation)
            const modal = $('lendAgainModal');
            if (modal) {
+             const titleEl = $('lendAgainTitle');
+             const questionEl = $('lendAgainQuestionText');
+             const yesBtn = $('reLendYesBtn');
+             const noBtn = $('reLendNoBtn');
+             
+             if (item.type === 'demand') {
+               if (titleEl) titleEl.textContent = "Demande clôturée !";
+               if (questionEl) questionEl.textContent = "Souhaitez-vous republier votre demande pour que d'autres étudiants puissent la voir ?";
+               if (yesBtn) yesBtn.textContent = "Oui, rechercher";
+               if (noBtn) noBtn.textContent = "Non, c'est bon";
+             } else {
+               if (titleEl) titleEl.textContent = "Prêt terminé ! 🥳";
+               if (questionEl) questionEl.textContent = "Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?";
+               if (yesBtn) yesBtn.textContent = "Oui, avec plaisir";
+               if (noBtn) noBtn.textContent = "Non, c'est fini";
+             }
+             
              modal.classList.remove('hidden');
              $('reLendYesBtn').onclick = () => { modal.classList.add('hidden'); window.reLendItem(m.data.item_id, true); };
              $('reLendNoBtn').onclick = () => { modal.classList.add('hidden'); window.reLendItem(m.data.item_id, false); };
@@ -2001,8 +2032,8 @@ window.handleProposeLoan = async (demandItemId, otherUserId) => {
 
   select.value = '';
   newFields.classList.remove('hidden');
-  $('propItemName').value = '';
-  $('propItemDesc').value = '';
+  $('propItemName').value = item.name || '';
+  $('propItemDesc').value = item.description || '';
   
   $('propFrom').value = item.available_from ? item.available_from.split('T')[0] : '';
   $('propUntil').value = item.available_until ? item.available_until.split('T')[0] : '';

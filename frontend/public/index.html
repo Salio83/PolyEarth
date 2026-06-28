@@ -159,8 +159,8 @@
 
     <div id="lendAgainModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
         <div class="bg-white rounded-xl p-10 max-w-lg w-full shadow-2xl animate-scale-up border border-gray-100">
-            <h3 class="text-2xl font-black text-gray-900 mb-4">Prêt terminé ! 🥳</h3>
-            <p class="text-gray-600 font-medium mb-8 leading-relaxed">Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?</p>
+            <h3 id="lendAgainTitle" class="text-2xl font-black text-gray-900 mb-4">Prêt terminé ! 🥳</h3>
+            <p id="lendAgainQuestionText" class="text-gray-600 font-medium mb-8 leading-relaxed">Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?</p>
             <div class="flex gap-4">
                 <button id="reLendYesBtn" class="flex-1 bg-emerald-700 text-white py-4 rounded-lg font-black hover:bg-emerald-800 transition-all shadow-lg">Oui, avec plaisir</button>
                 <button id="reLendNoBtn" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-lg font-bold hover:bg-gray-200 transition-all">Non, c'est fini</button>
@@ -302,7 +302,7 @@
             <textarea id="reviewComment" placeholder="Un petit mot sur l'échange (optionnel)..." class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-medium text-sm h-24 mb-6"></textarea>
             
             <div id="reLendOption" class="hidden mb-6">
-                <p class="text-gray-600 font-bold mb-4 text-sm">Souhaitez-vous remettre cet objet en ligne ?</p>
+                <p id="reLendQuestionText" class="text-gray-600 font-bold mb-4 text-sm">Souhaitez-vous remettre cet objet en ligne ?</p>
                 <div class="flex gap-4">
                     <button id="reLendYes" class="flex-1 py-3 rounded-lg border-2 border-emerald-600 text-emerald-600 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-50 transition-all">OUI, disponible</button>
                     <button id="reLendNo" class="flex-1 py-3 rounded-lg border-2 border-gray-200 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">NON, fini</button>
