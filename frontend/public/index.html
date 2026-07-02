@@ -155,6 +155,54 @@
                 display: none !important;
             }
         }
+
+        /* Classes utilitaires de padding pour éviter les chevauchements d'icônes */
+        .pl-4 { padding-left: 1rem !important; }
+        .pr-4 { padding-right: 1rem !important; }
+        .pr-10 { padding-right: 2.5rem !important; }
+        .pl-12 { padding-left: 3rem !important; }
+
+        /* Structure et styles robustes pour les fenêtres modales */
+        .modal-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            background-color: rgba(17, 24, 39, 0.6) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            display: flex !important;
+            align-items: flex-end !important;
+            justify-content: center !important;
+            z-index: 100 !important;
+        }
+        .modal-overlay.hidden {
+            display: none !important;
+        }
+        @media (min-width: 768px) {
+            .modal-overlay {
+                align-items: center !important;
+                padding: 1rem !important;
+            }
+        }
+        .modal-container {
+            background-color: #fff !important;
+            width: 100% !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+            border: 1px solid #ecfdf5 !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            border-top-left-radius: 1.5rem !important;
+            border-top-right-radius: 1.5rem !important;
+            border-bottom-left-radius: 0px !important;
+            border-bottom-right-radius: 0px !important;
+            padding: 1.25rem !important;
+        }
+        @media (min-width: 768px) {
+            .modal-container {
+                max-width: 32rem !important;
+                border-radius: 1rem !important;
+                padding: 2.5rem !important;
+            }
+        }
     </style>
 </head>
 <body class="font-['Work_Sans'] text-gray-900 min-h-screen body-font">
@@ -224,8 +272,8 @@
     </nav>
 
     <!-- Modals -->
-    <div id="overdueLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[100]">
-        <div class="bg-white rounded-t-3xl md:rounded-2xl p-6 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 pb-safe">
+    <div id="overdueLoanModal" class="hidden modal-overlay">
+        <div class="modal-container">
             <h3 id="overdueTitle" class="text-xl md:text-2xl font-black text-gray-900 mb-3">Prêt en retard</h3>
             <p id="overdueText" class="text-gray-600 font-medium mb-6 leading-relaxed text-sm md:text-base"></p>
             <div id="overdueActions" class="flex gap-4">
@@ -244,8 +292,8 @@
         </div>
     </div>
 
-    <div id="extendLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[100]">
-        <div class="bg-white rounded-t-3xl md:rounded-2xl p-6 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 pb-safe">
+    <div id="extendLoanModal" class="hidden modal-overlay">
+        <div class="modal-container">
             <h3 class="text-xl md:text-2xl font-black text-gray-900 mb-3">Prolonger le prêt</h3>
             <p class="text-gray-600 font-medium mb-5 leading-relaxed text-sm md:text-base">Jusqu'à quelle date souhaitez-vous prolonger ce prêt ?</p>
             <div class="space-y-4">
@@ -259,8 +307,8 @@
         </div>
     </div>
 
-    <div id="lendAgainModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[100]">
-        <div class="bg-white rounded-t-3xl md:rounded-2xl p-6 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 pb-safe">
+    <div id="lendAgainModal" class="hidden modal-overlay">
+        <div class="modal-container">
             <h3 id="lendAgainTitle" class="text-xl md:text-2xl font-black text-gray-900 mb-3">Prêt terminé ! 🥳</h3>
             <p id="lendAgainQuestionText" class="text-gray-600 font-medium mb-6 leading-relaxed text-sm md:text-base">Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?</p>
             <div class="flex gap-4">
@@ -271,9 +319,9 @@
         </div>
     </div>
 
-    <div id="modal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[100]">
+    <div id="modal" class="hidden modal-overlay">
         <!-- Add Item Modal Content -->
-        <div class="bg-white rounded-t-3xl md:rounded-2xl p-5 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-emerald-50 pb-safe">
+        <div class="modal-container">
             <div class="flex justify-between items-start mb-5">
                 <div>
                     <h3 class="text-xl md:text-3xl font-extrabold text-gray-900 tracking-tight heading-font">Nouvelle annonce</h3>
@@ -348,8 +396,8 @@
         </div>
     </div>
 
-    <div id="proposeLoanModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[100]">
-        <div class="bg-white rounded-t-3xl md:rounded-2xl p-5 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-emerald-50">
+    <div id="proposeLoanModal" class="hidden modal-overlay">
+        <div class="modal-container">
             <div class="flex justify-between items-start mb-5">
                 <div>
                     <h3 class="text-xl md:text-3xl font-extrabold text-gray-900 tracking-tight heading-font">Proposer un objet</h3>
@@ -392,8 +440,8 @@
         </div>
     </div>
 
-    <div id="reviewModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[110]">
-        <div class="bg-white rounded-t-3xl md:rounded-2xl p-5 md:p-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 pb-safe">
+    <div id="reviewModal" class="hidden modal-overlay">
+        <div class="modal-container">
             <h3 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Notez votre expérience ! ⭐</h3>
             <p id="reviewTargetName" class="text-gray-500 font-medium mb-4 text-xs md:text-sm">Comment s'est passé l'échange avec cet utilisateur ?</p>
             
