@@ -5,7 +5,8 @@
  */
 
 export const API = '/api';
-export const WS_URL = `/ws`;
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+export const WS_URL = `${wsProtocol}//${window.location.host}/ws`;
 
 /**
  * Raccourci pour document.getElementById.

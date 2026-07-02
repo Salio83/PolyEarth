@@ -579,134 +579,139 @@ document.addEventListener('click', e => {
 // =============================================================================
 
 /**
- * Initialise la connexion WebSocket pour les notifications en temps réel.
+ * Initialise la connexion WebSocket.
  */
 function initWS() {
   if (!isLoggedIn()) return;
-  const u = getUser();
-  if (socket) socket.close();
-  
-  socket = new WebSocket(`${WS_URL}/${u.id}?token=${localStorage.getItem('token')}`);
-  
-  socket.onmessage = async e => {
-    const m = JSON.parse(e.data);
-    const types = ['NEW_MESSAGE', 'LOAN_ACCEPTED', 'LOAN_REJECTED', 'LOAN_REQUEST', 'DISCUSSION_ENDED'];
+  try {
+    const u = getUser();
+    if (!u || !u.id) return;
+    if (socket) socket.close();
     
-    if (types.includes(m.type)) {
-      updateUnreadBadge();
-      if (location.pathname === '/messages') loadMessages();
+    socket = new WebSocket(`${WS_URL}/${u.id}?token=${localStorage.getItem('token')}`);
+    
+    socket.onmessage = async e => {
+      const m = JSON.parse(e.data);
+      const types = ['NEW_MESSAGE', 'LOAN_ACCEPTED', 'LOAN_REJECTED', 'LOAN_REQUEST', 'DISCUSSION_ENDED'];
       
-      // Notifications par type d'événement
-      if (m.type === 'NEW_MESSAGE') notify(`Nouveau message de ${m.data.sender_name || 'un utilisateur'}`);
-      if (m.type === 'LOAN_ACCEPTED') notify('Prêt accepté !');
-      if (m.type === 'LOAN_REJECTED') notify('Prêt refusé.', 'error');
-      if (m.type === 'LOAN_REQUEST') notify('Nouvelle demande de prêt !');
-      
-      // Cas particulier : fin de discussion (prêt terminé)
-      if (m.type === 'DISCUSSION_ENDED') {
-        const u = getUser();
-        const itemRes = await fetch(`${API}/items/${m.data.item_id}`);
-        const item = await itemRes.json().catch(() => ({}));
-
-        // Masquer la discussion localement pour cet utilisateur
-        await fetch(`${API}/messages/end-discussion`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            item_id: m.data.item_id, 
-            user_id: u.id 
-          })
-        });
-
-        // Préparation de la fenêtre de notation si un prêt était lié
-        if (m.data.loan_id && m.data.other_id) {
-           currentTransactionId = m.data.loan_id;
-           currentRevieweeId = m.data.other_id;
-           currentItemId = m.data.item_id;
-           currentRating = 0;
-           $('reviewComment').value = '';
-           document.querySelectorAll('.star-btn').forEach(btn => btn.classList.add('grayscale'));
-           
-           const txsRes = await fetch(`${API}/loans/user/${u.id}`);
-           const txs = await txsRes.json();
-           const tx = txs.find(t => t.id === m.data.loan_id);
-           const otherName = tx ? (tx.owner_id === u.id ? tx.borrower_name : tx.owner_name) : 'cet utilisateur';
-           $('reviewTargetName').textContent = `Comment s'est passé l'échange avec ${otherName} ?`;
-
-           // Si l'utilisateur actuel est le propriétaire, proposer de remettre en ligne ou de republier la demande
-           if (item.owner_id === u.id) {
-              $('reLendOption').classList.remove('hidden');
-              const questionEl = $('reLendQuestionText');
-              const yesBtn = $('reLendYes');
-              const noBtn = $('reLendNo');
-              
-              if (item.type === 'demand') {
-                if (questionEl) questionEl.textContent = "Souhaitez-vous republier votre demande ?";
-                if (yesBtn) yesBtn.textContent = "OUI, rechercher";
-                if (noBtn) noBtn.textContent = "NON, trouvé";
-              } else {
-                if (questionEl) questionEl.textContent = "Souhaitez-vous remettre cet objet en ligne ?";
-                if (yesBtn) yesBtn.textContent = "OUI, disponible";
-                if (noBtn) noBtn.textContent = "NON, fini";
-              }
-              
-              currentReLendChoice = true;
-              $('reLendYes').onclick = () => { 
-                 currentReLendChoice = true;
-                 $('reLendYes').classList.add('bg-emerald-50', 'border-emerald-600');
-                 $('reLendNo').classList.remove('bg-gray-50', 'border-gray-300');
-              };
-              $('reLendNo').onclick = () => { 
-                 currentReLendChoice = false;
-                 $('reLendNo').classList.add('bg-gray-50', 'border-gray-300');
-                 $('reLendYes').classList.remove('bg-emerald-50', 'border-emerald-600');
-              };
-              $('reLendYes').classList.add('bg-emerald-50', 'border-emerald-600');
-              $('reLendNo').classList.remove('bg-gray-50', 'border-gray-300');
-           } else {
-              $('reLendOption').classList.add('hidden');
-           }
-           showModal('reviewModal');
-        } else if (item.owner_id === u.id) {
-           // Autre cas de fin sans transaction directe (ex: annulation)
-           const modal = $('lendAgainModal');
-           if (modal) {
-             const titleEl = $('lendAgainTitle');
-             const questionEl = $('lendAgainQuestionText');
-             const yesBtn = $('reLendYesBtn');
-             const noBtn = $('reLendNoBtn');
+      if (types.includes(m.type)) {
+        updateUnreadBadge();
+        if (location.pathname === '/messages') loadMessages();
+        
+        // Notifications par type d'événement
+        if (m.type === 'NEW_MESSAGE') notify(`Nouveau message de ${m.data.sender_name || 'un utilisateur'}`);
+        if (m.type === 'LOAN_ACCEPTED') notify('Prêt accepté !');
+        if (m.type === 'LOAN_REJECTED') notify('Prêt refusé.', 'error');
+        if (m.type === 'LOAN_REQUEST') notify('Nouvelle demande de prêt !');
+        
+        // Cas particulier : fin de discussion (prêt terminé)
+        if (m.type === 'DISCUSSION_ENDED') {
+          const u = getUser();
+          const itemRes = await fetch(`${API}/items/${m.data.item_id}`);
+          const item = await itemRes.json().catch(() => ({}));
+  
+          // Masquer la discussion localement pour cet utilisateur
+          await fetch(`${API}/messages/end-discussion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              item_id: m.data.item_id, 
+              user_id: u.id 
+            })
+          });
+  
+          // Préparation de la fenêtre de notation si un prêt était lié
+          if (m.data.loan_id && m.data.other_id) {
+             currentTransactionId = m.data.loan_id;
+             currentRevieweeId = m.data.other_id;
+             currentItemId = m.data.item_id;
+             currentRating = 0;
+             $('reviewComment').value = '';
+             document.querySelectorAll('.star-btn').forEach(btn => btn.classList.add('grayscale'));
              
-             if (item.type === 'demand') {
-               if (titleEl) titleEl.textContent = "Demande clôturée !";
-               if (questionEl) questionEl.textContent = "Souhaitez-vous republier votre demande pour que d'autres étudiants puissent la voir ?";
-               if (yesBtn) yesBtn.textContent = "Oui, rechercher";
-               if (noBtn) noBtn.textContent = "Non, c'est bon";
+             const txsRes = await fetch(`${API}/loans/user/${u.id}`);
+             const txs = await txsRes.json();
+             const tx = txs.find(t => t.id === m.data.loan_id);
+             const otherName = tx ? (tx.owner_id === u.id ? tx.borrower_name : tx.owner_name) : 'cet utilisateur';
+             $('reviewTargetName').textContent = `Comment s'est passé l'échange avec ${otherName} ?`;
+   
+             // Si l'utilisateur actuel est le propriétaire, proposer de remettre en ligne ou de republier la demande
+             if (item.owner_id === u.id) {
+                $('reLendOption').classList.remove('hidden');
+                const questionEl = $('reLendQuestionText');
+                const yesBtn = $('reLendYes');
+                const noBtn = $('reLendNo');
+                
+                if (item.type === 'demand') {
+                  if (questionEl) questionEl.textContent = "Souhaitez-vous republier votre demande ?";
+                  if (yesBtn) yesBtn.textContent = "OUI, rechercher";
+                  if (noBtn) noBtn.textContent = "NON, trouvé";
+                } else {
+                  if (questionEl) questionEl.textContent = "Souhaitez-vous remettre cet objet en ligne ?";
+                  if (yesBtn) yesBtn.textContent = "OUI, disponible";
+                  if (noBtn) noBtn.textContent = "NON, fini";
+                }
+                
+                currentReLendChoice = true;
+                $('reLendYes').onclick = () => { 
+                   currentReLendChoice = true;
+                   $('reLendYes').classList.add('bg-emerald-50', 'border-emerald-600');
+                   $('reLendNo').classList.remove('bg-gray-50', 'border-gray-300');
+                };
+                $('reLendNo').onclick = () => { 
+                   currentReLendChoice = false;
+                   $('reLendNo').classList.add('bg-gray-50', 'border-gray-300');
+                   $('reLendYes').classList.remove('bg-emerald-50', 'border-emerald-600');
+                };
+                $('reLendYes').classList.add('bg-emerald-50', 'border-emerald-600');
+                $('reLendNo').classList.remove('bg-gray-50', 'border-gray-300');
              } else {
-               if (titleEl) titleEl.textContent = "Prêt terminé ! 🥳";
-               if (questionEl) questionEl.textContent = "Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?";
-               if (yesBtn) yesBtn.textContent = "Oui, avec plaisir";
-               if (noBtn) noBtn.textContent = "Non, c'est fini";
+                $('reLendOption').classList.add('hidden');
              }
-             
-             modal.classList.remove('hidden');
-             $('reLendYesBtn').onclick = () => { modal.classList.add('hidden'); window.reLendItem(m.data.item_id, true); };
-             $('reLendNoBtn').onclick = () => { modal.classList.add('hidden'); window.reLendItem(m.data.item_id, false); };
-           }
-        }
-
-        notify('Prêt terminé - Discussion fermée.');
-        const [itemId] = activeConv?.split('_') || [];
-        if (Number(itemId) === m.data.item_id) {
-           activeConv = null;
-           localStorage.removeItem('activeConv');
-           handleRoute(); // Rafraîchissement de la vue
+             showModal('reviewModal');
+          } else if (item.owner_id === u.id) {
+             // Autre cas de fin sans transaction directe (ex: annulation)
+             const modal = $('lendAgainModal');
+             if (modal) {
+               const titleEl = $('lendAgainTitle');
+               const questionEl = $('lendAgainQuestionText');
+               const yesBtn = $('reLendYesBtn');
+               const noBtn = $('reLendNoBtn');
+               
+               if (item.type === 'demand') {
+                 if (titleEl) titleEl.textContent = "Demande clôturée !";
+                 if (questionEl) questionEl.textContent = "Souhaitez-vous republier votre demande pour que d'autres étudiants puissent la voir ?";
+                 if (yesBtn) yesBtn.textContent = "Oui, rechercher";
+                 if (noBtn) noBtn.textContent = "Non, c'est bon";
+               } else {
+                 if (titleEl) titleEl.textContent = "Prêt terminé ! 🥳";
+                 if (questionEl) questionEl.textContent = "Souhaitez-vous remettre cet objet en ligne pour que d'autres étudiants puissent en profiter ?";
+                 if (yesBtn) yesBtn.textContent = "Oui, avec plaisir";
+                 if (noBtn) noBtn.textContent = "Non, c'est fini";
+               }
+               
+               modal.classList.remove('hidden');
+               $('reLendYesBtn').onclick = () => { modal.classList.add('hidden'); window.reLendItem(m.data.item_id, true); };
+               $('reLendNoBtn').onclick = () => { modal.classList.add('hidden'); window.reLendItem(m.data.item_id, false); };
+             }
+          }
+  
+          notify('Prêt terminé - Discussion fermée.');
+          const [itemId] = activeConv?.split('_') || [];
+          if (Number(itemId) === m.data.item_id) {
+             activeConv = null;
+             localStorage.removeItem('activeConv');
+             handleRoute(); // Rafraîchissement de la vue
+          }
         }
       }
-    }
-  };
-  
-  // Reconnexion automatique en cas de fermeture
-  socket.onclose = () => setTimeout(initWS, 5000);
+    };
+    
+    // Reconnexion automatique en cas de fermeture
+    socket.onclose = () => setTimeout(initWS, 5000);
+  } catch (err) {
+    console.error("Erreur de connexion WebSocket:", err);
+  }
 }
 
 // =============================================================================
