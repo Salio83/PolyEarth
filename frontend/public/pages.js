@@ -68,7 +68,7 @@ export const homePage = () => {
         <div class="grid grid-cols-2 gap-3 md:gap-6">
             <div onclick="navigate('/offres')" class="bg-pastel-green p-3 md:p-8 rounded-2xl md:rounded-3xl border border-duck/5 flex items-center justify-between gap-2 group hover:scale-[1.02] transition-transform cursor-pointer overflow-hidden">
                 <div class="min-w-0 flex-1">
-                    <p class="text-duck font-bold uppercase tracking-wide text-[7px] md:text-[10px] mb-0.5 leading-tight">Objets<br class="md:hidden">dispo.</p>
+                    <p class="text-duck font-bold uppercase tracking-wide text-[7px] md:text-[10px] mb-0.5 leading-tight">Objets <br class="md:hidden">dispo.</p>
                     <h3 id="statsAvailable" class="text-2xl md:text-4xl font-black text-duck">...</h3>
                 </div>
                 <div class="w-8 h-8 md:w-14 md:h-14 bg-white rounded-lg md:rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform flex-shrink-0">
@@ -77,7 +77,7 @@ export const homePage = () => {
             </div>
             <div onclick="navigate('/prets')" class="bg-pastel-green p-3 md:p-8 rounded-2xl md:rounded-3xl border border-duck/5 flex items-center justify-between gap-2 group hover:scale-[1.02] transition-transform cursor-pointer overflow-hidden">
                 <div class="min-w-0 flex-1">
-                    <p class="text-duck font-bold uppercase tracking-wide text-[7px] md:text-[10px] mb-0.5 leading-tight">Prêts<br class="md:hidden">en cours</p>
+                    <p class="text-duck font-bold uppercase tracking-wide text-[7px] md:text-[10px] mb-0.5 leading-tight">Prêts <br class="md:hidden">en cours</p>
                     <h3 id="statsOngoing" class="text-2xl md:text-4xl font-black text-duck">...</h3>
                 </div>
                 <div class="w-8 h-8 md:w-14 md:h-14 bg-white rounded-lg md:rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform flex-shrink-0">
@@ -580,7 +580,7 @@ export const itemCard = (i) => `
         <div class="bg-pastel-green p-3 md:p-5 rounded-2xl md:rounded-3xl border border-duck/5 transition-transform group-hover:scale-[1.01]">
             <div class="flex justify-between items-start mb-2">
                 <h4 class="font-bold text-gray-900 text-sm md:text-lg group-hover:text-duck transition-colors truncate">${i.name}</h4>
-                <span class="text-duck font-black text-xs mt-0.5">Gratuit</span>
+                <span class="text-duck font-black text-xs mt-0.5">Disponible</span>
             </div>
             <div class="flex items-center gap-2" onclick="event.stopPropagation();navigate('/profile/${i.owner_id}')">
                 <div class="w-6 h-6 rounded-full bg-white flex items-center justify-center overflow-hidden border border-duck/10">
@@ -617,7 +617,7 @@ export const itemDetail = (i, isOwner, isAdmin) => {
                 <div>
                     <div class="flex gap-2 mb-4">${catBadge(i.category)} ${qBadge(i.quality)}</div>
                     <h2 class="text-5xl font-black text-gray-900 mb-2 tracking-tight">${i.name}</h2>
-                    <div class="text-duck font-black text-xl tracking-widest uppercase">${i.type === 'offer' ? 'Prêt Gratuit' : 'Recherche de Prêt'}</div>
+                    <div class="text-duck font-black text-xl tracking-widest uppercase">${i.type === 'offer' ? 'Prêt Disponible' : 'Recherche de Prêt'}</div>
                 </div>
                 <div class="p-8 bg-white rounded-2xl border border-gray-100 space-y-4 shadow-sm">
                     <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Description</h3>
@@ -657,14 +657,26 @@ export const itemDetail = (i, isOwner, isAdmin) => {
  * @returns {string} HTML de la page.
  */
 export const loginPage = () => `
-    <div class="max-w-md mx-auto bg-white p-10 rounded-xl shadow-sm border border-gray-100 mt-10">
-        <h2 class="text-3xl font-black mb-10 text-center text-gray-900 tracking-tight">Bonjour ! 🌱</h2>
+    <div class="max-w-md mx-auto bg-white p-8 md:p-10 rounded-3xl shadow-xl shadow-emerald-100/50 border border-emerald-50 mt-10">
+        <div class="w-16 h-16 bg-emerald-50 text-duck rounded-2xl flex items-center justify-center mb-6 mx-auto">
+            <i data-lucide="sprout" class="w-9 h-9"></i>
+        </div>
+        <h2 class="text-3xl font-black mb-8 text-center text-gray-900 tracking-tight heading-font">Bonjour !</h2>
         <form onsubmit="doLogin(event)" class="space-y-6">
-            <input id="email" type="email" placeholder="Adresse e-mail" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
-            <input id="password" type="password" placeholder="Mot de passe" class="w-full p-4 bg-gray-50 border-none rounded-lg outline-none font-bold" required>
-            <button type="submit" class="w-full bg-duck text-white py-4 rounded-lg font-black shadow-lg shadow-duck/10 hover:bg-duck-dark transition-all">Se connecter</button>
+            <div class="relative">
+                <input id="email" type="email" placeholder="Adresse e-mail" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-100 focus:bg-white focus:border-duck focus:ring-2 focus:ring-duck/10 rounded-xl outline-none font-semibold text-gray-700 transition-all" required>
+                <i data-lucide="mail" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <div class="relative">
+                <input id="password" type="password" placeholder="Mot de passe" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-100 focus:bg-white focus:border-duck focus:ring-2 focus:ring-duck/10 rounded-xl outline-none font-semibold text-gray-700 transition-all" required>
+                <i data-lucide="lock" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <button type="submit" class="w-full bg-duck text-white py-3.5 rounded-xl font-bold shadow-lg shadow-duck/20 hover:bg-duck-dark transition-all flex items-center justify-center gap-2">
+                <span>Se connecter</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
         </form>
-        <div class="mt-8 text-center">
+        <div class="mt-8 text-center border-t border-gray-100 pt-6">
             <p class="text-sm text-gray-400 font-medium mb-2">Pas encore de compte ?</p>
             <button onclick="navigate('/register')" class="text-duck font-black text-sm hover:underline transition-all">Créer un compte</button>
         </div>
@@ -692,49 +704,57 @@ export const registerPage = () => `
 
       <!-- Étape 1 : Compte -->
       <div id="wStep1" class="wizard-step p-8 md:p-10">
-        <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🌱</div>
+        <div class="w-14 h-14 bg-emerald-50 text-duck rounded-2xl flex items-center justify-center mb-6">
+            <i data-lucide="user-plus" class="w-7 h-7"></i>
+        </div>
         <h2 class="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight heading-font">Créer mon compte</h2>
         <p class="text-sm text-gray-400 font-medium mb-8">Rejoins la communauté PolyEarth !</p>
         <form onsubmit="wizardNext(event)" class="space-y-4">
           <div>
-            <input id="regName" oninput="validateRegName(this)" placeholder="Prénom et Nom" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700" required>
+            <input id="regName" oninput="validateRegName(this)" placeholder="Prénom et Nom" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-all font-medium text-gray-700 text-sm" required>
             <p id="regNameFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
           </div>
           <div>
-            <input id="regEmail" type="email" oninput="validateRegEmail(this)" placeholder="Adresse e-mail" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700" required>
+            <input id="regEmail" type="email" oninput="validateRegEmail(this)" placeholder="Adresse e-mail" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-all font-medium text-gray-700 text-sm" required>
             <p id="regEmailFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
           </div>
           <div>
-            <input id="regPassword" type="password" oninput="validateRegPassword(this)" placeholder="Mot de passe (8 car. min.)" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700" required minlength="8">
+            <input id="regPassword" type="password" oninput="validateRegPassword(this)" placeholder="Mot de passe (8 car. min.)" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-all font-medium text-gray-700 text-sm" required minlength="8">
             <p id="regPasswordFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
           </div>
           <div>
             <div class="flex gap-2">
-              <select id="regPhonePrefix" onchange="validateRegPhone(document.getElementById('regPhone'))" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 cursor-pointer text-sm">
-                <option value="+33" selected>🇫🇷 +33</option>
-                <option value="+32">🇧🇪 +32</option>
-                <option value="+41">🇨🇭 +41</option>
-                <option value="+1">🇨🇦 +1</option>
-                <option value="+34">🇪🇸 +34</option>
-                <option value="+39">🇮🇹 +39</option>
-                <option value="+44">🇬🇧 +44</option>
-                <option value="+49">🇩🇪 +49</option>
-                <option value="+212">🇲🇦 +212</option>
-                <option value="+213">🇩🇿 +213</option>
-                <option value="+216">🇹🇳 +216</option>
-                <option value="+221">🇸🇳 +221</option>
+              <select id="regPhonePrefix" onchange="validateRegPhone(document.getElementById('regPhone'))" class="border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-all font-semibold text-gray-700 cursor-pointer text-sm">
+                <option value="+33" selected>FR +33</option>
+                <option value="+32">BE +32</option>
+                <option value="+41">CH +41</option>
+                <option value="+1">CA +1</option>
+                <option value="+34">ES +34</option>
+                <option value="+39">IT +39</option>
+                <option value="+44">GB +44</option>
+                <option value="+49">DE +49</option>
+                <option value="+212">MA +212</option>
+                <option value="+213">DZ +213</option>
+                <option value="+216">TN +216</option>
+                <option value="+221">SN +221</option>
               </select>
               <div class="relative flex-1">
-                <input id="regPhone" type="tel" oninput="validateRegPhone(this)" placeholder="ex: 06 12 34 56 78" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 pr-10" required>
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-base">📱</span>
+                <input id="regPhone" type="tel" oninput="validateRegPhone(this)" placeholder="ex: 06 12 34 56 78" class="w-full border border-gray-200 rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-all font-medium text-gray-700 text-sm" required>
+                <i data-lucide="smartphone" class="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
               </div>
             </div>
             <p id="regPhoneFeedback" class="text-xs font-semibold mt-1 px-1 hidden"></p>
           </div>
-          <p class="text-xs text-gray-400 font-medium -mt-1 px-1">🔒 Ton numéro est confidentiel — jamais visible par les autres utilisateurs.</p>
-          <button type="submit" id="wNextBtn1" disabled class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all mt-2 opacity-50 shadow-lg shadow-emerald-600/10">Commencer ➜</button>
+          <p class="text-xs text-gray-400 font-medium -mt-1 px-1 flex items-center gap-1">
+            <i data-lucide="lock" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0"></i>
+            <span>Ton numéro est confidentiel — jamais visible par les autres utilisateurs.</span>
+          </p>
+          <button type="submit" id="wNextBtn1" disabled class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 active:scale-95 transition-all mt-4 opacity-50 shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2 text-sm">
+            <span>Commencer</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
         </form>
-        <div class="mt-6 text-center">
+        <div class="mt-6 text-center border-t border-gray-100 pt-6">
           <button onclick="navigate('/login')" class="text-xs text-gray-400 font-bold hover:text-emerald-600 transition-colors">Déjà un compte ? Se connecter</button>
         </div>
       </div>
@@ -742,63 +762,104 @@ export const registerPage = () => `
       <!-- Étape 2 : Catégories -->
       <div id="wStep2" class="wizard-step hidden p-8 md:p-10">
         <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
-        <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl mb-6">📦</div>
+        <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-6">
+            <i data-lucide="package" class="w-7 h-7"></i>
+        </div>
         <h2 class="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight heading-font">Tes objets</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Dans quels domaines as-tu des objets peu utilisés ? <span class="text-emerald-600 font-black">(Choix multiples)</span></p>
         <div class="grid grid-cols-2 gap-3 mb-8">
-          ${[['🛠️','Bricolage'],['📚','Livres / Études'],['⚽','Sport & Loisirs'],['🎮','Jeux / Électro'],['🍳','Cuisine'],['🧳','Voyage'],['🎸','Musique'],['🪴','Maison / Déco']].map(([icon, label]) => `
+          ${[
+            ['wrench', 'Bricolage'],
+            ['book-open', 'Livres / Études'],
+            ['trophy', 'Sport & Loisirs'],
+            ['gamepad-2', 'Jeux / Électro'],
+            ['utensils', 'Cuisine'],
+            ['compass', 'Voyage'],
+            ['music', 'Musique'],
+            ['palette', 'Maison / Déco']
+          ].map(([icon, label]) => `
           <button type="button" onclick="wizardToggle(this)" data-val="${label}"
             class="wizard-choice flex items-center gap-3 p-3.5 rounded-xl border-2 border-gray-100 text-left font-bold text-sm text-gray-700 hover:border-emerald-300 hover:bg-emerald-50 transition-all">
-            <span class="text-xl">${icon}</span><span>${label}</span>
+            <i data-lucide="${icon}" class="w-5 h-5 text-gray-400 flex-shrink-0"></i>
+            <span>${label}</span>
           </button>`).join('')}
         </div>
-        <button onclick="wizardNext()" id="wNextBtn2" disabled class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10">Continuer ➜</button>
+        <button onclick="wizardNext()" id="wNextBtn2" disabled class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2 text-sm">
+            <span>Continuer</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
       </div>
 
       <!-- Étape 3 : Fréquence -->
       <div id="wStep3" class="wizard-step hidden p-8 md:p-10">
         <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
-        <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🤔</div>
+        <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+            <i data-lucide="help-circle" class="w-7 h-7"></i>
+        </div>
         <h2 class="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight heading-font">Combien d'objets ?</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Parmi tes affaires, combien n'ont <span class="text-blue-600 font-black">pas été utilisés depuis 3 mois</span> ou plus ?</p>
         <div class="space-y-3 mb-8">
-          ${[['0','Aucun... je suis minimaliste 😅'],['1-3','1 à 3 objets 🤔'],['4-10','4 à 10 objets 📦'],['10+','Plus de 10, j\'ai de la place à libérer ! 🏠']].map(([val, label]) => `
+          ${[
+            ['0', 'Aucun... je suis minimaliste'],
+            ['1-3', '1 à 3 objets'],
+            ['4-10', '4 à 10 objets'],
+            ['10+', 'Plus de 10, j\'ai de la place à libérer !']
+          ].map(([val, label]) => `
           <button type="button" onclick="wizardSingle(this,'freq')" data-val="${val}"
             class="wizard-single w-full p-4 rounded-xl border-2 border-gray-100 text-left font-bold text-sm text-gray-700 hover:border-blue-300 hover:bg-blue-50 transition-all">
             ${label}
           </button>`).join('')}
         </div>
-        <button onclick="wizardNext()" id="wNextBtn3" disabled class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10">Continuer ➜</button>
+        <button onclick="wizardNext()" id="wNextBtn3" disabled class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2 text-sm">
+            <span>Continuer</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
       </div>
 
       <!-- Étape 4 : Motivation -->
       <div id="wStep4" class="wizard-step hidden p-8 md:p-10">
         <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
-        <div class="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center text-2xl mb-6">💡</div>
+        <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6">
+            <i data-lucide="lightbulb" class="w-7 h-7"></i>
+        </div>
         <h2 class="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight heading-font">Ta motivation</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Qu'est-ce qui t'<span class="text-purple-600 font-black">encouragerait le plus</span> à prêter un objet ?</p>
         <div class="space-y-3 mb-8">
-          ${[['service','🤝 Rendre service à un camarade'],['place','📦 Libérer de la place chez moi'],['rep','⭐ Construire ma réputation sur PolyEarth'],['all','✨ Un peu de tout ça !']].map(([val, label]) => `
+          ${[
+            ['service', 'Rendre service à un camarade'],
+            ['place', 'Libérer de la place chez moi'],
+            ['rep', 'Construire ma réputation sur PolyEarth'],
+            ['all', 'Un peu de tout ça !']
+          ].map(([val, label]) => `
           <button type="button" onclick="wizardSingle(this,'motiv')" data-val="${val}"
             class="wizard-single w-full p-4 rounded-xl border-2 border-gray-100 text-left font-bold text-sm text-gray-700 hover:border-purple-300 hover:bg-purple-50 transition-all">
             ${label}
           </button>`).join('')}
         </div>
-        <button onclick="wizardNext()" id="wNextBtn4" disabled class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10">Continuer ➜</button>
+        <button onclick="wizardNext()" id="wNextBtn4" disabled class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2 text-sm">
+            <span>Continuer</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
       </div>
 
       <!-- Étape 5 : Premier objet -->
       <div id="wStep5" class="wizard-step hidden p-8 md:p-10">
         <button type="button" onclick="wizardPrev()" class="text-xs font-bold text-gray-400 hover:text-emerald-600 flex items-center gap-1 mb-4 select-none">&larr; Retour</button>
-        <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-2xl mb-6">🚀</div>
+        <div class="w-14 h-14 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center mb-6">
+            <i data-lucide="rocket" class="w-7 h-7"></i>
+        </div>
         <h2 class="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight heading-font">Ton premier objet</h2>
         <p class="text-sm text-gray-400 font-medium mb-6">Quel objet pourrais-tu proposer <span class="text-orange-500 font-black">dès maintenant</span> à tes camarades ?</p>
         <input id="firstItemName" type="text" placeholder="Ex: perceuse Bosch, livre de Maths S3..." oninput="wizardInputCheck(this)"
-          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-gray-700 mb-4">
-        <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-8 text-sm text-orange-700 font-medium">
-          ✨ Tu pourras publier cette annonce en un clic dès la création de ton compte !
+          class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-all font-medium text-gray-700 mb-4 text-sm">
+        <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-8 text-sm text-orange-700 font-medium flex items-start gap-2">
+          <i data-lucide="info" class="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5"></i>
+          <span>Tu pourras publier cette annonce en un clic dès la création de ton compte !</span>
         </div>
-        <button onclick="wizardNext()" id="wNextBtn5" disabled class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10">Presque fini ➜</button>
+        <button onclick="wizardNext()" id="wNextBtn5" disabled class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 active:scale-95 transition-all opacity-50 shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2 text-sm">
+            <span>Presque fini</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
       </div>
 
       <!-- Étape 6 : Score & création -->
@@ -825,10 +886,11 @@ export const registerPage = () => `
           <p id="scoreDetail2" class="text-sm font-bold text-emerald-700"></p>
         </div>
         <button onclick="doRegisterWizard()" id="wFinalBtn"
-          class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 active:scale-95 transition-all shadow-lg shadow-emerald-600/10">
-          Créer mon compte 🌱
+          class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 active:scale-95 transition-all shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2">
+          <span>Créer mon compte</span>
+          <i data-lucide="check" class="w-5 h-5"></i>
         </button>
-        <p class="text-xs text-gray-300 font-medium mt-4">En créant un compte tu acceptes les conditions d'utilisation.</p>
+        <p class="text-xs text-gray-400 font-medium mt-4">En créant un compte tu acceptes les conditions d'utilisation.</p>
       </div>
 
     </div>

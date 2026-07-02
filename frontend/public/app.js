@@ -304,7 +304,10 @@ const routes = {
   '/prets': () => { if (!guard()) return; content.innerHTML = pretsPage(); loadLoans(); hdr(); },
   '/profil': () => { if (!guard()) return; renderMyProfile(); },
   '/profile/:id': (id) => { if (!guard()) return; renderProfile(id); hdr(); },
-  '/login': () => { content.innerHTML = loginPage(); },
+  '/login': () => { 
+    content.innerHTML = loginPage(); 
+    if (window.lucide) lucide.createIcons();
+  },
   '/register': () => {
     _wizardStep = 1;
     _wizardData.categories = [];
@@ -313,6 +316,7 @@ const routes = {
     _wizardData.firstItem = '';
     _regFieldsValid = { name: false, email: false, password: false, phone: false };
     content.innerHTML = registerPage();
+    if (window.lucide) lucide.createIcons();
   },
   '/association': () => { if (!guard()) return; content.innerHTML = associationPage(); hdr(); },
   '/admin': () => { if (!guard() || !getUser().is_admin) { navigate('/'); return; } content.innerHTML = adminPage(); loadAdminData(); hdr(); },
