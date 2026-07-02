@@ -68,7 +68,7 @@ export const homePage = () => {
         <div class="grid grid-cols-2 gap-3 md:gap-6">
             <div onclick="navigate('/offres')" class="bg-pastel-green p-3 md:p-8 rounded-2xl md:rounded-3xl border border-duck/5 flex items-center justify-between gap-2 group hover:scale-[1.02] transition-transform cursor-pointer overflow-hidden">
                 <div class="min-w-0 flex-1">
-                    <p class="text-duck font-bold uppercase tracking-wide text-[7px] md:text-[10px] mb-0.5 leading-tight">Objets<br class="md:hidden">dispo.</p>
+                    <p class="text-duck font-bold uppercase tracking-wide text-[7px] md:text-[10px] mb-0.5 leading-tight">Objets <br class="md:hidden">dispo.</p>
                     <h3 id="statsAvailable" class="text-2xl md:text-4xl font-black text-duck">...</h3>
                 </div>
                 <div class="w-8 h-8 md:w-14 md:h-14 bg-white rounded-lg md:rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform flex-shrink-0">
@@ -77,7 +77,7 @@ export const homePage = () => {
             </div>
             <div onclick="navigate('/prets')" class="bg-pastel-green p-3 md:p-8 rounded-2xl md:rounded-3xl border border-duck/5 flex items-center justify-between gap-2 group hover:scale-[1.02] transition-transform cursor-pointer overflow-hidden">
                 <div class="min-w-0 flex-1">
-                    <p class="text-duck font-bold uppercase tracking-wide text-[7px] md:text-[10px] mb-0.5 leading-tight">Prêts<br class="md:hidden">en cours</p>
+                    <p class="text-duck font-bold uppercase tracking-wide text-[7px] md:text-[10px] mb-0.5 leading-tight">Prêts <br class="md:hidden">en cours</p>
                     <h3 id="statsOngoing" class="text-2xl md:text-4xl font-black text-duck">...</h3>
                 </div>
                 <div class="w-8 h-8 md:w-14 md:h-14 bg-white rounded-lg md:rounded-2xl flex items-center justify-center text-duck shadow-sm group-hover:rotate-12 transition-transform flex-shrink-0">
