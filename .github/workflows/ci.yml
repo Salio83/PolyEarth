@@ -58,10 +58,16 @@ jobs:
             # Accéder au dossier de l'application sur le serveur
             cd ~/PolyEarth || { echo "❌ Dossier ~/PolyEarth introuvable sur le serveur"; exit 1; }
             
+            # Sauvegarder les modifications locales temporaires pour éviter les blocages de pull/checkout
+            git stash
+            
             # Récupérer les branches et forcer le passage sur la bonne branche qui a déclenché le workflow
             git fetch origin
             git checkout "$BRANCH_NAME" || git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
             git pull origin "$BRANCH_NAME"
+            
+            # Réappliquer les modifications locales si possible
+            git stash pop || true
             
             # Relancer les conteneurs avec build automatique
             docker compose down
