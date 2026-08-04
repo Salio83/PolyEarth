@@ -196,12 +196,32 @@
             border-bottom-right-radius: 0px !important;
             padding: 1.25rem !important;
         }
-        @media (min-width: 768px) {
-            .modal-container {
-                max-width: 32rem !important;
-                border-radius: 1rem !important;
-                padding: 2.5rem !important;
             }
+        }
+        
+        /* Style du footer global */
+        .site-footer {
+            width: 100% !important;
+            background-color: #ffffff !important;
+            border-top: 1px solid #f3f4f6 !important;
+            padding-top: 1.5rem !important;
+            padding-bottom: 7rem !important;
+            text-align: center !important;
+            font-size: 0.75rem !important;
+            color: #9ca3af !important;
+            font-weight: 700 !important;
+            margin-top: 3rem !important;
+        }
+        @media (min-width: 768px) {
+            .site-footer {
+                padding-bottom: 1.5rem !important;
+            }
+        }
+        .site-footer a {
+            transition: color 0.2s ease-in-out !important;
+        }
+        .site-footer a:hover {
+            color: #00635d !important;
         }
     </style>
 </head>
@@ -241,6 +261,18 @@
     <div id="content" class="container mx-auto py-6 px-4 pb-24">
         <!-- Content injected by app.js -->
     </div>
+
+    <!-- Global Footer -->
+    <footer class="site-footer">
+        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p>© 2026 PolyEarth. </p>
+            <div class="flex items-center justify-center gap-3">
+                <a href="/cgu" onclick="event.preventDefault(); navigate('/cgu')" class="hover:text-duck transition-colors font-bold">CGU</a>
+                <span class="text-gray-300">•</span>
+                <a href="/mentions-legales" onclick="event.preventDefault(); navigate('/mentions-legales')" class="hover:text-duck transition-colors font-bold">Mentions Légales</a>
+            </div>
+        </div>
+    </footer>
 
     <!-- Mobile Bottom Navigation (visible on scroll, hidden on desktop) -->
     <nav id="mobileNav">

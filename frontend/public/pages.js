@@ -890,7 +890,7 @@ export const registerPage = () => `
           <span>Créer mon compte</span>
           <i data-lucide="check" class="w-5 h-5"></i>
         </button>
-        <p class="text-xs text-gray-400 font-medium mt-4">En créant un compte tu acceptes les conditions d'utilisation.</p>
+        <p class="text-xs text-gray-400 font-medium mt-4">En créant un compte tu acceptes les <a href="/cgu" onclick="event.preventDefault(); navigate('/cgu')" class="text-duck font-bold hover:underline">conditions d'utilisation</a>.</p>
       </div>
 
     </div>
@@ -913,8 +913,8 @@ export const associationPage = () => `
         <div class="bg-duck rounded-3xl p-12 text-white shadow-2xl shadow-duck/10 relative overflow-hidden">
             <div class="relative z-10">
                 <h3 class="text-3xl font-black mb-6">Notre Vision</h3>
-                <p class="text-white/90 text-xl font-medium leading-relaxed italic">"Partager plus qu'un campus."</p>
-                <p class="text-white/80 text-lg font-medium leading-relaxed mt-4">PolyEarth favorise l'économie circulaire et l'entraide entre les étudiants de Polytech Montpellier. Emprunter plutôt qu'acheter, c'est notre devise pour réduire notre empreinte tout en renforçant les liens sur le campus.</p>
+                <p class="text-white/90 text-xl font-medium leading-relaxed italic">"</p>
+                <p class="text-white/80 text-lg font-medium leading-relaxed mt-4">Description de notre vision et de nos objectifs.</p>
             </div>
             <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-duck-light rounded-full opacity-50 blur-3xl"></div>
         </div>
@@ -1034,6 +1034,112 @@ export const adminPage = () => `
                 </table>
             </div>
         </div>
+    </div>
+</div>
+`;
+
+/**
+ * Page des Conditions Générales d'Utilisation (CGU).
+ * @returns {string} HTML de la page.
+ */
+export const cguPage = () => `
+<div class="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
+    <div class="flex flex-col items-center text-center space-y-4">
+        <div class="w-16 h-16 bg-emerald-50 text-duck rounded-2xl flex items-center justify-center">
+            <i data-lucide="file-text" class="w-8 h-8"></i>
+        </div>
+        <h2 class="text-4xl font-black text-gray-900 tracking-tight heading-font">Conditions Générales d'Utilisation</h2>
+        <p class="text-gray-500 font-medium text-sm md:text-base">Dernière mise à jour : Août 2026</p>
+    </div>
+
+    <div class="bg-white rounded-3xl p-6 md:p-10 border border-gray-100 shadow-sm space-y-8 text-gray-700 leading-relaxed font-medium text-sm md:text-base">
+        <section class="space-y-3">
+            <h3 class="text-lg md:text-xl font-black text-gray-900 heading-font flex items-center gap-2">
+                <span class="w-2 h-2 bg-duck rounded-full"></span> 1. Présentation de la Plateforme
+            </h3>
+            <p><strong>PolyEarth</strong> (PrêtObjets) est une plateforme de mise en relation destinée à faciliter le prêt gratuit et l'emprunt d'objets du quotidien entre les étudiants et membres de l'école Polytech Montpellier. Notre but est de favoriser l'entraide, le développement durable et l'économie circulaire sur le campus.</p>
+        </section>
+
+        <section class="space-y-3">
+            <h3 class="text-lg md:text-xl font-black text-gray-900 heading-font flex items-center gap-2">
+                <span class="w-2 h-2 bg-duck rounded-full"></span> 2. Inscription et Éligibilité
+            </h3>
+            <p>L'accès à la plateforme est réservé exclusivement aux étudiants et au personnel de Polytech Montpellier. Pour vous inscrire, vous devez fournir des informations exactes et maintenir vos identifiants sécurisés. Tout utilisateur s'engage à n'utiliser qu'un seul compte.</p>
+        </section>
+
+        <section class="space-y-3">
+            <h3 class="text-lg md:text-xl font-black text-gray-900 heading-font flex items-center gap-2">
+                <span class="w-2 h-2 bg-duck rounded-full"></span> 3. Gratuité et Responsabilité des Prêts
+            </h3>
+            <p>L'ensemble des services de la plateforme et des prêts d'objets est <strong>strictement gratuit</strong>. Aucune contrepartie financière ou commerciale ne peut être exigée par les utilisateurs.</p>
+            <p>Conformément aux règles du droit civil (contrat de commodat) :</p>
+            <ul class="list-disc pl-6 space-y-1.5">
+                <li><strong>L'emprunteur</strong> est tenu de veiller à la garde et à la conservation de l'objet prêté. Il s'engage à le restituer dans son état d'origine.</li>
+                <li><strong>Le prêteur</strong> s'engage à prêter des objets en bon état de fonctionnement et sécurisés, et à signaler tout défaut ou risque potentiel.</li>
+                <li><strong>L'Association PolyEarth</strong> agit comme simple hébergeur et intermédiaire de mise en relation. Elle décline toute responsabilité en cas de perte, de vol, de détérioration d'un objet, ou de tout incident lié à l'utilisation d'un objet prêté.</li>
+            </ul>
+        </section>
+
+        <section class="space-y-3">
+            <h3 class="text-lg md:text-xl font-black text-gray-900 heading-font flex items-center gap-2">
+                <span class="w-2 h-2 bg-duck rounded-full"></span> 4. Protection des Données (RGPD)
+            </h3>
+            <p>Conformément au RGPD, les données personnelles collectées (nom, e-mail, téléphone) sont utilisées uniquement pour le bon fonctionnement du service de prêt et la mise en relation. Les numéros de téléphone restent confidentiels et ne sont partagés qu'entre les deux parties d'un prêt validé. Vous disposez d'un droit d'accès, de rectification et de suppression de vos données en contactant l'administration de PolyEarth.</p>
+        </section>
+
+        <section class="space-y-3">
+            <h3 class="text-lg md:text-xl font-black text-gray-900 heading-font flex items-center gap-2">
+                <span class="w-2 h-2 bg-duck rounded-full"></span> 5. Modification des CGU
+            </h3>
+            <p>L'association PolyEarth se réserve le droit de modifier les présentes conditions à tout moment pour les adapter aux évolutions du site et de la réglementation. L'utilisation continue du site vaut acceptation des conditions révisées.</p>
+        </section>
+    </div>
+</div>
+`;
+
+/**
+ * Page des Mentions Légales.
+ * @returns {string} HTML de la page.
+ */
+export const mentionsLegalesPage = () => `
+<div class="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
+    <div class="flex flex-col items-center text-center space-y-4">
+        <div class="w-16 h-16 bg-emerald-50 text-duck rounded-2xl flex items-center justify-center">
+            <i data-lucide="scale" class="w-8 h-8"></i>
+        </div>
+        <h2 class="text-4xl font-black text-gray-900 tracking-tight heading-font">Mentions Légales</h2>
+        <p class="text-gray-500 font-medium text-sm md:text-base">Informations obligatoires concernant le site</p>
+    </div>
+
+    <div class="bg-white rounded-3xl p-6 md:p-10 border border-gray-100 shadow-sm space-y-8 text-gray-700 leading-relaxed font-medium text-sm md:text-base">
+        <section class="space-y-3">
+            <h3 class="text-lg md:text-xl font-black text-gray-900 heading-font">Éditeur du Site</h3>
+            <p>Le site <strong>PolyEarth PrêtObjets</strong> est édité par l'association étudiante <strong>PolyEarth</strong>.</p>
+            <ul class="list-none space-y-1">
+                <li><strong>Siège social :</strong> Polytech Montpellier, Place Eugène Bataillon, 34095 Montpellier Cedex 5</li>
+                <li><strong>Directeur de la publication :</strong> Le Président de l'association PolyEarth</li>
+                <li><strong>Contact :</strong> <a href="mailto:polyearth@example.com" class="text-duck hover:underline">polyearth@example.com</a></li>
+            </ul>
+        </section>
+
+        <section class="space-y-3">
+            <h3 class="text-lg md:text-xl font-black text-gray-900 heading-font">Hébergement du Site</h3>
+            <p></p>
+            <ul class="list-none space-y-1">
+                <li><strong>Adresse :</strong> Place Eugène Bataillon, 34095 Montpellier Cedex 5</li>
+                <li><strong>Téléphone :</strong> +33 (0)4 67 14 31 60</li>
+            </ul>
+        </section>
+
+        <section class="space-y-3">
+            <h3 class="text-lg md:text-xl font-black text-gray-900 heading-font">Propriété Intellectuelle</h3>
+            <p>Tous les contenus originaux présents sur le site (textes, logos, illustrations) sont la propriété de l'association PolyEarth. Toute reproduction sans accord écrit est interdite.</p>
+        </section>
+
+        <section class="space-y-3">
+            <h3 class="text-lg md:text-xl font-black text-gray-900 heading-font">Contact et Réclamations</h3>
+            <p>Pour toute question ou demande de suppression de contenu/données, vous pouvez envoyer un e-mail à l'adresse de contact ci-dessus.</p>
+        </section>
     </div>
 </div>
 `;

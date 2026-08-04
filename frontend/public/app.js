@@ -12,7 +12,7 @@ import {
 
 import { 
   homePage, offresPage, demandesPage, messagesPage, pretsPage, profilPage, userProfilePage, loginPage, registerPage, associationPage, 
-  itemCard, demandCard, itemDetail, loanRow, adminPage 
+  itemCard, demandCard, itemDetail, loanRow, adminPage, cguPage, mentionsLegalesPage 
 } from './pages.js';
 
 // =============================================================================
@@ -320,6 +320,8 @@ const routes = {
   },
   '/association': () => { if (!guard()) return; content.innerHTML = associationPage(); hdr(); },
   '/admin': () => { if (!guard() || !getUser().is_admin) { navigate('/'); return; } content.innerHTML = adminPage(); loadAdminData(); hdr(); },
+  '/cgu': () => { content.innerHTML = cguPage(); hdr(); },
+  '/mentions-legales': () => { content.innerHTML = mentionsLegalesPage(); hdr(); },
 };
 
 /**
