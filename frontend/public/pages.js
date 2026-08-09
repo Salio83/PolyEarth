@@ -905,7 +905,7 @@ export const registerPage = () => `
 export const associationPage = () => `
     <div class="max-w-4xl mx-auto space-y-12 animate-fade-in">
         <div class="flex flex-col items-center text-center space-y-4">
-            <img src="/logo-polyearth.png" alt="PolyEarth Logo" class="w-32 h-32 object-contain rounded-xl shadow-xl shadow-emerald-100 mb-4">
+            <img src="newlogo.png" alt="PolyEarth Logo" class="w-32 h-32 object-contain rounded-xl shadow-xl shadow-emerald-100 mb-4">
             <h2 class="text-5xl font-black text-gray-900 tracking-tighter">L'Association</h2>
             <p class="text-gray-500 font-medium max-w-xl">PolyEarth — Association étudiante pour le partage et la durabilité à Polytech Montpellier.</p>
         </div>
@@ -913,8 +913,7 @@ export const associationPage = () => `
         <div class="bg-duck rounded-3xl p-12 text-white shadow-2xl shadow-duck/10 relative overflow-hidden">
             <div class="relative z-10">
                 <h3 class="text-3xl font-black mb-6">Notre Vision</h3>
-                <p class="text-white/90 text-xl font-medium leading-relaxed italic">"</p>
-                <p class="text-white/80 text-lg font-medium leading-relaxed mt-4">Description de notre vision et de nos objectifs.</p>
+                <p class="text-white/80 text-lg font-medium leading-relaxed mt-4">L'association Polyearth promeut le développement durable et la responsabilisation sociale à travers des actes de citoyenneté et de solidarité.</p>
             </div>
             <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-duck-light rounded-full opacity-50 blur-3xl"></div>
         </div>
@@ -1118,7 +1117,7 @@ export const mentionsLegalesPage = () => `
             <ul class="list-none space-y-1">
                 <li><strong>Siège social :</strong> Polytech Montpellier, Place Eugène Bataillon, 34095 Montpellier Cedex 5</li>
                 <li><strong>Directeur de la publication :</strong> Le Président de l'association PolyEarth</li>
-                <li><strong>Contact :</strong> <a href="mailto:polyearth@example.com" class="text-duck hover:underline">polyearth@example.com</a></li>
+                <li><strong>Contact :</strong> <a href="mailto:polytech.polyearth@gmail.com" class="text-duck hover:underline">polytech.polyearth@gmail.com</a></li>
             </ul>
         </section>
 
@@ -1127,7 +1126,6 @@ export const mentionsLegalesPage = () => `
             <p></p>
             <ul class="list-none space-y-1">
                 <li><strong>Adresse :</strong> Place Eugène Bataillon, 34095 Montpellier Cedex 5</li>
-                <li><strong>Téléphone :</strong> +33 (0)4 67 14 31 60</li>
             </ul>
         </section>
 
