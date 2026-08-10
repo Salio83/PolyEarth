@@ -913,7 +913,7 @@ export const associationPage = () => `
         <div class="bg-duck rounded-3xl p-12 text-white shadow-2xl shadow-duck/10 relative overflow-hidden">
             <div class="relative z-10">
                 <h3 class="text-3xl font-black mb-6">Notre Vision</h3>
-                <p class="text-white/80 text-lg font-medium leading-relaxed mt-4">L'association Polyearth promeut le développement durable et la responsabilisation sociale à travers des actes de citoyenneté et de solidarité.</p>
+                <p class="text-white/80 text-lg font-medium leading-relaxed mt-4">Poly'earth association solidaire et eco responsable de polytech Montpellier. Crée poly'troc, un site destiné aux élèves et au personnel de tous le réseau.</p>
             </div>
             <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-duck-light rounded-full opacity-50 blur-3xl"></div>
         </div>
