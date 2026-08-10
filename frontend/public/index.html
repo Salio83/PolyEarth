@@ -228,6 +228,16 @@
         .site-footer a:hover {
             color: #00635d !important;
         }
+
+        /* Classes de visibilité responsives explicites pour contourner le pruning de Tailwind */
+        @media (min-width: 768px) {
+            .md\:block {
+                display: block !important;
+            }
+            .md\:hidden {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="font-['Work_Sans'] text-gray-900 min-h-screen body-font">
