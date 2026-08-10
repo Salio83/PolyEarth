@@ -1287,26 +1287,32 @@ async function fetchItems(type = 'offer') {
   if (s && s.value) params.set('search', s.value);
   params.set('type', type);
   
-  const items = await (await fetch(`${API}/items?${params}`)).json();
+  const resItems = await fetch(`${API}/items?${params}`).catch(() => null);
+  const items = resItems ? await resItems.json().catch(() => []) : [];
   const grid = type === 'demand' ? $('demandsGrid') : $('offersGrid');
   if (!grid) return;
   
   const uid = getUser()?.id || 0;
+  const itemsArray = Array.isArray(items) ? items : [];
   // On filtre pour ne pas voir ses propres annonces dans les flux publics
-  grid.innerHTML = items.filter(i => i.owner_id !== uid).map(i => type === 'demand' ? demandCard(i) : itemCard(i)).join('') 
+  grid.innerHTML = itemsArray.filter(i => i.owner_id !== uid).map(i => type === 'demand' ? demandCard(i) : itemCard(i)).join('') 
     || '<div class="col-span-full text-center py-8 text-gray-400 text-sm">Aucune annonce trouvée.</div>';
 
   // Mise à jour des statistiques sur la page d'accueil
   if (location.pathname === '/') {
-    const allOffers = await (await fetch(`${API}/items?type=offer`)).json();
-    const statsAvailable = $('statsAvailable');
-    if (statsAvailable) statsAvailable.textContent = allOffers.length;
+    try {
+      const allOffers = await (await fetch(`${API}/items?type=offer`)).json();
+      const statsAvailable = $('statsAvailable');
+      if (statsAvailable) statsAvailable.textContent = allOffers.length;
 
-    const resLoans = await fetch(`${API}/loans/user/${uid}`);
-    const allLoans = await resLoans.json().catch(() => []);
-    const ongoingCount = allLoans.filter(l => l.status === 'accepted').length;
-    const statsOngoing = $('statsOngoing');
-    if (statsOngoing) statsOngoing.textContent = ongoingCount;
+      const resLoans = await fetch(`${API}/loans/user/${uid}`);
+      const allLoans = await resLoans.json().catch(() => []);
+      const ongoingCount = allLoans.filter(l => l.status === 'accepted').length;
+      const statsOngoing = $('statsOngoing');
+      if (statsOngoing) statsOngoing.textContent = ongoingCount;
+    } catch (err) {
+      console.error("Erreur de chargement des statistiques de l'accueil :", err);
+    }
   }
 
   if (window.lucide) lucide.createIcons();

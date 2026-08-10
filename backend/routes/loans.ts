@@ -18,7 +18,10 @@ router.get("/api/loans/user/:userId", async (ctx) => {
     `SELECT t.*, i.name as item_name, i.photo_url as item_photo, i.status as item_status, 
             ub.name as borrower_name, ub.photo_url as borrower_photo,
             uo.name as owner_name, uo.photo_url as owner_photo
-     FROM transactions t JOIN items i ON t.item_id=i.id JOIN users ub ON t.borrower_id=ub.id JOIN users uo ON t.owner_id=uo.id
+     FROM transactions t 
+     LEFT JOIN items i ON t.item_id=i.id 
+     LEFT JOIN users ub ON t.borrower_id=ub.id 
+     LEFT JOIN users uo ON t.owner_id=uo.id
      WHERE (t.borrower_id=$1 OR t.owner_id=$1) ORDER BY t.created_at DESC`,
     [ctx.params.userId],
   );
@@ -177,7 +180,10 @@ router.get("/api/loans/overdue/:userId", async (ctx) => {
   const today = new Date().toISOString().split("T")[0];
   const r = await client.queryObject(
     `SELECT t.*, i.name as item_name, ub.name as borrower_name, uo.name as owner_name
-     FROM transactions t JOIN items i ON t.item_id=i.id JOIN users ub ON t.borrower_id=ub.id JOIN users uo ON t.owner_id=uo.id
+     FROM transactions t 
+     LEFT JOIN items i ON t.item_id=i.id 
+     LEFT JOIN users ub ON t.borrower_id=ub.id 
+     LEFT JOIN users uo ON t.owner_id=uo.id
      WHERE (t.borrower_id=$1 OR t.owner_id=$1) AND t.status='accepted' AND t.end_date IS NOT NULL AND t.end_date < $2
      ORDER BY t.end_date ASC`,
     [ctx.params.userId, today],

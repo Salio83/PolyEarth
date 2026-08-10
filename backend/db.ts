@@ -42,6 +42,7 @@ export async function connectDb() {
         `ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false`,
         `ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMP`,
         `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES users(id)`,
+        `UPDATE transactions SET owner_id = (SELECT owner_id FROM items WHERE items.id = transactions.item_id) WHERE owner_id IS NULL`,
         `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`,
         `ALTER TABLE messages ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'text'`,
         `ALTER TABLE messages ADD COLUMN IF NOT EXISTS loan_id INTEGER`,

@@ -66,7 +66,7 @@ router.get("/api/admin/users", async (ctx) => {
 router.get("/api/admin/transactions", async (ctx) => {
   try {
     const res = await client.queryObject(
-      "SELECT t.*, i.name as item_name, u1.name as owner_name, u2.name as borrower_name FROM transactions t JOIN items i ON t.item_id=i.id JOIN users u1 ON t.owner_id=u1.id JOIN users u2 ON t.borrower_id=u2.id ORDER BY t.created_at DESC"
+      "SELECT t.*, i.name as item_name, u1.name as owner_name, u2.name as borrower_name FROM transactions t LEFT JOIN items i ON t.item_id=i.id LEFT JOIN users u1 ON t.owner_id=u1.id LEFT JOIN users u2 ON t.borrower_id=u2.id ORDER BY t.created_at DESC"
     );
     ctx.response.body = res.rows;
   } catch (e) {
