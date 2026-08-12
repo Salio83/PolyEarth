@@ -10,39 +10,35 @@ L'application est construite avec **Deno** (Oak) pour le backend, **Vanilla HTML
 
 Le backend a été restructuré de façon modulaire et sécurisée pour éviter les fichiers monolithiques et centraliser la configuration.
 
-PolyEarth/
-├── backend/                # API REST & WebSocket (Deno)
-│   ├── middleware/
-│   │   └── auth.ts         # Middleware de vérification JWT
-│   ├── routes/
-│   │   ├── auth.ts         # Inscription, connexion, vérification d'email
-│   │   ├── items.ts        # Gestion des annonces et réservations d'objets
-│   │   ├── loans.ts        # Gestion des prêts, extensions et retards
-│   │   ├── messages.ts     # Discussions instantanées & WebSockets
-│   │   ├── reviews.ts      # Évaluations & commentaires
-│   │   └── users.ts        # Profils utilisateurs
-│   ├── services/
-│   │   ├── email.ts        # Simulation/Envoi de courriels
-│   │   └── websocket.ts    # Gestion des sockets et notifications temps réel
-│   ├── utils/
-│   │   ├── rate_limit.ts   # Limiteur de débit (Rate Limiting) anti-brute-force
-│   │   └── validators.ts   # Validateurs d'entrées et sanitisation
-│   ├── config.ts           # Centralisation de la configuration (Deno.env)
-│   ├── db.ts               # Connexion PostgreSQL & migrations automatiques
-│   ├── Dockerfile          # Image Docker du backend
-│   └── main.ts             # Point d'entrée principal (Oak application)
-├── frontend/               # Serveur Frontend (Deno Oak)
-│   ├── public/             # Fichiers statiques servis au navigateur (SPA)
-│   │   ├── app.js          # Logique frontend, gestion des routes & WS
-│   │   └── index.html      # Point d'entrée utilisateur unique
-│   ├── server.ts           # Serveur Deno servant les pages et fichiers statiques
-│   └── Dockerfile          # Image Docker du frontend
-├── nginx/
-│   └── default.conf        # Configuration du Reverse Proxy Nginx
-├── .github/workflows/
-│   └── ci.yml              # Pipeline CI/CD (GitHub Actions)
-├── docker-compose.yml      # Orchestration multi-conteneurs
-└── schema.sql              # Schéma initial de la base de données SQL
+* **`backend/`** : API REST & WebSocket (Deno)
+  * `middleware/auth.ts` : Middleware de vérification JWT
+  * `routes/`
+    * `auth.ts` : Inscription, connexion, vérification d'email
+    * `items.ts` : Gestion des annonces et réservations d'objets
+    * `loans.ts` : Gestion des prêts, extensions et retards
+    * `messages.ts` : Discussions instantanées & WebSockets
+    * `reviews.ts` : Évaluations & commentaires
+    * `users.ts` : Profils utilisateurs
+  * `services/`
+    * `email.ts` : Simulation/Envoi de courriels
+    * `websocket.ts` : Gestion des sockets et notifications temps réel
+  * `utils/`
+    * `rate_limit.ts` : Limiteur de débit (Rate Limiting) anti-brute-force
+    * `validators.ts` : Validateurs d'entrées et sanitisation
+  * `config.ts` : Centralisation de la configuration (`Deno.env`)
+  * `db.ts` : Connexion PostgreSQL & migrations automatiques
+  * `Dockerfile` : Image Docker du backend
+  * `main.ts` : Point d'entrée principal (Oak application)
+* **`frontend/`** : Serveur Frontend (Deno Oak)
+  * `public/`
+    * `app.js` : Logique frontend, gestion des routes & WS
+    * `index.html` : Point d'entrée utilisateur unique
+  * `server.ts` : Serveur Deno servant les pages et fichiers statiques
+  * `Dockerfile` : Image Docker du frontend
+* **`nginx/default.conf`** : Configuration du Reverse Proxy Nginx
+* **`.github/workflows/ci.yml`** : Pipeline CI/CD (GitHub Actions)
+* **`docker-compose.yml`** : Orchestration multi-conteneurs
+* **`schema.sql`** : Schéma initial de la base de données SQL
 ---
 
 ## 🔌 Ports Exposés
