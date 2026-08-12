@@ -44,7 +44,6 @@ PolyEarth/
 ├── docker-compose.yml      # Orchestration multi-conteneurs
 └── schema.sql              # Schéma initial de la base de données SQL
 
-
 ---
 
 ## 🔌 Ports Exposés
