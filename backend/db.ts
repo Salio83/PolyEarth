@@ -60,6 +60,9 @@ export async function connectDb() {
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false`,
         `UPDATE users SET is_admin=true WHERE email='admin@polyearth.com'`,
+        `CREATE INDEX IF NOT EXISTS idx_items_status_type ON items(status, type)`,
+        `CREATE INDEX IF NOT EXISTS idx_items_owner ON items(owner_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_transactions_users ON transactions(owner_id, borrower_id, status)`,
       ];
 
       for (const q of migrations) {

@@ -19,7 +19,7 @@ const router = new Router();
 router.get("/api/users/:id", async (ctx) => {
   try {
     const r = await client.queryObject(
-      "SELECT id, name, email, school, status, photo_url, rating, transaction_count FROM users WHERE id=$1",
+      "SELECT id, name, email, school, status, photo_url, rating, transaction_count, is_admin FROM users WHERE id=$1",
       [ctx.params.id],
     );
     ctx.response.body = r.rows[0] as object;
@@ -81,7 +81,7 @@ router.patch("/api/users/:id", async (ctx) => {
     const sanitizedName = name ? sanitizeString(name.trim()) : null;
 
     const r = await client.queryObject(
-      "UPDATE users SET name=COALESCE($1,name), email=COALESCE($2,email), school=COALESCE($3,school), status=COALESCE($4,status), photo_url=COALESCE($5,photo_url) WHERE id=$6 RETURNING id,name,email,school,status,photo_url,rating,transaction_count",
+      "UPDATE users SET name=COALESCE($1,name), email=COALESCE($2,email), school=COALESCE($3,school), status=COALESCE($4,status), photo_url=COALESCE($5,photo_url) WHERE id=$6 RETURNING id,name,email,school,status,photo_url,rating,transaction_count,is_admin",
       [
         sanitizedName,
         email?.toLowerCase(),

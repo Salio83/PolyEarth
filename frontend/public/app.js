@@ -562,7 +562,6 @@ const handleRoute = () => {
   (routes[p] || routes['/'])();
   
   scrollTo(0, 0);
-  if (isLoggedIn()) checkOverdueLoans();
   if (window.lucide) lucide.createIcons();
 };
 
@@ -1298,20 +1297,24 @@ async function fetchItems(type = 'offer') {
   grid.innerHTML = itemsArray.filter(i => i.owner_id !== uid).map(i => type === 'demand' ? demandCard(i) : itemCard(i)).join('') 
     || '<div class="col-span-full text-center py-8 text-gray-400 text-sm">Aucune annonce trouvée.</div>';
 
-  // Mise à jour des statistiques sur la page d'accueil
+  // Mise à jour non-bloquante des statistiques sur la page d'accueil
   if (location.pathname === '/') {
-    try {
-      const allOffers = await (await fetch(`${API}/items?type=offer`)).json();
-      const statsAvailable = $('statsAvailable');
-      if (statsAvailable) statsAvailable.textContent = allOffers.length;
+    const statsAvailable = $('statsAvailable');
+    if (statsAvailable) {
+      if (type === 'offer' && (!activeCat || activeCat === 'all') && (!s || !s.value)) {
+        statsAvailable.textContent = itemsArray.length;
+      } else {
+        fetch(`${API}/items?type=offer`).then(r => r.json()).then(offers => {
+          if ($('statsAvailable')) $('statsAvailable').textContent = (offers || []).length;
+        }).catch(() => {});
+      }
+    }
 
-      const resLoans = await fetch(`${API}/loans/user/${uid}`);
-      const allLoans = await resLoans.json().catch(() => []);
-      const ongoingCount = allLoans.filter(l => l.status === 'accepted').length;
-      const statsOngoing = $('statsOngoing');
-      if (statsOngoing) statsOngoing.textContent = ongoingCount;
-    } catch (err) {
-      console.error("Erreur de chargement des statistiques de l'accueil :", err);
+    if (uid) {
+      fetch(`${API}/loans/user/${uid}`).then(r => r.json()).then(allLoans => {
+        const ongoingCount = (allLoans || []).filter(l => l.status === 'accepted').length;
+        if ($('statsOngoing')) $('statsOngoing').textContent = ongoingCount;
+      }).catch(() => {});
     }
   }
 
