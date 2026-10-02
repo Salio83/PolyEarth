@@ -6,7 +6,7 @@ L'application est construite avec **Deno** (Oak) pour le backend, **Vanilla HTML
 
 ---
 
-## 🏗 Architecture & Restructuration du Projet
+## Architecture & Restructuration du Projet
 
 Le backend a été restructuré de façon modulaire et sécurisée pour éviter les fichiers monolithiques et centraliser la configuration.
 
@@ -41,7 +41,7 @@ Le backend a été restructuré de façon modulaire et sécurisée pour éviter 
 * **`schema.sql`** : Schéma initial de la base de données SQL
 ---
 
-## 🔌 Ports Exposés
+## Ports Exposés
 
 Pour maximiser la sécurité de l'application, aucun service (API, Base de données, Frontend) n'est directement accessible depuis l'adresse IP de l'hôte, à l'exception de **Nginx**.
 
@@ -54,7 +54,7 @@ Pour maximiser la sécurité de l'application, aucun service (API, Base de donn�
 
 ---
 
-## 🛠 Lancement en Local (Développement)
+## Lancement en Local (Développement)
 
 ### Prérequis
 - Avoir [Docker Desktop](https://www.docker.com/products/docker-desktop/) installé et démarré.
@@ -69,7 +69,7 @@ Pour maximiser la sécurité de l'application, aucun service (API, Base de donn�
    NODE_ENV=development
    APP_URL=http://localhost
 
-⚠️ Important : Ne jamais commiter votre fichier .env dans le gestionnaire de versions (assurez-vous qu'il est bien présent dans votre .gitignore).
+Important : Ne jamais commiter votre fichier .env dans le gestionnaire de versions (assurez-vous qu'il est bien présent dans votre .gitignore).
 
     Démarrez l'application :
     Bash
@@ -78,7 +78,7 @@ Pour maximiser la sécurité de l'application, aucun service (API, Base de donn�
 
     Ouvrez votre navigateur sur http://localhost.
 
-🚀 Déploiement en Production
+Déploiement en Production
 
 Pour déployer PolyEarth sur un serveur de production (VPS Linux) :
 1. Préparer le serveur
@@ -114,7 +114,7 @@ Bash
 
 docker compose up -d --build
 
-🔄 Pipeline CI/CD (GitHub Actions)
+Pipeline CI/CD (GitHub Actions)
 
 L'application intègre un workflow CI/CD complet via GitHub Actions (.github/workflows/ci.yml).
 
