@@ -1534,7 +1534,7 @@ async function renderMyProfile() {
  */
 async function loadMessages() {
   const u = getUser();
-  const res = await fetch(`${API}/messages/${u.id}`);
+  const res = await fetch(`${API}/messages`);
   allMessages = await res.json().catch(() => []);
   
   const groups = {};
@@ -2415,7 +2415,7 @@ async function updateUnreadBadge() {
   if (!isLoggedIn()) return;
   try {
     const u = getUser();
-    const res = await fetch(`${API}/messages/${u.id}`);
+    const res = await fetch(`${API}/messages`);
     const msgs = await res.json().catch(() => []);
     const unread = msgs.filter(m => !m.is_read && m.receiver_id === u.id).length;
     

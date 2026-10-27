@@ -178,6 +178,9 @@ router.post("/api/auth/login", async (ctx) => {
     ctx.cookies.set("auth_token", jwt, {
       httpOnly: true,
       secure: config.nodeEnv === "production",
+      // nginx termine le TLS et transmet en HTTP : sans cette option, Oak lève
+      // une exception (et fait planter l'API) au lieu de poser le cookie Secure.
+      ignoreInsecure: true,
       sameSite: "lax",
       maxAge: config.jwtExpirationSeconds,
       path: "/",
