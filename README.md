@@ -68,6 +68,9 @@ Pour maximiser la sécurité de l'application, aucun service (API, Base de donn�
    JWT_SECRET=votre_cle_jwt_secrete_longue
    NODE_ENV=development
    APP_URL=http://localhost
+   # Optionnel : compte administrateur créé au démarrage s'il n'existe pas
+   ADMIN_EMAIL=admin@example.com
+   ADMIN_PASSWORD=mot_de_passe_admin_robuste
 
 Important : Ne jamais commiter votre fichier .env dans le gestionnaire de versions (assurez-vous qu'il est bien présent dans votre .gitignore).
 
@@ -95,6 +98,8 @@ POSTGRES_PASSWORD=MOT_DE_PASSE_TRES_FORT_ET_SECRET
 JWT_SECRET=CLE_JWT_FORTEMENT_ALEATOIRE_ET_TRES_LONGUE_HAUTEMENT_SECURISEE
 NODE_ENV=production
 APP_URL=[https://votre-domaine.com](https://votre-domaine.com)
+ADMIN_EMAIL=admin@votre-domaine.com
+ADMIN_PASSWORD=MOT_DE_PASSE_ADMIN_TRES_FORT
 
 3. Persistance et volumes
 

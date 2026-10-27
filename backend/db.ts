@@ -98,12 +98,10 @@ export async function connectDb() {
         `UPDATE users SET status='Étudiant' WHERE status IS NULL`,
         `UPDATE users SET rating=3.0 WHERE rating IS NULL`,
         `UPDATE users SET transaction_count=0 WHERE transaction_count IS NULL`,
-        `UPDATE users SET is_verified=true WHERE is_verified IS NULL`,
         `UPDATE messages SET is_read=false WHERE is_read IS NULL`,
         `UPDATE messages SET type='text' WHERE type IS NULL`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)`,
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false`,
-        `UPDATE users SET is_admin=true WHERE email='admin@polyearth.com'`,
         `CREATE INDEX IF NOT EXISTS idx_items_status_type ON items(status, type)`,
         `CREATE INDEX IF NOT EXISTS idx_items_owner ON items(owner_id)`,
         `CREATE INDEX IF NOT EXISTS idx_transactions_users ON transactions(owner_id, borrower_id, status)`,
@@ -120,20 +118,7 @@ export async function connectDb() {
       }
       console.log("✅ Migrations terminées avec succès");
 
-      // S'assurer qu'un utilisateur administrateur par défaut existe
-      const adminCheck = await client.queryObject(
-        "SELECT id FROM users WHERE email=$1",
-        ["admin@polyearth.com"]
-      );
-      if (adminCheck.rows.length === 0) {
-        const bcrypt = await import("https://deno.land/x/bcrypt@v0.4.1/mod.ts");
-        const hashedAdminPassword = await bcrypt.hash("admin123");
-        await client.queryObject(
-          "INSERT INTO users (name, email, password, is_verified, is_admin, status) VALUES ($1,$2,$3,$4,$5,$6)",
-          ["Admin PolyEarth", "admin@polyearth.com", hashedAdminPassword, true, true, "Administrateur"]
-        );
-        console.log("👤 Utilisateur Administrateur par défaut créé : admin@polyearth.com / admin123");
-      }
+      await ensureAdminUser(client);
       break;
     } catch (err) {
       console.error(
@@ -145,4 +130,32 @@ export async function connectDb() {
       client?.release();
     }
   }
+}
+
+/**
+ * Crée le compte administrateur défini par ADMIN_EMAIL / ADMIN_PASSWORD,
+ * s'il n'existe pas encore. Ne fait rien si ces variables sont absentes.
+ */
+async function ensureAdminUser(client: PoolClient) {
+  const { email, password } = config.admin;
+  if (!email || !password) {
+    console.log(
+      "ℹ️ ADMIN_EMAIL / ADMIN_PASSWORD non définis : aucun compte admin créé.",
+    );
+    return;
+  }
+
+  const existing = await client.queryObject(
+    "SELECT id FROM users WHERE email=$1",
+    [email],
+  );
+  if (existing.rows.length > 0) return;
+
+  const bcrypt = await import("https://deno.land/x/bcrypt@v0.4.1/mod.ts");
+  const hashedPassword = await bcrypt.hash(password);
+  await client.queryObject(
+    "INSERT INTO users (name, email, password, is_verified, is_admin, status) VALUES ($1,$2,$3,$4,$5,$6)",
+    ["Admin PolyEarth", email, hashedPassword, true, true, "Administrateur"],
+  );
+  console.log(`👤 Compte administrateur créé : ${email}`);
 }
