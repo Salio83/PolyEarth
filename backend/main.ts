@@ -47,24 +47,9 @@ mainRouter.use(reviewsRouter.allowedMethods());
 mainRouter.use(adminRouter.routes());
 mainRouter.use(adminRouter.allowedMethods());
 
-// Middleware CORS et Gestion des erreurs/auth globale
+// Middleware d'authentification globale.
+// Pas d'en-têtes CORS : le front et l'API sont servis sur la même origine via Nginx.
 app.use(async (ctx, next) => {
-  // Configuration CORS
-  ctx.response.headers.set("Access-Control-Allow-Origin", "*");
-  ctx.response.headers.set(
-    "Access-Control-Allow-Methods",
-    "GET,POST,PATCH,DELETE,OPTIONS",
-  );
-  ctx.response.headers.set(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With",
-  );
-
-  if (ctx.request.method === "OPTIONS") {
-    ctx.response.status = 204;
-    return;
-  }
-
   const path = ctx.request.url.pathname;
 
   // Routes publiques (sans authentification requise)

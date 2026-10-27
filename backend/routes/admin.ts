@@ -4,7 +4,7 @@
  */
 
 import { Router, Context, Next } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { client } from "../db.ts";
+import { query } from "../db.ts";
 import { User } from "../types.ts";
 
 const router = new Router();
@@ -21,7 +21,7 @@ async function checkAdmin(ctx: Context, next: Next) {
   }
 
   try {
-    const res = await client.queryObject(
+    const res = await query(
       "SELECT is_admin FROM users WHERE id=$1",
       [userId]
     );
@@ -48,7 +48,7 @@ router.use(checkAdmin);
  */
 router.get("/api/admin/users", async (ctx) => {
   try {
-    const res = await client.queryObject(
+    const res = await query(
       "SELECT id, name, email, phone, school, status, rating, transaction_count, is_verified, is_admin, created_at FROM users ORDER BY name ASC"
     );
     ctx.response.body = res.rows;
@@ -65,7 +65,7 @@ router.get("/api/admin/users", async (ctx) => {
  */
 router.get("/api/admin/transactions", async (ctx) => {
   try {
-    const res = await client.queryObject(
+    const res = await query(
       "SELECT t.*, i.name as item_name, u1.name as owner_name, u2.name as borrower_name FROM transactions t LEFT JOIN items i ON t.item_id=i.id LEFT JOIN users u1 ON t.owner_id=u1.id LEFT JOIN users u2 ON t.borrower_id=u2.id ORDER BY t.created_at DESC"
     );
     ctx.response.body = res.rows;
@@ -82,7 +82,7 @@ router.get("/api/admin/transactions", async (ctx) => {
  */
 router.get("/api/admin/messages", async (ctx) => {
   try {
-    const res = await client.queryObject(
+    const res = await query(
       "SELECT m.*, i.name as item_name, u1.name as sender_name, u2.name as receiver_name FROM messages m JOIN items i ON m.item_id=i.id JOIN users u1 ON m.sender_id=u1.id JOIN users u2 ON m.receiver_id=u2.id ORDER BY m.created_at DESC"
     );
     ctx.response.body = res.rows;

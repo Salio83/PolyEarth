@@ -4,7 +4,7 @@
  */
 
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { client } from "../db.ts";
+import { pool, query, withTransaction } from "../db.ts";
 import { Item, Transaction } from "../types.ts";
 import { connectedUsers, notifyUser } from "../services/websocket.ts";
 
@@ -19,30 +19,30 @@ router.get("/api/items", async (ctx) => {
   const type = ctx.request.url.searchParams.get("type") || "offer";
   const ownerId = ctx.request.url.searchParams.get("owner_id");
 
-  let query =
+  let sql =
     `SELECT i.*, u.name as owner_name, u.photo_url as owner_photo, u.rating as owner_rating, u.transaction_count as owner_transaction_count FROM items i JOIN users u ON i.owner_id=u.id WHERE i.status != 'deleted'`;
   const params: unknown[] = [];
 
   if (ownerId) {
     params.push(parseInt(ownerId, 10));
-    query += ` AND i.owner_id=$${params.length}`;
+    sql += ` AND i.owner_id=$${params.length}`;
   } else {
-    query += ` AND i.status='available'`;
+    sql += ` AND i.status='available'`;
     params.push(type);
-    query += ` AND i.type=$${params.length}`;
+    sql += ` AND i.type=$${params.length}`;
     if (category && category !== "all") {
       params.push(category);
-      query += ` AND i.category=$${params.length}`;
+      sql += ` AND i.category=$${params.length}`;
     }
     if (search) {
       params.push(`%${search}%`);
-      query +=
+      sql +=
         ` AND (i.name ILIKE $${params.length} OR i.description ILIKE $${params.length})`;
     }
   }
 
-  query += " ORDER BY i.id DESC";
-  ctx.response.body = (await client.queryObject(query, params)).rows;
+  sql += " ORDER BY i.id DESC";
+  ctx.response.body = (await query(sql, params)).rows;
 });
 
 /**
@@ -66,7 +66,7 @@ router.post("/api/items", async (ctx) => {
       return;
     }
     const userId = ctx.state.userId;
-    const r = await client.queryObject(
+    const r = await query(
       "INSERT INTO items (name,description,owner_id,category,quality,photo_url,available_from,available_until,type) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *",
       [
         body.name,
@@ -92,7 +92,7 @@ router.post("/api/items", async (ctx) => {
  * Récupère les détails d'une annonce spécifique.
  */
 router.get("/api/items/:id", async (ctx) => {
-  const r = await client.queryObject(
+  const r = await query(
     `SELECT i.*, u.name as owner_name, u.email as owner_email, u.photo_url as owner_photo, u.rating as owner_rating, u.transaction_count as owner_transaction_count FROM items i JOIN users u ON i.owner_id=u.id WHERE i.id=$1 AND i.status != 'deleted'`,
     [ctx.params.id],
   );
@@ -114,7 +114,7 @@ router.patch("/api/items/:id/status", async (ctx) => {
     const userId = ctx.state.userId;
 
     // Vérification de la propriété
-    const itemRes = await client.queryObject(
+    const itemRes = await query(
       "SELECT owner_id FROM items WHERE id=$1",
       [ctx.params.id],
     );
@@ -127,7 +127,7 @@ router.patch("/api/items/:id/status", async (ctx) => {
       return;
     }
 
-    await client.queryObject("UPDATE items SET status=$1 WHERE id=$2", [
+    await query("UPDATE items SET status=$1 WHERE id=$2", [
       status,
       ctx.params.id,
     ]);
@@ -145,14 +145,14 @@ router.patch("/api/items/:id/status", async (ctx) => {
 router.delete("/api/items/:id", async (ctx) => {
   const userId = ctx.state.userId;
   try {
-    const userRes = await client.queryObject(
+    const userRes = await query(
       "SELECT is_admin FROM users WHERE id=$1",
       [userId]
     );
     const currentUser = userRes.rows[0] as { is_admin?: boolean };
     const isAdmin = currentUser?.is_admin === true;
 
-    const itemRes = await client.queryObject(
+    const itemRes = await query(
       isAdmin ? "SELECT id, status FROM items WHERE id=$1" : "SELECT id, status FROM items WHERE id=$1 AND owner_id=$2",
       isAdmin ? [ctx.params.id] : [ctx.params.id, userId],
     );
@@ -164,16 +164,18 @@ router.delete("/api/items/:id", async (ctx) => {
       return;
     }
 
-    // Suppression logique : changement du statut à 'deleted'
-    await client.queryObject("UPDATE items SET status='deleted' WHERE id=$1", [
-      ctx.params.id,
-    ]);
+    await withTransaction(async (tx) => {
+      // Suppression logique : changement du statut à 'deleted'
+      await tx.queryObject("UPDATE items SET status='deleted' WHERE id=$1", [
+        ctx.params.id,
+      ]);
 
-    // Annulation des transactions en cours (en attente ou acceptées)
-    await client.queryObject(
-      "UPDATE transactions SET status='rejected' WHERE item_id=$1 AND status IN ('pending', 'accepted')",
-      [ctx.params.id],
-    );
+      // Annulation des transactions en cours (en attente ou acceptées)
+      await tx.queryObject(
+        "UPDATE transactions SET status='rejected' WHERE item_id=$1 AND status IN ('pending', 'accepted')",
+        [ctx.params.id],
+      );
+    });
 
     ctx.response.body = { message: "Annonce supprimée." };
   } catch (e) {
@@ -201,37 +203,37 @@ router.post("/api/items/:id/reserve", async (ctx) => {
       return;
     }
 
-    // Démarrer une transaction SQL manuelle
-    await client.queryObject("BEGIN");
-
+    // Transaction SQL manuelle sur une connexion dédiée du pool
+    const c = await pool.connect();
     try {
+      await c.queryObject("BEGIN");
       // Verrouiller la ligne de l'item pour la transaction
-      const itemRes = await client.queryObject(
+      const itemRes = await c.queryObject(
         "SELECT owner_id, status FROM items WHERE id=$1 FOR UPDATE",
         [itemId],
       );
       const item = itemRes.rows[0] as Item;
 
       if (!item) {
-        await client.queryObject("ROLLBACK");
+        await c.queryObject("ROLLBACK");
         ctx.response.status = 404;
         ctx.response.body = { message: "Objet introuvable." };
         return;
       }
       if (item.status === "deleted") {
-        await client.queryObject("ROLLBACK");
+        await c.queryObject("ROLLBACK");
         ctx.response.status = 410;
         ctx.response.body = { message: "Cet objet a été supprimé." };
         return;
       }
       if (item.status !== "available") {
-        await client.queryObject("ROLLBACK");
+        await c.queryObject("ROLLBACK");
         ctx.response.status = 409;
         ctx.response.body = { message: "Cet objet n'est plus disponible." };
         return;
       }
       if (item.owner_id === borrower_id) {
-        await client.queryObject("ROLLBACK");
+        await c.queryObject("ROLLBACK");
         ctx.response.status = 403;
         ctx.response.body = {
           message: "Vous ne pouvez pas emprunter votre propre objet.",
@@ -240,12 +242,12 @@ router.post("/api/items/:id/reserve", async (ctx) => {
       }
 
       // Vérifier l'absence de demande en cours (avec verrouillage)
-      const existing = await client.queryObject(
+      const existing = await c.queryObject(
         "SELECT id FROM transactions WHERE item_id=$1 AND borrower_id=$2 AND status IN ('pending','accepted') FOR UPDATE",
         [itemId, borrower_id],
       );
       if (existing.rows.length > 0) {
-        await client.queryObject("ROLLBACK");
+        await c.queryObject("ROLLBACK");
         ctx.response.status = 409;
         ctx.response.body = {
           message: "Vous avez déjà une demande en cours pour cet objet.",
@@ -254,7 +256,7 @@ router.post("/api/items/:id/reserve", async (ctx) => {
       }
 
       // Création de la transaction
-      const txRes = await client.queryObject(
+      const txRes = await c.queryObject(
         "INSERT INTO transactions (item_id,borrower_id,owner_id,start_date,end_date,status) VALUES ($1,$2,$3,$4,$5,'pending') RETURNING *",
         [
           itemId,
@@ -276,21 +278,23 @@ router.post("/api/items/:id/reserve", async (ctx) => {
       });
 
       // Envoi du message de notification dans la discussion
-      await client.queryObject(
+      await c.queryObject(
         "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id,meta) VALUES ($1,$2,$3,$4,'loan_request',$5,$6)",
         [itemId, borrower_id, item.owner_id, msgContent, newTx.id, meta],
       );
 
       // Valider la transaction
-      await client.queryObject("COMMIT");
+      await c.queryObject("COMMIT");
 
       // Notification WebSocket en temps réel (après commit)
       notifyUser(item.owner_id, "LOAN_REQUEST", { item_id: itemId });
 
       ctx.response.body = newTx;
     } catch (e) {
-      await client.queryObject("ROLLBACK");
+      await c.queryObject("ROLLBACK");
       throw e;
+    } finally {
+      c.release();
     }
   } catch (e) {
     console.error("❌ Erreur réservation:", e);
@@ -321,7 +325,7 @@ router.post("/api/items/:id/propose", async (ctx) => {
     }
 
     // Vérifie que l'objet proposé appartient bien au prêteur
-    const ownerRes = await client.queryObject(
+    const ownerRes = await query(
       "SELECT id FROM items WHERE id=$1 AND owner_id=$2",
       [ctx.params.id, lender_id],
     );
@@ -332,18 +336,6 @@ router.post("/api/items/:id/propose", async (ctx) => {
       };
       return;
     }
-
-    // Création de la transaction
-    const txRes = await client.queryObject(
-      "INSERT INTO transactions (item_id,borrower_id,owner_id,start_date,end_date,status) VALUES ($1,$2,$3,$4,$5,'pending') RETURNING *",
-      [
-        ctx.params.id,
-        borrower_id,
-        lender_id,
-        start_date || null,
-        end_date || null,
-      ],
-    );
 
     const msgContent = `🤝 Proposition de prêt : ${item_name}`;
     const meta = JSON.stringify({
@@ -356,17 +348,26 @@ router.post("/api/items/:id/propose", async (ctx) => {
     // Utilisation de l'ID de discussion fourni (si l'objet prêté n'est pas celui de la discussion originale)
     const messageItemId = discussion_item_id || ctx.params.id;
 
-    await client.queryObject(
-      "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id,meta) VALUES ($1,$2,$3,$4,'loan_request',$5,$6)",
-      [
-        messageItemId,
-        lender_id,
-        borrower_id,
-        msgContent,
-        (txRes.rows[0] as Transaction).id,
-        meta,
-      ],
-    );
+    // Création de la transaction et du message associé, de façon atomique
+    const loanId = await withTransaction(async (tx) => {
+      const txRes = await tx.queryObject(
+        "INSERT INTO transactions (item_id,borrower_id,owner_id,start_date,end_date,status) VALUES ($1,$2,$3,$4,$5,'pending') RETURNING *",
+        [
+          ctx.params.id,
+          borrower_id,
+          lender_id,
+          start_date || null,
+          end_date || null,
+        ],
+      );
+      const id = (txRes.rows[0] as Transaction).id;
+
+      await tx.queryObject(
+        "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id,meta) VALUES ($1,$2,$3,$4,'loan_request',$5,$6)",
+        [messageItemId, lender_id, borrower_id, msgContent, id, meta],
+      );
+      return id;
+    });
 
     const borrowerSocket = connectedUsers.get(borrower_id);
     if (borrowerSocket) {
@@ -380,7 +381,7 @@ router.post("/api/items/:id/propose", async (ctx) => {
 
     ctx.response.body = {
       message: "Proposition envoyée.",
-      loan_id: (txRes.rows[0] as Transaction).id,
+      loan_id: loanId,
     };
   } catch (e) {
     console.error(e);

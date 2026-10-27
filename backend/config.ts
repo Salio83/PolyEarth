@@ -35,6 +35,10 @@ export const config = {
   jwtExpirationSeconds: 60 * 60 * 24, // 24 heures
   nodeEnv: Deno.env.get("NODE_ENV") || "production",
   appUrl: Deno.env.get("APP_URL") || "http://localhost",
+  admin: {
+    email: Deno.env.get("ADMIN_EMAIL")?.toLowerCase() || null,
+    password: Deno.env.get("ADMIN_PASSWORD") || null,
+  },
   db: {
     user: Deno.env.get("DB_USER") || "root",
     database: Deno.env.get("DB_NAME") || "polyearth",

@@ -7,7 +7,7 @@ import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { create, getNumericDate } from "https://deno.land/x/djwt@v2.9.1/mod.ts";
 import { config, jwtKey } from "../config.ts";
-import { client } from "../db.ts";
+import { query } from "../db.ts";
 import { User } from "../types.ts";
 import {
   isValidEmail,
@@ -79,7 +79,7 @@ router.post("/api/auth/register", async (ctx) => {
     }
 
     // Vérifier si l'email existe déjà
-    const existingUser = await client.queryObject(
+    const existingUser = await query(
       "SELECT id FROM users WHERE email=$1",
       [email.toLowerCase()],
     );
@@ -93,7 +93,7 @@ router.post("/api/auth/register", async (ctx) => {
 
     const hashed = await bcrypt.hash(password);
 
-    await client.queryObject(
+    await query(
       "INSERT INTO users (name, email, password, verification_token, is_verified, status, phone) VALUES ($1,$2,$3,$4,$5,'Étudiant',$6)",
       [
         sanitizedName,
@@ -143,7 +143,7 @@ router.post("/api/auth/login", async (ctx) => {
       return;
     }
 
-    const r = await client.queryObject("SELECT * FROM users WHERE email=$1", [
+    const r = await query("SELECT * FROM users WHERE email=$1", [
       email.toLowerCase(),
     ]);
     const user = r.rows[0] as User;
@@ -221,7 +221,7 @@ router.get("/api/auth/check-email", async (ctx) => {
       return;
     }
 
-    const r = await client.queryObject(
+    const r = await query(
       "SELECT id FROM users WHERE email=$1",
       [email.toLowerCase()],
     );

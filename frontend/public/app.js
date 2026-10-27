@@ -589,7 +589,8 @@ function initWS() {
     if (!u || !u.id) return;
     if (socket) socket.close();
     
-    socket = new WebSocket(`${WS_URL}/${u.id}?token=${localStorage.getItem('token')}`);
+    // Le JWT est transmis par le cookie httpOnly auth_token, pas dans l'URL
+    socket = new WebSocket(`${WS_URL}/${u.id}`);
     
     socket.onmessage = async e => {
       const m = JSON.parse(e.data);
