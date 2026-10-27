@@ -320,6 +320,19 @@ router.post("/api/items/:id/propose", async (ctx) => {
       return;
     }
 
+    // Vérifie que l'objet proposé appartient bien au prêteur
+    const ownerRes = await client.queryObject(
+      "SELECT id FROM items WHERE id=$1 AND owner_id=$2",
+      [ctx.params.id, lender_id],
+    );
+    if (ownerRes.rows.length === 0) {
+      ctx.response.status = 403;
+      ctx.response.body = {
+        message: "Vous ne pouvez proposer que vos propres objets.",
+      };
+      return;
+    }
+
     // Création de la transaction
     const txRes = await client.queryObject(
       "INSERT INTO transactions (item_id,borrower_id,owner_id,start_date,end_date,status) VALUES ($1,$2,$3,$4,$5,'pending') RETURNING *",

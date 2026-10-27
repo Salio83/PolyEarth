@@ -54,6 +54,17 @@ export function isValidName(name: string): boolean {
   return name.trim().length >= 2 && name.trim().length <= 255;
 }
 
+/** Longueur maximale d'un message de la messagerie. */
+export const MAX_MESSAGE_LENGTH = 2000;
+
+/**
+ * Validation du contenu d'un message (non vide, longueur limitée).
+ */
+export function isValidMessageContent(content: unknown): content is string {
+  return typeof content === "string" && content.trim().length > 0 &&
+    content.length <= MAX_MESSAGE_LENGTH;
+}
+
 /**
  * Échappe les caractères spéciaux pour éviter les injections (defense-in-depth).
  */

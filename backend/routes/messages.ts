@@ -9,6 +9,10 @@ import { jwtKey } from "../config.ts";
 import { client } from "../db.ts";
 import { User } from "../types.ts";
 import {
+  isValidMessageContent,
+  MAX_MESSAGE_LENGTH,
+} from "../utils/validators.ts";
+import {
   connectedUsers,
   notifyUser,
   startHeartbeat,
@@ -68,9 +72,9 @@ router.get("/ws/:userId", async (ctx) => {
 });
 
 /**
- * Récupère tous les messages d'un utilisateur.
+ * Récupère tous les messages de l'utilisateur connecté.
  */
-router.get("/api/messages/:userId", async (ctx) => {
+router.get("/api/messages", async (ctx) => {
   const r = await client.queryObject(
     `SELECT m.*, 
             u1.name as sender_name, u1.photo_url as sender_photo,
@@ -87,7 +91,7 @@ router.get("/api/messages/:userId", async (ctx) => {
      LEFT JOIN transactions t ON m.loan_id = t.id
      WHERE (m.sender_id=$1 OR m.receiver_id=$1) AND i.status NOT IN ('deleted', 'borrowed') 
      ORDER BY m.created_at ASC`,
-    [ctx.params.userId],
+    [ctx.state.userId],
   );
   ctx.response.body = r.rows;
 });
@@ -98,8 +102,8 @@ router.get("/api/messages/:userId", async (ctx) => {
 router.patch("/api/messages/:id/read", async (ctx) => {
   try {
     await client.queryObject(
-      "UPDATE messages SET is_read=true, read_at=CURRENT_TIMESTAMP WHERE id=$1",
-      [ctx.params.id],
+      "UPDATE messages SET is_read=true, read_at=CURRENT_TIMESTAMP WHERE id=$1 AND receiver_id=$2",
+      [ctx.params.id, ctx.state.userId],
     );
     ctx.response.body = { success: true };
   } catch (_err) {
@@ -116,6 +120,31 @@ router.post("/api/messages", async (ctx) => {
       type: "json",
     }).value;
     const sender_id = ctx.state.userId;
+
+    if (!isValidMessageContent(content)) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        message:
+          `Le message doit contenir entre 1 et ${MAX_MESSAGE_LENGTH} caractères.`,
+      };
+      return;
+    }
+    if (Number(receiver_id) === Number(sender_id)) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        message: "Vous ne pouvez pas vous envoyer un message à vous-même.",
+      };
+      return;
+    }
+    const receiverRes = await client.queryObject(
+      "SELECT id FROM users WHERE id=$1",
+      [receiver_id],
+    );
+    if (receiverRes.rows.length === 0) {
+      ctx.response.status = 404;
+      ctx.response.body = { message: "Destinataire introuvable." };
+      return;
+    }
 
     // Vérifie si l'objet existe encore
     const itemRes = await client.queryObject(
