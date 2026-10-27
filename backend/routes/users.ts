@@ -4,7 +4,7 @@
  */
 
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { client } from "../db.ts";
+import { query } from "../db.ts";
 import {
   isValidEmail,
   isValidName,
@@ -18,7 +18,7 @@ const router = new Router();
  */
 router.get("/api/users/:id", async (ctx) => {
   try {
-    const r = await client.queryObject(
+    const r = await query(
       "SELECT id, name, email, school, status, photo_url, rating, transaction_count, is_admin FROM users WHERE id=$1",
       [ctx.params.id],
     );
@@ -80,7 +80,7 @@ router.patch("/api/users/:id", async (ctx) => {
 
     const sanitizedName = name ? sanitizeString(name.trim()) : null;
 
-    const r = await client.queryObject(
+    const r = await query(
       "UPDATE users SET name=COALESCE($1,name), email=COALESCE($2,email), school=COALESCE($3,school), status=COALESCE($4,status), photo_url=COALESCE($5,photo_url) WHERE id=$6 RETURNING id,name,email,school,status,photo_url,rating,transaction_count,is_admin",
       [
         sanitizedName,

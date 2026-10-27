@@ -4,7 +4,7 @@
  */
 
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { client } from "../db.ts";
+import { query, withTransaction } from "../db.ts";
 
 const router = new Router();
 
@@ -18,7 +18,7 @@ router.post("/api/reviews", async (ctx) => {
     const reviewer_id = ctx.state.userId;
 
     // Vérifie si une note existe déjà pour cette transaction par ce reviewer
-    const existing = await client.queryObject(
+    const existing = await query(
       "SELECT id FROM reviews WHERE transaction_id=$1 AND reviewer_id=$2",
       [transaction_id, reviewer_id],
     );
@@ -28,23 +28,25 @@ router.post("/api/reviews", async (ctx) => {
       return;
     }
 
-    // Insertion de la note
-    await client.queryObject(
-      "INSERT INTO reviews (transaction_id, reviewer_id, reviewee_id, rating, comment) VALUES ($1,$2,$3,$4,$5)",
-      [transaction_id, reviewer_id, reviewee_id, rating, comment || null],
-    );
+    await withTransaction(async (db) => {
+      // Insertion de la note
+      await db.queryObject(
+        "INSERT INTO reviews (transaction_id, reviewer_id, reviewee_id, rating, comment) VALUES ($1,$2,$3,$4,$5)",
+        [transaction_id, reviewer_id, reviewee_id, rating, comment || null],
+      );
 
-    // Mise à jour de la note moyenne de l'utilisateur noté
-    const avgRes = await client.queryObject(
-      "SELECT AVG(rating) as average FROM reviews WHERE reviewee_id=$1",
-      [reviewee_id],
-    );
-    const newAvg = (avgRes.rows[0] as { average: number | null }).average;
+      // Mise à jour de la note moyenne de l'utilisateur noté
+      const avgRes = await db.queryObject(
+        "SELECT AVG(rating) as average FROM reviews WHERE reviewee_id=$1",
+        [reviewee_id],
+      );
+      const newAvg = (avgRes.rows[0] as { average: number | null }).average;
 
-    await client.queryObject(
-      "UPDATE users SET rating=$1 WHERE id=$2",
-      [newAvg || 3.0, reviewee_id],
-    );
+      await db.queryObject(
+        "UPDATE users SET rating=$1 WHERE id=$2",
+        [newAvg || 3.0, reviewee_id],
+      );
+    });
 
     ctx.response.body = { success: true };
   } catch (e) {

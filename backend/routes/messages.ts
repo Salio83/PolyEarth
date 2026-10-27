@@ -6,7 +6,7 @@
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { verify } from "https://deno.land/x/djwt@v2.9.1/mod.ts";
 import { jwtKey } from "../config.ts";
-import { client } from "../db.ts";
+import { query } from "../db.ts";
 import { User } from "../types.ts";
 import {
   isValidMessageContent,
@@ -75,7 +75,7 @@ router.get("/ws/:userId", async (ctx) => {
  * Récupère tous les messages de l'utilisateur connecté.
  */
 router.get("/api/messages", async (ctx) => {
-  const r = await client.queryObject(
+  const r = await query(
     `SELECT m.*, 
             u1.name as sender_name, u1.photo_url as sender_photo,
             u2.name as receiver_name, u2.photo_url as receiver_photo,
@@ -101,7 +101,7 @@ router.get("/api/messages", async (ctx) => {
  */
 router.patch("/api/messages/:id/read", async (ctx) => {
   try {
-    await client.queryObject(
+    await query(
       "UPDATE messages SET is_read=true, read_at=CURRENT_TIMESTAMP WHERE id=$1 AND receiver_id=$2",
       [ctx.params.id, ctx.state.userId],
     );
@@ -136,7 +136,7 @@ router.post("/api/messages", async (ctx) => {
       };
       return;
     }
-    const receiverRes = await client.queryObject(
+    const receiverRes = await query(
       "SELECT id FROM users WHERE id=$1",
       [receiver_id],
     );
@@ -147,7 +147,7 @@ router.post("/api/messages", async (ctx) => {
     }
 
     // Vérifie si l'objet existe encore
-    const itemRes = await client.queryObject(
+    const itemRes = await query(
       "SELECT id, status FROM items WHERE id=$1",
       [item_id],
     );
@@ -167,13 +167,13 @@ router.post("/api/messages", async (ctx) => {
       return;
     }
 
-    await client.queryObject(
+    await query(
       "INSERT INTO messages (item_id,sender_id,receiver_id,content) VALUES ($1,$2,$3,$4)",
       [item_id, sender_id, receiver_id, content],
     );
 
     // Notification en temps réel au destinataire via WebSocket helper
-    const sRes = await client.queryObject(
+    const sRes = await query(
       "SELECT name FROM users WHERE id=$1",
       [sender_id],
     );
@@ -198,7 +198,7 @@ router.post("/api/messages/read-all", async (ctx) => {
   try {
     const { item_id } = await ctx.request.body({ type: "json" }).value;
     const user_id = ctx.state.userId;
-    await client.queryObject(
+    await query(
       "UPDATE messages SET is_read=true, read_at=CURRENT_TIMESTAMP WHERE item_id=$1 AND receiver_id=$2 AND is_read=false",
       [item_id, user_id],
     );
@@ -224,7 +224,7 @@ router.post("/api/messages/end-discussion", async (ctx) => {
     }
 
     // Supprimer les messages où l'utilisateur est expéditeur ou destinataire pour cet objet.
-    await client.queryObject(
+    await query(
       "DELETE FROM messages WHERE item_id=$1 AND receiver_id=$2",
       [item_id, user_id],
     );

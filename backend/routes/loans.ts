@@ -4,7 +4,7 @@
  */
 
 import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
-import { client } from "../db.ts";
+import { query, withTransaction } from "../db.ts";
 import { Message, Transaction } from "../types.ts";
 import { notifyUser } from "../services/websocket.ts";
 
@@ -14,7 +14,7 @@ const router = new Router();
  * Récupère tous les prêts (emprunts et dons) d'un utilisateur.
  */
 router.get("/api/loans/user/:userId", async (ctx) => {
-  const r = await client.queryObject(
+  const r = await query(
     `SELECT t.*, i.name as item_name, i.photo_url as item_photo, i.status as item_status, 
             ub.name as borrower_name, ub.photo_url as borrower_photo,
             uo.name as owner_name, uo.photo_url as owner_photo
@@ -45,7 +45,7 @@ router.patch("/api/loans/:id", async (ctx) => {
       return;
     }
 
-    const txRes0 = await client.queryObject(
+    const txRes0 = await query(
       "SELECT * FROM transactions WHERE id=$1",
       [loanId],
     );
@@ -69,7 +69,7 @@ router.patch("/api/loans/:id", async (ctx) => {
     const otherId = tx.owner_id === requester_id ? tx.borrower_id : tx.owner_id;
 
     // Retrouve l'ID de l'objet utilisé dans la discussion originale
-    const origMsgRes = await client.queryObject(
+    const origMsgRes = await query(
       "SELECT item_id FROM messages WHERE loan_id=$1 AND type='loan_request' LIMIT 1",
       [loanId],
     );
@@ -77,90 +77,104 @@ router.patch("/api/loans/:id", async (ctx) => {
       ? (origMsgRes.rows[0] as Message).item_id
       : tx.item_id;
 
-    if (status === "accepted") {
-      await client.queryObject(
-        "UPDATE transactions SET status='accepted' WHERE id=$1",
-        [loanId],
-      );
-      await client.queryObject(
-        "UPDATE items SET status='reserved' WHERE id=$1",
-        [tx.item_id],
-      );
-      await client.queryObject(
-        "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'loan_response',$5)",
-        [
-          discussionItemId,
-          requester_id,
-          otherId,
-          "✅ Prêt accepté ! Coordonnez la remise de l'objet.",
-          tx.id,
-        ],
-      );
-      // Incrémentation du compteur de transactions pour les deux utilisateurs
-      await client.queryObject(
-        "UPDATE users SET transaction_count=transaction_count+1 WHERE id=$1 OR id=$2",
-        [tx.owner_id, tx.borrower_id],
-      );
+    // Écritures liées dans une seule transaction SQL ; la notification
+    // WebSocket n'est envoyée qu'après le COMMIT.
+    const notification = await withTransaction(async (db) => {
+      if (status === "accepted") {
+        await db.queryObject(
+          "UPDATE transactions SET status='accepted' WHERE id=$1",
+          [loanId],
+        );
+        await db.queryObject(
+          "UPDATE items SET status='reserved' WHERE id=$1",
+          [tx.item_id],
+        );
+        await db.queryObject(
+          "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'loan_response',$5)",
+          [
+            discussionItemId,
+            requester_id,
+            otherId,
+            "✅ Prêt accepté ! Coordonnez la remise de l'objet.",
+            tx.id,
+          ],
+        );
+        // Incrémentation du compteur de transactions pour les deux utilisateurs
+        await db.queryObject(
+          "UPDATE users SET transaction_count=transaction_count+1 WHERE id=$1 OR id=$2",
+          [tx.owner_id, tx.borrower_id],
+        );
+        return {
+          type: "LOAN_ACCEPTED",
+          data: { item_id: discussionItemId },
+        };
+      } else if (status === "rejected") {
+        await db.queryObject(
+          "UPDATE transactions SET status='rejected' WHERE id=$1",
+          [loanId],
+        );
+        await db.queryObject(
+          "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'loan_response',$5)",
+          [
+            discussionItemId,
+            requester_id,
+            otherId,
+            "❌ Demande de prêt refusée.",
+            tx.id,
+          ],
+        );
+        return {
+          type: "LOAN_REJECTED",
+          data: { item_id: discussionItemId },
+        };
+      } else if (status === "request_end") {
+        // Demande de fin de prêt initiée par l'un des deux
+        await db.queryObject(
+          "UPDATE transactions SET end_requested_by=$1 WHERE id=$2",
+          [requester_id, loanId],
+        );
+        await db.queryObject(
+          "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'end_request',$5)",
+          [
+            discussionItemId,
+            requester_id,
+            otherId,
+            "🏁 Demande de fin de prêt — l'objet a-t-il bien été rendu ?",
+            tx.id,
+          ],
+        );
+        return {
+          type: "NEW_MESSAGE",
+          data: { item_id: discussionItemId, sender_name: "un utilisateur" },
+        };
+      } else if (status === "completed") {
+        // Fin de prêt confirmée
+        await db.queryObject(
+          "UPDATE transactions SET status='completed', end_requested_by=NULL WHERE id=$1",
+          [loanId],
+        );
+        await db.queryObject(
+          "UPDATE items SET status='borrowed' WHERE id=$1",
+          [tx.item_id],
+        );
+        await db.queryObject(
+          "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,'✅ Prêt terminé avec succès. Merci !','system',$4)",
+          [discussionItemId, requester_id, otherId, tx.id],
+        );
+        return {
+          type: "DISCUSSION_ENDED",
+          data: {
+            item_id: discussionItemId,
+            loan_id: tx.id,
+            other_id: requester_id,
+          },
+        };
+      }
+      return null;
+    });
 
-      notifyUser(otherId, "LOAN_ACCEPTED", { item_id: discussionItemId });
-    } else if (status === "rejected") {
-      await client.queryObject(
-        "UPDATE transactions SET status='rejected' WHERE id=$1",
-        [loanId],
-      );
-      await client.queryObject(
-        "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'loan_response',$5)",
-        [
-          discussionItemId,
-          requester_id,
-          otherId,
-          "❌ Demande de prêt refusée.",
-          tx.id,
-        ],
-      );
-
-      notifyUser(otherId, "LOAN_REJECTED", { item_id: discussionItemId });
-    } else if (status === "request_end") {
-      // Demande de fin de prêt initiée par l'un des deux
-      await client.queryObject(
-        "UPDATE transactions SET end_requested_by=$1 WHERE id=$2",
-        [requester_id, loanId],
-      );
-      await client.queryObject(
-        "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'end_request',$5)",
-        [
-          discussionItemId,
-          requester_id,
-          otherId,
-          "🏁 Demande de fin de prêt — l'objet a-t-il bien été rendu ?",
-          tx.id,
-        ],
-      );
-
-      notifyUser(otherId, "NEW_MESSAGE", {
-        item_id: discussionItemId,
-        sender_name: "un utilisateur",
-      });
-    } else if (status === "completed") {
-      // Fin de prêt confirmée
-      await client.queryObject(
-        "UPDATE transactions SET status='completed', end_requested_by=NULL WHERE id=$1",
-        [loanId],
-      );
-      await client.queryObject(
-        "UPDATE items SET status='borrowed' WHERE id=$1",
-        [tx.item_id],
-      );
-      await client.queryObject(
-        "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,'✅ Prêt terminé avec succès. Merci !','system',$4)",
-        [discussionItemId, requester_id, otherId, tx.id],
-      );
-
-      notifyUser(otherId, "DISCUSSION_ENDED", {
-        item_id: discussionItemId,
-        loan_id: tx.id,
-        other_id: requester_id,
-      });
+    if (notification) {
+      notifyUser(otherId, notification.type, notification.data);
     }
 
     ctx.response.body = { success: true };
@@ -178,7 +192,7 @@ router.patch("/api/loans/:id", async (ctx) => {
  */
 router.get("/api/loans/overdue/:userId", async (ctx) => {
   const today = new Date().toISOString().split("T")[0];
-  const r = await client.queryObject(
+  const r = await query(
     `SELECT t.*, i.name as item_name, ub.name as borrower_name, uo.name as owner_name
      FROM transactions t 
      LEFT JOIN items i ON t.item_id=i.id 
@@ -207,7 +221,7 @@ router.post("/api/loans/:id/extend", async (ctx) => {
       return;
     }
 
-    const txRes = await client.queryObject(
+    const txRes = await query(
       "SELECT * FROM transactions WHERE id=$1",
       [loanId],
     );
@@ -241,7 +255,7 @@ router.post("/api/loans/:id/extend", async (ctx) => {
     const fmt = (d: string) => new Date(d).toLocaleDateString("fr-FR");
     const meta = JSON.stringify({ new_end_date });
 
-    await client.queryObject(
+    await query(
       "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id,meta) VALUES ($1,$2,$3,$4,'extension_request',$5,$6)",
       [
         tx.item_id,
@@ -285,7 +299,7 @@ router.patch("/api/loans/:id/extend", async (ctx) => {
       return;
     }
 
-    const txRes = await client.queryObject(
+    const txRes = await query(
       "SELECT * FROM transactions WHERE id=$1",
       [loanId],
     );
@@ -315,23 +329,25 @@ router.patch("/api/loans/:id/extend", async (ctx) => {
         };
         return;
       }
-      await client.queryObject(
-        "UPDATE transactions SET end_date=$1 WHERE id=$2",
-        [new_end_date, loanId],
-      );
       const fmt = (d: string) => new Date(d).toLocaleDateString("fr-FR");
-      await client.queryObject(
-        "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'system',$5)",
-        [
-          tx.item_id,
-          requester_id,
-          tx.owner_id === requester_id ? tx.borrower_id : tx.owner_id,
-          `✅ Extension acceptée jusqu'au ${fmt(new_end_date)}`,
-          tx.id,
-        ],
-      );
+      await withTransaction(async (db) => {
+        await db.queryObject(
+          "UPDATE transactions SET end_date=$1 WHERE id=$2",
+          [new_end_date, loanId],
+        );
+        await db.queryObject(
+          "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,$4,'system',$5)",
+          [
+            tx.item_id,
+            requester_id,
+            tx.owner_id === requester_id ? tx.borrower_id : tx.owner_id,
+            `✅ Extension acceptée jusqu'au ${fmt(new_end_date)}`,
+            tx.id,
+          ],
+        );
+      });
     } else {
-      await client.queryObject(
+      await query(
         "INSERT INTO messages (item_id,sender_id,receiver_id,content,type,loan_id) VALUES ($1,$2,$3,'❌ Extension refusée.','system',$4)",
         [
           tx.item_id,
@@ -365,7 +381,7 @@ router.get("/api/loans/active/:itemId/:userId", async (ctx) => {
   try {
     const { itemId, userId } = ctx.params;
     const otherId = ctx.request.url.searchParams.get("otherId");
-    const r = await client.queryObject(
+    const r = await query(
       `SELECT t.* FROM transactions t 
        WHERE t.id IN (
          SELECT loan_id FROM messages 

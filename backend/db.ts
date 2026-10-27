@@ -3,16 +3,59 @@
  * @description Initialisation de la connexion PostgreSQL et migrations automatiques.
  */
 
-import { Client } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
+import { Pool, PoolClient } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 import { config } from "./config.ts";
 
-export const client = new Client({
-  user: config.db.user,
-  database: config.db.database,
-  hostname: config.db.hostname,
-  password: config.db.password,
-  port: config.db.port,
-});
+/** Pool de connexions PostgreSQL (10 connexions max, ouvertes à la demande). */
+export const pool = new Pool(
+  {
+    user: config.db.user,
+    database: config.db.database,
+    hostname: config.db.hostname,
+    password: config.db.password,
+    port: config.db.port,
+  },
+  10,
+  true,
+);
+
+/**
+ * Exécute une requête sur une connexion du pool, puis libère la connexion.
+ */
+export async function query<T = unknown>(
+  sql: string,
+  args?: unknown[],
+) {
+  const c = await pool.connect();
+  try {
+    return await c.queryObject<T>(sql, args);
+  } finally {
+    c.release();
+  }
+}
+
+/**
+ * Exécute `fn` dans une transaction SQL sur une connexion dédiée.
+ * COMMIT si `fn` réussit, ROLLBACK si elle lève une erreur.
+ */
+export async function withTransaction<T>(
+  fn: (tx: PoolClient) => Promise<T>,
+): Promise<T> {
+  const c = await pool.connect();
+  try {
+    await c.queryObject("BEGIN");
+    try {
+      const result = await fn(c);
+      await c.queryObject("COMMIT");
+      return result;
+    } catch (e) {
+      await c.queryObject("ROLLBACK");
+      throw e;
+    }
+  } finally {
+    c.release();
+  }
+}
 
 /**
  * Établit la connexion à la base de données avec un système de reconnexion automatique.
@@ -20,8 +63,9 @@ export const client = new Client({
  */
 export async function connectDb() {
   while (true) {
+    let client: PoolClient | null = null;
     try {
-      await client.connect();
+      client = await pool.connect();
       console.log("✅ Connecté à PostgreSQL");
 
       // Liste des migrations pour mettre à jour le schéma de la base de données
@@ -97,6 +141,8 @@ export async function connectDb() {
         err instanceof Error ? err.message : err,
       );
       await new Promise((resolve) => setTimeout(resolve, 5000));
+    } finally {
+      client?.release();
     }
   }
 }
