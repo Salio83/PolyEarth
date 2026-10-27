@@ -7,6 +7,7 @@ import { Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { verify } from "https://deno.land/x/djwt@v2.9.1/mod.ts";
 import { jwtKey } from "../config.ts";
 import { query } from "../db.ts";
+import { getTokenFromRequest } from "../middleware/auth.ts";
 import { User } from "../types.ts";
 import {
   isValidMessageContent,
@@ -22,13 +23,15 @@ import {
 const router = new Router();
 
 /**
- * Gère la connexion WebSocket temps réel et l'authentification par token.
+ * Gère la connexion WebSocket temps réel.
+ * Le JWT est lu dans le cookie auth_token (envoyé avec la requête d'upgrade,
+ * même origine) et non dans l'URL, pour qu'il n'apparaisse pas dans les logs.
  */
 router.get("/ws/:userId", async (ctx) => {
   if (!ctx.isUpgradable) ctx.throw(400, "Connexion non upgradable");
 
   const userId = parseInt(ctx.params.userId, 10);
-  const token = ctx.request.url.searchParams.get("token");
+  const token = await getTokenFromRequest(ctx);
 
   if (!token) {
     ctx.response.status = 401;
